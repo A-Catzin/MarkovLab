@@ -1,0 +1,39 @@
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Editors and IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Julia local artifacts
+*.ji
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+.julia/
+
+# Local Pi / Gentle AI state
+.atl/
+
+# Temporary files
+*.tmp
+*.temp
