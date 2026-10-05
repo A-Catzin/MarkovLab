@@ -6,9 +6,11 @@ MarkovLab es un proyecto académico para el monitoreo, análisis y optimización
 
 ## Estado
 
-En planificación y definición de la arquitectura. La especificación funcional completa está documentada en [`SRS.md`](./SRS.md).
+En planificación y definición de la arquitectura. La especificación funcional completa está documentada en [`SRS.md`](./documentacion/contexto/SRS.md).
 
 ## Arquitectura prevista
+
+La estructura y las conexiones previstas se describen en [`ARCHITECTURE.md`](./documentacion/tecnica/ARCHITECTURE.md).
 
 ```text
 Frontend Next.js + TypeScript
@@ -35,14 +37,20 @@ Proveedor externo de datos de mercado
 - Predicciones evaluables y backtesting.
 - Visualización y persistencia de resultados.
 
-## Estructura actual
+## Estructura inicial
 
 ```text
 .
-├── README.md   # Introducción y guía del proyecto
-├── SRS.md      # Especificación de requisitos de software
-└── .gitignore  # Archivos excluidos del control de versiones
+├── README.md          # Introducción y guía del proyecto
+├── backend/           # Paquete Julia y futuras capas de API
+├── documentacion/     # Contexto, documentación técnica y datos
+│   ├── contexto/      # Requisitos y alcance
+│   ├── tecnica/       # Arquitectura y decisiones técnicas
+│   └── datos/         # Datasets y documentación de datos
+└── .gitignore         # Archivos excluidos del control de versiones
 ```
+
+Las áreas `frontend/` y `database/` se incorporan en sus ramas de trabajo respectivas y se integrarán posteriormente.
 
 ## Desarrollo local
 

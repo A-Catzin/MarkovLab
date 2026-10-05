@@ -37,4 +37,4 @@ backend/
 └── scripts/README.md         # Automatización local futura
 ```
 
-Los directorios `api`, `domain`, `services`, `infrastructure`, `config` y `scripts` contienen únicamente guías por ahora. No hay rutas HTTP, migraciones, integraciones, dependencias de producción, Docker, lógica financiera ni frontend ejecutable en esta base. Ver [`backend/README.md`](backend/README.md) para probar el paquete.
+Los directorios `api`, `domain`, `services`, `infrastructure`, `config` y `scripts` contienen únicamente guías por ahora. No hay rutas HTTP, migraciones, integraciones, dependencias de producción, Docker, lógica financiera ni frontend ejecutable en esta base. Ver [`backend/README.md`](../../backend/README.md) para probar el paquete.

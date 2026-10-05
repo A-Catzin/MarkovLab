@@ -1,6 +1,6 @@
 # Backend Julia
 
-Este directorio contiene la base comprobable del paquete `MarkovLabBackend`; aún no es un servidor. La organización y las conexiones previstas están en [`ARCHITECTURE.md`](../ARCHITECTURE.md).
+Este directorio contiene la base comprobable del paquete `MarkovLabBackend`; aún no es un servidor. La organización y las conexiones previstas están en [`ARCHITECTURE.md`](../documentacion/tecnica/ARCHITECTURE.md).
 
 ## Inicio rápido
 
