@@ -22,19 +22,30 @@ Flujo futuro: usuario → frontend → solicitud HTTP/JSON al backend → valida
 ```text
 backend/
 ├── README.md                 # Inicio y límites del paquete
-├── Project.toml              # Identidad y versión Julia, sin dependencias externas
+├── CHANGELOG.md              # Registro de lo implementado
+├── Project.toml              # Identidad, versión y dependencias Julia (solo Dates)
+├── Manifest.toml             # Versiones resueltas del entorno
 ├── src/
 │   ├── README.md             # Mapa del código fuente
-│   ├── MarkovLabBackend.jl    # Módulo mínimo
+│   ├── MarkovLabBackend.jl    # Módulo principal y exportaciones
 │   ├── api/README.md         # Contratos HTTP futuros
-│   ├── domain/README.md      # Reglas y modelos puros futuros
+│   ├── domain/
+│   │   ├── README.md         # Reglas y modelos puros
+│   │   ├── errors.jl         # InsufficientDataError
+│   │   ├── metrics.jl        # Rendimientos, volatilidad, drawdown y correlación
+│   │   └── prices.jl         # PriceBar (observación OHLCV)
 │   ├── services/README.md    # Orquestación futura
-│   └── infrastructure/README.md # Adaptadores externos futuros
+│   └── infrastructure/
+│       ├── README.md         # Adaptadores externos
+│       └── csv_prices.jl     # Importación de precios desde CSV
 ├── test/
 │   ├── README.md             # Estrategia de pruebas
-│   └── runtests.jl           # Prueba mínima del paquete
+│   ├── runtests.jl           # Punto de entrada de las pruebas
+│   ├── domain/               # Pruebas de métricas y PriceBar
+│   ├── infrastructure/       # Pruebas de importación CSV
+│   └── fixtures/             # Archivos CSV de ejemplo
 ├── config/README.md          # Configuración no sensible futura
 └── scripts/README.md         # Automatización local futura
 ```
 
-Los directorios `api`, `domain`, `services`, `infrastructure`, `config` y `scripts` contienen únicamente guías por ahora. No hay rutas HTTP, migraciones, integraciones, dependencias de producción, Docker, lógica financiera ni frontend ejecutable en esta base. Ver [`backend/README.md`](../../backend/README.md) para probar el paquete.
+`domain/` contiene las métricas financieras puras ([`METRICAS_DOMINIO.md`](METRICAS_DOMINIO.md)) y `PriceBar`; `infrastructure/` contiene el importador CSV ([`IMPORTACION_CSV.md`](IMPORTACION_CSV.md)). Los directorios `api`, `services`, `config` y `scripts` contienen únicamente guías por ahora. No hay rutas HTTP, migraciones, integración con PostgreSQL o la API de mercado, Docker ni frontend ejecutable en esta base. Ver [`backend/README.md`](../../backend/README.md) para probar el paquete.
