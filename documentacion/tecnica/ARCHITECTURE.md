@@ -33,7 +33,8 @@ backend/
 │   │   ├── README.md         # Reglas y modelos puros
 │   │   ├── errors.jl         # InsufficientDataError
 │   │   ├── metrics.jl        # Rendimientos, volatilidad, drawdown y correlación
-│   │   └── prices.jl         # PriceBar (observación OHLCV)
+│   │   ├── prices.jl         # PriceBar (observación OHLCV)
+│   │   └── portfolio.jl      # Portfolio, covarianza y riesgo de cartera
 │   ├── services/README.md    # Orquestación futura
 │   └── infrastructure/
 │       ├── README.md         # Adaptadores externos
@@ -41,11 +42,11 @@ backend/
 ├── test/
 │   ├── README.md             # Estrategia de pruebas
 │   ├── runtests.jl           # Punto de entrada de las pruebas
-│   ├── domain/               # Pruebas de métricas y PriceBar
+│   ├── domain/               # Pruebas de métricas, PriceBar y carteras
 │   ├── infrastructure/       # Pruebas de importación CSV
 │   └── fixtures/             # Archivos CSV de ejemplo
 ├── config/README.md          # Configuración no sensible futura
 └── scripts/README.md         # Automatización local futura
 ```
 
-`domain/` contiene las métricas financieras puras ([`METRICAS_DOMINIO.md`](METRICAS_DOMINIO.md)) y `PriceBar`; `infrastructure/` contiene el importador CSV ([`IMPORTACION_CSV.md`](IMPORTACION_CSV.md)). Los directorios `api`, `services`, `config` y `scripts` contienen únicamente guías por ahora. No hay rutas HTTP, migraciones, integración con PostgreSQL o la API de mercado, Docker ni frontend ejecutable en esta base. Ver [`backend/README.md`](../../backend/README.md) para probar el paquete.
+`domain/` contiene las métricas financieras puras ([`METRICAS_DOMINIO.md`](METRICAS_DOMINIO.md)), `PriceBar` y las carteras ([`CARTERAS_DOMINIO.md`](CARTERAS_DOMINIO.md)); `infrastructure/` contiene el importador CSV ([`IMPORTACION_CSV.md`](IMPORTACION_CSV.md)). Los directorios `api`, `services`, `config` y `scripts` contienen únicamente guías por ahora. No hay rutas HTTP, migraciones, integración con PostgreSQL o la API de mercado, Docker ni frontend ejecutable en esta base. Ver [`backend/README.md`](../../backend/README.md) para probar el paquete.
