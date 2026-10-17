@@ -1,12 +1,12 @@
 # Especificación de Requisitos de Software (SRS)
 
-## QuantPortfolio(Nombre por definir): plataforma de monitoreo, predicción y optimización de carteras
+## MarkovLab: plataforma de monitoreo, predicción y optimización de carteras
 
 **Versión:** 1.0  
 **Estado:** Borrador para revisión  
 **Materia:** Programación Estructurada  
 **Lenguajes principales:** Julia y SQL  
-**Frontend:** Framework web a definir  
+**Frontend:** Next.js con TypeScript  
 **Integrantes:** _Por completar_   
 **Fecha:** _Por completar_
 
@@ -16,13 +16,13 @@
 
 ### 1.1 Propósito
 
-Este documento especifica los requisitos de **QuantPortfolio**, una plataforma web para consultar información de mercado, analizar activos financieros, construir carteras, estimar riesgos, realizar predicciones y comparar estrategias mediante simulaciones.
+Este documento especifica los requisitos de **MarkovLab**, una plataforma web para consultar información de mercado, analizar activos financieros, construir carteras, estimar riesgos, realizar predicciones y comparar estrategias mediante simulaciones.
 
 El documento sirve como referencia para el diseño, desarrollo, pruebas y evaluación del proyecto universitario.
 
 ### 1.2 Alcance del producto
 
-QuantPortfolio permitirá que un usuario:
+MarkovLab permitirá que un usuario:
 
 1. Consulte precios históricos y actuales mediante una API financiera.
 2. Analice el rendimiento y el riesgo de distintos activos.
@@ -65,7 +65,7 @@ El sistema será una herramienta académica de análisis y apoyo a decisiones. *
 
 ### 2.1 Perspectiva del producto
 
-QuantPortfolio será una aplicación web con una arquitectura separada por capas:
+MarkovLab será una aplicación web con una arquitectura separada por capas:
 
 ```text
 Usuario
@@ -638,4 +638,4 @@ El sistema se considerará aceptable cuando:
 
 ## 14. Glosario de alcance
 
-QuantPortfolio no busca predecir el mercado de forma infalible. Su objetivo es mostrar cómo los datos históricos, la estadística, la simulación y la optimización pueden combinarse para construir una herramienta de análisis reproducible.
+MarkovLab no busca predecir el mercado de forma infalible. Su objetivo es mostrar cómo los datos históricos, la estadística, la simulación y la optimización pueden combinarse para construir una herramienta de análisis reproducible.

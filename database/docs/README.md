@@ -4,7 +4,7 @@ Este directorio reserva un lugar para explicar las decisiones futuras de persist
 
 ## Contenido previsto
 
-Podrán añadirse descripciones del modelo de datos, convenciones y guías de operación de PostgreSQL administrado por Supabase, una vez definidas. Los requisitos generales permanecen en [`SRS.md`](../../SRS.md).
+Podrán añadirse descripciones del modelo de datos, convenciones y guías de operación de PostgreSQL administrado por Supabase, una vez definidas. Los requisitos generales permanecen en [`SRS.md`](../../documentacion/contexto/SRS.md).
 
 ## Límites
 

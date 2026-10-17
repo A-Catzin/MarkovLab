@@ -7,7 +7,7 @@ Este directorio organiza el trabajo futuro de persistencia de MarkovLab. La arqu
 - [`migrations/`](./migrations/README.md): cambios versionados del esquema, cuando se definan.
 - [`seeds/`](./seeds/README.md): datos de ejemplo reproducibles, cuando se definan.
 - [`docs/`](./docs/README.md): decisiones y guías de la capa de datos.
-- [`SRS.md`](../SRS.md): requisitos y arquitectura previstos para el proyecto.
+- [`SRS.md`](../documentacion/contexto/SRS.md): requisitos y arquitectura previstos para el proyecto.
 
 ## Estado y responsabilidad
 
