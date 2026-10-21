@@ -19,6 +19,8 @@ node_modules/
 out/
 dist/
 coverage/
+next-env.d.ts
+*.tsbuildinfo
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -33,6 +35,10 @@ pnpm-debug.log*
 
 # Local Pi / Gentle AI state
 .atl/
+
+# Design inspection and browser automation output
+.taste-skill/
+.playwright-mcp/
 
 # Temporary files
 *.tmp

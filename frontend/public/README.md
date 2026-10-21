@@ -1,11 +1,9 @@
 # Recursos públicos
 
-Este directorio está reservado para archivos estáticos que la interfaz pueda servir públicamente.
+Archivos estáticos que la interfaz sirve públicamente.
 
-## Contenido previsto
+## Contenido actual
 
-Aquí podrán ubicarse imágenes, iconos y otros recursos estáticos aptos para acceso público.
+`archive/` contiene las fotografías de archivo de la página de inicio, descargadas de Wikimedia Commons, y `credits.json` con su fuente y licencia. Los créditos también aparecen en el pie de la página; si se quita o agrega una imagen, actualice ambos y [`LANDING.md`](../../documentacion/tecnica/LANDING.md).
 
-## Límites
-
-Por ahora no hay recursos añadidos. No deben colocarse aquí credenciales, datos privados, lógica de aplicación ni archivos que deban procesarse en el backend.
+No deben colocarse aquí credenciales, datos privados, lógica de aplicación ni archivos que deban procesarse en el backend.

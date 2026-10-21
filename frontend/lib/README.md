@@ -1,11 +1,11 @@
 # Utilidades del frontend
 
-Este directorio está reservado para lógica compartida que da soporte a la interfaz.
+Lógica compartida que da soporte a la interfaz.
 
-## Contenido previsto
+## Contenido actual
 
-Aquí podrán ubicarse utilidades, tipos compartidos y el futuro cliente HTTP/JSON para consultar la API Julia, conforme a contratos que aún deben definirse.
+- `simulation.ts`: versión para el navegador del modelo Monte Carlo del backend (`normal-rebalanced-v1`), con cuantiles, VaR, CVaR, histograma y trayectorias.
+- `demo.ts`: ejecuta la cartera de demostración; lo usan el servidor (primer render) y el simulador.
+- `landing-data.ts`: textos y datos de ejemplo de la página de inicio, incluidas las mediciones del motor Julia.
 
-## Límites
-
-No hay cliente HTTP ni utilidades implementadas todavía. Las vistas pertenecen a [`app/`](../app/), los componentes visuales a [`components/`](../components/) y el análisis financiero y la persistencia al backend.
+Ver [`LANDING.md`](../../documentacion/tecnica/LANDING.md). Todavía no hay cliente HTTP para la API Julia; su contrato está en [`API.md`](../../documentacion/tecnica/API.md).

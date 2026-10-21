@@ -1,11 +1,9 @@
 # Componentes
 
-Este directorio está reservado para elementos reutilizables de la interfaz de MarkovLab.
+Elementos de interfaz de MarkovLab. Las rutas y la composición de páginas pertenecen a [`app/`](../app/); los datos, el modelo de simulación del navegador y las utilidades, a [`lib/`](../lib/). Este directorio no reemplaza los cálculos del backend.
 
-## Contenido previsto
+## Contenido actual
 
-Aquí podrán ubicarse controles, tablas, gráficos y otros componentes compartidos entre vistas.
+`landing/` contiene las secciones de la página de inicio: `Hero`, `Intro`, `Simulator`, `Modules`, `Pipeline`, `Questions`, `SiteFooter` y `RevealOnScroll`. Su diseño y comportamiento están documentados en [`LANDING.md`](../../documentacion/tecnica/LANDING.md).
 
-## Límites
-
-No hay componentes implementados todavía. Las rutas y la composición de páginas pertenecen a [`app/`](../app/); el acceso a la API y las utilidades compartidas, a [`lib/`](../lib/). Este directorio no realiza cálculos financieros del backend.
+`Simulator` y `RevealOnScroll` son componentes de cliente; los demás se renderizan en el servidor.

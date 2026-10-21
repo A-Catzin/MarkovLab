@@ -1,11 +1,11 @@
 # Aplicación
 
-Este directorio está reservado para las páginas, la navegación y la estructura de la aplicación frontend.
+Páginas, navegación y estructura de la aplicación frontend (Next.js App Router).
 
-## Contenido previsto
+## Contenido actual
 
-Aquí podrán incorporarse rutas, diseños de página y estados propios de cada vista cuando se configure Next.js.
+- `layout.tsx`: idioma, tipografías (Young Serif y Source Serif 4 con `next/font`) y la clase `js` que activa las animaciones.
+- `page.tsx`: página de inicio; compone las secciones de [`components/landing/`](../components/landing/).
+- `globals.css`: tokens de color, tipo y espacio, estilos de cada sección y movimiento con alternativa para `prefers-reduced-motion`.
 
-## Límites
-
-No contiene rutas implementadas todavía. Los elementos compartidos pertenecen a [`components/`](../components/) y los cálculos financieros y la persistencia al backend Julia.
+Diseño documentado en [`LANDING.md`](../../documentacion/tecnica/LANDING.md). Los cálculos financieros y la persistencia pertenecen al backend Julia.
