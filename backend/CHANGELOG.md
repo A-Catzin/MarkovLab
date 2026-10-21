@@ -4,6 +4,26 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Agregado — 2026-10-16: carteras en el dominio
+
+- `src/domain/portfolio.jl`:
+  - `Portfolio`: composición sin posiciones cortas que valida símbolos únicos, pesos entre 0 y 1 y suma de 100 % con tolerancia `PORTFOLIO_WEIGHT_TOLERANCE = 1e-6` (RF-28, RF-29).
+  - `covariance_matrix`: covarianza muestral con anualización opcional.
+  - `portfolio_returns`, `portfolio_return`, `portfolio_volatility`: serie histórica, rendimiento esperado y volatilidad `sqrt(wᵀΣw)` de la cartera (RF-30).
+- `test/domain/portfolio_tests.jl`: reglas de validación, valores a mano y coherencia entre funciones.
+- Documentación en [`CARTERAS_DOMINIO.md`](../documentacion/tecnica/CARTERAS_DOMINIO.md).
+
+**Decisiones**
+
+- Los pesos inválidos se rechazan en lugar de reescalarse, para que el usuario vea el error (RF-29).
+- Las funciones de cartera aceptan vectores de pesos sin validar además de `Portfolio`, para que la optimización pueda evaluar candidatos.
+- Nombre, capital, moneda y fecha (RF-27) quedan para la capa de persistencia.
+
+**Siguientes pasos**
+
+1. Monte Carlo, VaR y CVaR sobre `Portfolio` (RF-41 a RF-48).
+2. API mínima con Oxygen.jl.
+
 ### Agregado — 2026-10-16: importación de precios desde CSV
 
 - `src/domain/prices.jl`: `PriceBar`, observación OHLCV que valida símbolo, precios positivos, coherencia de máximo y mínimo y volumen no negativo.

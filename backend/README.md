@@ -16,6 +16,7 @@ julia --project=backend backend/test/runtests.jl
 ## Implementado
 
 - Métricas financieras puras en `src/domain/`: rendimientos, volatilidad, drawdown y correlación. Ver [`METRICAS_DOMINIO.md`](../documentacion/tecnica/METRICAS_DOMINIO.md).
+- Carteras: composición validada, covarianza, rendimiento y volatilidad. Ver [`CARTERAS_DOMINIO.md`](../documentacion/tecnica/CARTERAS_DOMINIO.md).
 - Importación de precios históricos desde CSV con validación y detección de duplicados. Ver [`IMPORTACION_CSV.md`](../documentacion/tecnica/IMPORTACION_CSV.md).
 
 El historial de cambios está en [`CHANGELOG.md`](CHANGELOG.md).
