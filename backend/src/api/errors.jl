@@ -1,6 +1,6 @@
-# Request parsing helpers and translation of errors into JSON responses.
+# Utilidades para leer solicitudes y traducir errores en respuestas JSON.
 
-"""Error detected while reading a request; carries the HTTP status and code."""
+"""Error detectado al leer una solicitud; lleva el estado HTTP y el código de error."""
 struct RequestError <: Exception
     status::Int
     code::String
@@ -23,7 +23,7 @@ end
 """
     handle(f, req)
 
-Runs a route body and converts any exception into a JSON error response.
+Ejecuta el cuerpo de una ruta y convierte cualquier excepción en una respuesta de error JSON.
 """
 function handle(f, req)
     try
@@ -49,7 +49,7 @@ function required_field(object, name)
     return object[name]
 end
 
-# `Base.get` is explicit because `@oxidize` defines a `get` route function in this module.
+# `Base.get` es explícito porque `@oxidize` define una función de ruta `get` en este módulo.
 optional_field(object, name, default) = something(Base.get(object, name, nothing), Some(default))
 
 is_number(value) = value isa Real && !(value isa Bool)

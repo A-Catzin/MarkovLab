@@ -1,28 +1,28 @@
-# Use case: Monte Carlo risk of a portfolio from historical prices (RF-41 to
-# RF-44, RF-47, RF-48). Validates request limits (RNF-05) and returns every
-# parameter needed to reproduce the result (RNF-16, RNF-17).
+# Caso de uso: riesgo Monte Carlo de una cartera a partir de precios históricos
+# (RF-41 a RF-44, RF-47, RF-48). Valida los límites de la solicitud (RNF-05) y
+# devuelve todos los parámetros necesarios para reproducir el resultado (RNF-16, RNF-17).
 
-"""Identifier of the simulation model, stored with each result (RNF-17)."""
+"""Identificador del modelo de simulación, que se guarda con cada resultado (RNF-17)."""
 const MONTE_CARLO_MODEL = "normal-rebalanced-v1"
 const DEFAULT_SIMULATIONS = 10_000
 const DEFAULT_HORIZON = 1
 const DEFAULT_CONFIDENCE = 0.95
-"""Upper bound on scenarios per request, to keep response times bounded."""
+"""Máximo de escenarios por solicitud, para acotar el tiempo de respuesta."""
 const MAX_SIMULATIONS = 100_000
-"""Upper bound on the horizon in periods (about 10 years of trading days)."""
+"""Máximo del horizonte en períodos (unos 10 años de días hábiles)."""
 const MAX_HORIZON = 2_520
 
 """
     run_monte_carlo(portfolio, prices; simulations, horizon, confidence, seed) -> NamedTuple
 
-Estimates expected returns and covariance from `prices` (one ordered price
-series per portfolio asset, same order as `portfolio.symbols`, all aligned by
-date), simulates the portfolio and summarizes the outcomes.
+Estima rendimientos esperados y covarianza a partir de `prices` (una serie ordenada
+de precios por activo de la cartera, en el mismo orden que `portfolio.symbols` y
+alineadas por fecha), simula la cartera y resume los resultados.
 
-Returns `parameters` (symbols, weights, simulations, horizon, confidence, seed,
+Devuelve `parameters` (symbols, weights, simulations, horizon, confidence, seed,
 observations), `model`, `expected_period_return`, `expected_period_volatility`
-and `summary` (see `summarize_outcomes`). When `seed` is `nothing`, a random
-seed is drawn and reported so that the run can be reproduced.
+y `summary` (ver `summarize_outcomes`). Si `seed` es `nothing`, se genera una
+semilla aleatoria y se informa, para que la ejecución pueda reproducirse.
 """
 function run_monte_carlo(portfolio::Portfolio, prices::AbstractVector{<:AbstractVector{<:Real}};
                          simulations::Integer=DEFAULT_SIMULATIONS, horizon::Integer=DEFAULT_HORIZON,

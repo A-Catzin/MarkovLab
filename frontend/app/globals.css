@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* MarkovLab landing: a printed report set on a dark field. Silver-white type on
-   blue-black, one cornflower accent; Young Serif for display, Source Serif 4 for text. */
+/* Landing de MarkovLab: un informe impreso sobre fondo oscuro. Texto blanco plateado
+   sobre negro azulado y un solo acento aciano; Young Serif en títulos, Source Serif 4 en texto. */
 
 :root {
   --bg: #0a0d14;
@@ -101,7 +101,7 @@ img {
   height: auto;
 }
 
-/* ---------- Shared pieces ---------- */
+/* ---------- Piezas compartidas ---------- */
 
 .page {
   position: relative;
@@ -184,7 +184,7 @@ img {
   color: var(--muted);
 }
 
-/* ---------- Hero ---------- */
+/* ---------- Portada ---------- */
 
 .hero {
   padding-top: 28px;
@@ -313,7 +313,7 @@ img {
   color: var(--muted);
 }
 
-/* ---------- Intro ---------- */
+/* ---------- Historia ---------- */
 
 .intro {
   padding-top: 140px;
@@ -388,7 +388,7 @@ img {
   height: 100%;
 }
 
-/* ---------- Simulator ---------- */
+/* ---------- Simulador ---------- */
 
 .sim {
   row-gap: 0;
@@ -442,7 +442,7 @@ img {
   margin-top: 1em;
 }
 
-/* Interface fragments keep the product's own controls. */
+/* Los fragmentos de interfaz conservan los controles propios del producto. */
 [data-ui] {
   font-family: var(--font-text), Georgia, serif;
   font-size: var(--step-small);
@@ -595,7 +595,7 @@ img {
   color: var(--muted);
 }
 
-/* ---------- Modules mosaic ---------- */
+/* ---------- Mosaico de módulos ---------- */
 
 .mosaic {
   display: grid;
@@ -727,7 +727,7 @@ img {
   max-width: 24ch;
 }
 
-/* ---------- Pipeline ---------- */
+/* ---------- Etapas de la solicitud ---------- */
 
 .pipeline__title {
   padding-inline: var(--m);
@@ -786,7 +786,7 @@ img {
   max-width: calc(40ch + var(--m));
 }
 
-/* ---------- Questions ---------- */
+/* ---------- Preguntas ---------- */
 
 .qa {
   row-gap: 80px;
@@ -814,7 +814,7 @@ img {
   max-width: 40ch;
 }
 
-/* ---------- Footer ---------- */
+/* ---------- Pie ---------- */
 
 .footer {
   position: sticky;
@@ -887,7 +887,7 @@ img {
   }
 }
 
-/* ---------- Phone composition ---------- */
+/* ---------- Composición en teléfono ---------- */
 
 @media (max-width: 760px) {
   .hero__side,
@@ -1095,7 +1095,7 @@ img {
   }
 }
 
-/* ---------- Motion ---------- */
+/* ---------- Movimiento ---------- */
 
 @media (prefers-reduced-motion: no-preference) {
   .js .lines [data-line] {

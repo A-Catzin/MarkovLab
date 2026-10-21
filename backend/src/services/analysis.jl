@@ -1,12 +1,12 @@
-# Use case: summary metrics of one price series (RF-15, RF-16, RF-19, RF-20).
+# Caso de uso: métricas principales de una serie de precios (RF-15, RF-16, RF-19, RF-20).
 
 """
     analyze_prices(prices; periods_per_year=nothing) -> NamedTuple
 
-Computes the main metrics of an ordered price series: `observations`,
-`cumulative_return`, `mean_return`, `volatility` (per period),
-`annualized_volatility` (`nothing` unless `periods_per_year` is given) and
-`max_drawdown`. Needs at least 3 prices, so that the volatility has 2 returns.
+Calcula las métricas principales de una serie ordenada de precios: `observations`,
+`cumulative_return`, `mean_return`, `volatility` (por período),
+`annualized_volatility` (`nothing` salvo que se indique `periods_per_year`) y
+`max_drawdown`. Requiere al menos 3 precios, para que la volatilidad tenga 2 rendimientos.
 """
 function analyze_prices(prices::AbstractVector{<:Real}; periods_per_year::Union{Nothing,Real}=nothing)
     require_observations(prices, 3, "analyze_prices")

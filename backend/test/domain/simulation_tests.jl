@@ -9,7 +9,7 @@ using MarkovLabBackend
         @test empirical_quantile(outcomes, 1.0) == 0.2
         @test empirical_quantile(outcomes, 0.5) == 0.0
         @test empirical_quantile(outcomes, 0.25) ≈ -0.1
-        # linear interpolation between neighbours
+        # interpolación lineal entre valores vecinos
         @test empirical_quantile(outcomes, 0.125) ≈ -0.15
         @test_throws ArgumentError empirical_quantile(outcomes, 1.5)
         @test_throws InsufficientDataError empirical_quantile(Float64[], 0.5)

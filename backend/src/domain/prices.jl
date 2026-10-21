@@ -1,15 +1,15 @@
 """
     PriceBar(symbol, date, open, high, low, close, volume)
 
-One historical OHLCV observation of an asset. The constructor normalizes the
-symbol (trimmed, uppercase) and enforces the invariants:
+Una observación histórica OHLCV de un activo. El constructor normaliza el
+símbolo (sin espacios, en mayúsculas) y exige los invariantes:
 
-- `symbol` is not empty;
-- `open`, `high`, `low` and `close` are finite and positive;
-- `high` is the highest and `low` the lowest of the four prices;
-- `volume` is finite and non-negative.
+- `symbol` no está vacío;
+- `open`, `high`, `low` y `close` son finitos y positivos;
+- `high` es el mayor y `low` el menor de los cuatro precios;
+- `volume` es finito y no negativo.
 
-Violations throw `ArgumentError`.
+Las violaciones lanzan `ArgumentError`.
 """
 struct PriceBar
     symbol::String

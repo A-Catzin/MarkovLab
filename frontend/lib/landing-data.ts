@@ -1,9 +1,9 @@
 import type { SampleAsset } from "./simulation";
 
 /**
- * Sample figures for the page's demonstration portfolio. They are illustrative,
- * not market data: annual return and volatility are rounded, plausible values
- * and the correlation matrix is chosen to be positive definite.
+ * Cifras de ejemplo de la cartera de demostración. Son ilustrativas, no datos de
+ * mercado: el rendimiento y la volatilidad anuales son valores redondeados y
+ * verosímiles, y la matriz de correlación se eligió definida positiva.
  */
 export const SAMPLE_ASSETS: SampleAsset[] = [
   { ticker: "AAPL", name: "Apple", annualReturn: 0.184, annualVolatility: 0.221 },
@@ -50,8 +50,8 @@ export const FACTS = [
 ];
 
 /**
- * Stages of one POST /api/risk/monte-carlo request (10,000 scenarios, 21 days,
- * four assets with 252 prices), median of 30 runs measured in the Julia engine.
+ * Etapas de una solicitud POST /api/risk/monte-carlo (10,000 escenarios, 21 días,
+ * cuatro activos con 252 precios); mediana de 30 ejecuciones medidas en el motor Julia.
  */
 export const REQUEST_STAGES = [
   { ms: 0.12, duration: "0.12 ms", clause: "Primero, la API lee el JSON y valida pesos, precios y límites." },

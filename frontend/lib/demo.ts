@@ -6,7 +6,7 @@ export type DemoResult = ReturnType<typeof runSimulation> & {
   elapsedMs: number | null;
 };
 
-/** Runs the demonstration portfolio; used on the server for the first render and in the browser on demand. */
+/** Ejecuta la cartera de demostración; se usa en el servidor para el primer render y en el navegador a pedido. */
 export function runDemo(request: SimulationRequest, elapsedMs: number | null = null): DemoResult {
   return { ...runSimulation(SAMPLE_ASSETS, SAMPLE_CORRELATION, request), request, elapsedMs };
 }

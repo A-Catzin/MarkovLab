@@ -1,5 +1,5 @@
-# Route definitions. Each route parses its JSON body, calls one service and
-# returns its result as JSON.
+# Definición de rutas. Cada ruta lee su cuerpo JSON, llama a un servicio y
+# devuelve el resultado como JSON.
 
 get("/health") do req
     json(Dict("status" => "ok", "service" => SERVICE_NAME,

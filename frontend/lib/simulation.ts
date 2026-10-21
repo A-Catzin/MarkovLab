@@ -1,11 +1,11 @@
-// Browser port of the backend model `normal-rebalanced-v1`
-// (backend/src/domain/simulation.jl): the portfolio period return is normal
-// with mu_p = w'mu and sigma_p = sqrt(w' Sigma w); each scenario compounds
-// `horizon` periods. Quantiles use linear interpolation (Hyndman-Fan type 7),
-// VaR and CVaR are reported as positive losses.
+// Versión para el navegador del modelo del backend `normal-rebalanced-v1`
+// (backend/src/domain/simulation.jl): el rendimiento de la cartera por período es
+// normal con mu_p = w'mu y sigma_p = sqrt(w' Sigma w); cada escenario capitaliza
+// `horizon` períodos. Los cuantiles usan interpolación lineal (tipo 7 de Hyndman y Fan),
+// y el VaR y el CVaR se informan como pérdidas positivas.
 //
-// The random sequence (mulberry32 + Box-Muller) differs from Julia's Xoshiro,
-// so results match the backend in distribution, not number for number.
+// La secuencia aleatoria (mulberry32 + Box-Muller) es distinta de la de Xoshiro en Julia,
+// así que los resultados coinciden con el backend en distribución, no número por número.
 
 export const TRADING_DAYS = 252;
 export const SUMMARY_PERCENTILES = [1, 5, 25, 50, 75, 95, 99] as const;
@@ -64,7 +64,7 @@ export function normalGenerator(seed: number): () => number {
   };
 }
 
-/** Daily mean and volatility of the portfolio from annual sample figures. */
+/** Media y volatilidad diarias de la cartera a partir de las cifras anuales de ejemplo. */
 export function portfolioMoments(
   assets: SampleAsset[],
   correlation: number[][],
@@ -94,7 +94,7 @@ export function simulateOutcomes(mu: number, sigma: number, horizon: number, sim
   return outcomes;
 }
 
-/** Type-7 quantile of an ascending array. */
+/** Cuantil tipo 7 de un arreglo ordenado de menor a mayor. */
 export function quantileSorted(sorted: Float64Array, p: number): number {
   const h = (sorted.length - 1) * p;
   const lower = Math.floor(h);
@@ -150,7 +150,7 @@ export function runSimulation(assets: SampleAsset[], correlation: number[][], re
   return { mu, sigma, summary, histogram: histogram(sorted, 36) };
 }
 
-/** Value paths (starting at 1) for the hero figure. */
+/** Trayectorias de valor (empiezan en 1) para el gráfico de la portada. */
 export function samplePaths(mu: number, sigma: number, horizon: number, count: number, seed: number): number[][] {
   const normal = normalGenerator(seed);
   return Array.from({ length: count }, () => {

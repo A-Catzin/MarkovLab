@@ -1,10 +1,10 @@
-# Starts the MarkovLab HTTP API.
+# Inicia la API HTTP de MarkovLab.
 #
-# Usage from the repository root:
+# Uso desde la raíz del repositorio:
 #   julia --project=backend backend/scripts/serve.jl
 #
-# Configuration comes from environment variables (see backend/config/README.md):
-# HOST, PORT and ALLOWED_ORIGINS.
+# La configuración se toma de variables de entorno (ver backend/config/README.md):
+# HOST, PORT y ALLOWED_ORIGINS.
 
 using MarkovLabBackend
 

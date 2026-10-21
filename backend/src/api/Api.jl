@@ -1,7 +1,7 @@
 """
-HTTP/JSON transport of the backend (SRS 6.3). Routes translate requests into
-service calls and errors into JSON responses; they never compute financial
-rules. The contract is documented in documentacion/tecnica/API.md.
+Transporte HTTP/JSON del backend (SRS 6.3). Las rutas traducen solicitudes en
+llamadas a servicios y errores en respuestas JSON; nunca calculan reglas
+financieras. El contrato está documentado en documentacion/tecnica/API.md.
 """
 module Api
 
@@ -20,9 +20,9 @@ include("routes.jl")
 """
     start(; host, port, allowed_origins, async=false)
 
-Starts the HTTP server. Defaults come from the environment: `HOST`
-(`0.0.0.0`), `PORT` (`8080`) and `ALLOWED_ORIGINS` (comma-separated, default
-`http://localhost:3000`).
+Inicia el servidor HTTP. Los valores por defecto vienen del entorno: `HOST`
+(`0.0.0.0`), `PORT` (`8080`) y `ALLOWED_ORIGINS` (separados por comas; por
+defecto `http://localhost:3000`).
 """
 function start(; host::AbstractString=Base.get(ENV, "HOST", "0.0.0.0"),
                port::Integer=parse(Int, Base.get(ENV, "PORT", "8080")),
@@ -33,4 +33,4 @@ function start(; host::AbstractString=Base.get(ENV, "HOST", "0.0.0.0"),
     return serve(; host, port, async, middleware=[cors_middleware(allowed_origins)])
 end
 
-end # module Api
+end # módulo Api

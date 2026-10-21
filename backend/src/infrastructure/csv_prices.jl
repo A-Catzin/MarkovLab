@@ -1,5 +1,5 @@
-# CSV adapter for historical prices (RF-02, RF-05). Translates the external file
-# format into domain `PriceBar` values. Format and rules are documented in
+# Adaptador CSV de precios históricos (RF-02, RF-05). Traduce el formato del archivo
+# externo a valores `PriceBar` del dominio. Formato y reglas en
 # documentacion/tecnica/IMPORTACION_CSV.md.
 
 const PRICE_COLUMNS = ("symbol", "date", "open", "high", "low", "close", "volume")
@@ -8,7 +8,7 @@ const PRICE_DATE_FORMAT = dateformat"yyyy-mm-dd"
 """
     ImportIssue(line, message)
 
-A row that was not imported. `line` is the 1-based line number in the file.
+Una fila que no se importó. `line` es el número de línea en el archivo, contado desde 1.
 """
 struct ImportIssue
     line::Int
@@ -18,9 +18,9 @@ end
 """
     PriceImportResult
 
-Outcome of a CSV import: `bars` holds the valid, unique rows sorted by symbol
-and date; `errors` the invalid rows; `duplicates` the rows discarded because an
-earlier row had the same symbol and date.
+Resultado de una importación CSV: `bars` contiene las filas válidas y únicas
+ordenadas por símbolo y fecha; `errors`, las filas inválidas; `duplicates`, las filas
+descartadas porque una fila anterior tenía el mismo símbolo y fecha.
 """
 struct PriceImportResult
     bars::Vector{PriceBar}
@@ -28,7 +28,7 @@ struct PriceImportResult
     duplicates::Vector{ImportIssue}
 end
 
-# Splits one CSV line on commas, honoring double-quoted fields and "" escapes.
+# Divide una línea CSV por comas, respetando campos entre comillas dobles y el escape "".
 function split_csv_line(line::AbstractString)
     fields = String[]
     buffer = IOBuffer()
@@ -102,17 +102,17 @@ end
 """
     parse_prices_csv(io; columns=Dict(), symbol=nothing) -> PriceImportResult
 
-Reads historical prices from a CSV stream with a header row containing
-`symbol,date,open,high,low,close,volume` (case-insensitive, any order, extra
-columns ignored).
+Lee precios históricos de un flujo CSV con un encabezado que contenga
+`symbol,date,open,high,low,close,volume` (sin distinguir mayúsculas, en cualquier
+orden; las columnas adicionales se ignoran).
 
-- `columns` maps internal column names to the provider's header names, for
-  example `Dict("close" => "Adj Close")`.
-- `symbol` supplies the asset symbol when the file has no symbol column.
+- `columns` asocia los nombres internos con los encabezados del proveedor, por
+  ejemplo `Dict("close" => "Adj Close")`.
+- `symbol` indica el símbolo del activo cuando el archivo no tiene columna de símbolo.
 
-Invalid rows are reported in `errors` and duplicated symbol/date rows in
-`duplicates`; neither stops the import. A missing required column or an empty
-file throws `ArgumentError`.
+Las filas inválidas se informan en `errors` y las filas con símbolo y fecha
+repetidos en `duplicates`; ninguna detiene la importación. Si falta una columna
+obligatoria o el archivo está vacío, se lanza `ArgumentError`.
 """
 function parse_prices_csv(io::IO; columns::AbstractDict=Dict{String,String}(),
                           symbol::Union{Nothing,AbstractString}=nothing)
@@ -153,6 +153,6 @@ end
 """
     read_prices_csv(path; kwargs...) -> PriceImportResult
 
-Opens the file at `path` and imports it with [`parse_prices_csv`](@ref).
+Abre el archivo en `path` y lo importa con [`parse_prices_csv`](@ref).
 """
 read_prices_csv(path::AbstractString; kwargs...) = open(io -> parse_prices_csv(io; kwargs...), path)

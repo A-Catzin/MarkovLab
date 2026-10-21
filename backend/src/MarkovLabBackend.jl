@@ -24,4 +24,4 @@ export simulate_portfolio_returns
 export ImportIssue, PriceImportResult, parse_prices_csv, read_prices_csv
 export analyze_prices, run_monte_carlo, MONTE_CARLO_MODEL, MAX_SIMULATIONS, MAX_HORIZON
 
-end # module MarkovLabBackend
+end # módulo MarkovLabBackend

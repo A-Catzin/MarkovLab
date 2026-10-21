@@ -1,4 +1,4 @@
-# CORS middleware restricted to a list of origins (ALLOWED_ORIGINS, SRS 6.5).
+# Middleware CORS restringido a una lista de orígenes (ALLOWED_ORIGINS, SRS 6.5).
 
 const CORS_ALLOWED_METHODS = "GET, POST, OPTIONS"
 const CORS_ALLOWED_HEADERS = "Content-Type"
@@ -6,7 +6,7 @@ const CORS_ALLOWED_HEADERS = "Content-Type"
 """
     parse_allowed_origins(value) -> Vector{String}
 
-Splits a comma-separated list of origins, trimming spaces and dropping empty entries.
+Divide una lista de orígenes separados por comas, quitando espacios y entradas vacías.
 """
 parse_allowed_origins(value::AbstractString) =
     [String(strip(origin)) for origin in split(value, ',') if !isempty(strip(origin))]
@@ -14,10 +14,10 @@ parse_allowed_origins(value::AbstractString) =
 """
     cors_middleware(allowed_origins)
 
-Middleware that echoes `Access-Control-Allow-Origin` only for origins in the
-list (`"*"` allows any origin). Preflight `OPTIONS` requests get `204` when the
-origin is allowed and `403` otherwise. Requests from other origins are still
-served, but without CORS headers, so browsers block them.
+Middleware que devuelve `Access-Control-Allow-Origin` solo para los orígenes de
+la lista (`"*"` permite cualquiera). Las solicitudes previas `OPTIONS` reciben
+`204` si el origen está permitido y `403` si no. Las solicitudes de otros
+orígenes se atienden igual, pero sin encabezados CORS, así que el navegador las bloquea.
 """
 function cors_middleware(allowed_origins::AbstractVector{<:AbstractString})
     allowed = Set{String}(allowed_origins)

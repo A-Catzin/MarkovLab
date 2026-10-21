@@ -1,10 +1,10 @@
-# Portfolio allocation and portfolio-level risk/return (RF-28 to RF-31).
-# Return matrices have one row per date and one column per asset, with columns
-# in the same order as the portfolio symbols. Formulas are documented in
+# Composición de carteras y su rendimiento y riesgo (RF-28 a RF-31).
+# Las matrices de rendimientos tienen una fila por fecha y una columna por activo,
+# en el mismo orden que los símbolos de la cartera. Fórmulas en
 # documentacion/tecnica/CARTERAS_DOMINIO.md.
 
 """
-Maximum absolute difference allowed between the sum of the weights and 1.
+Diferencia absoluta máxima permitida entre la suma de los pesos y 1.
 """
 const PORTFOLIO_WEIGHT_TOLERANCE = 1e-6
 
@@ -12,15 +12,15 @@ const PORTFOLIO_WEIGHT_TOLERANCE = 1e-6
     Portfolio(symbols, weights)
     Portfolio(["AAPL" => 0.6, "MSFT" => 0.4])
 
-Long-only allocation of assets (RF-28, RF-29). The constructor normalizes the
-symbols (trimmed, uppercase) and enforces:
+Composición de activos sin posiciones cortas (RF-28, RF-29). El constructor
+normaliza los símbolos (sin espacios, en mayúsculas) y exige:
 
-- at least one asset and as many weights as symbols;
-- non-empty, unique symbols;
-- finite weights between 0 and 1;
-- weights that sum to 1 within `PORTFOLIO_WEIGHT_TOLERANCE`.
+- al menos un activo y tantos pesos como símbolos;
+- símbolos no vacíos y únicos;
+- pesos finitos entre 0 y 1;
+- pesos que sumen 1 dentro de `PORTFOLIO_WEIGHT_TOLERANCE`.
 
-Violations throw `ArgumentError`. Weights are stored as given, without rescaling.
+Las violaciones lanzan `ArgumentError`. Los pesos se guardan tal como llegan, sin reescalar.
 """
 struct Portfolio
     symbols::Vector{String}
@@ -55,9 +55,9 @@ end
 """
     covariance_matrix(returns; periods_per_year=nothing) -> Matrix{Float64}
 
-Sample covariance matrix (denominator `n - 1`) of a returns matrix with one row
-per date and one column per asset. Needs at least 2 observations. When
-`periods_per_year` is given, the result is annualized by multiplying by it.
+Matriz de covarianza muestral (denominador `n - 1`) de una matriz de rendimientos con
+una fila por fecha y una columna por activo. Requiere al menos 2 observaciones. Si
+se indica `periods_per_year`, el resultado se anualiza multiplicándolo por ese valor.
 """
 function covariance_matrix(returns::AbstractMatrix{<:Real}; periods_per_year::Union{Nothing,Real}=nothing)
     observations, assets = size(returns)
@@ -81,9 +81,9 @@ end
     portfolio_returns(weights, returns) -> Vector{Float64}
     portfolio_returns(portfolio, returns)
 
-Historical return series of a portfolio rebalanced every period:
-`r_p,t = Σ_i w_i * r_i,t`. Columns of `returns` must follow the order of the
-weights. The result can be passed to the other metrics (`volatility`,
+Serie histórica de rendimientos de una cartera rebalanceada en cada período:
+`r_p,t = Σ_i w_i * r_i,t`. Las columnas de `returns` deben seguir el orden de los
+pesos. El resultado puede pasarse a las demás métricas (`volatility`,
 `cumulative_return`, ...).
 """
 function portfolio_returns(weights::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real})
@@ -100,7 +100,7 @@ portfolio_returns(portfolio::Portfolio, returns::AbstractMatrix{<:Real}) =
     portfolio_return(weights, expected_returns) -> Float64
     portfolio_return(portfolio, expected_returns)
 
-Expected portfolio return: `μ_p = Σ_i w_i * μ_i` (RF-30).
+Rendimiento esperado de la cartera: `μ_p = Σ_i w_i * μ_i` (RF-30).
 """
 function portfolio_return(weights::AbstractVector{<:Real}, expected_returns::AbstractVector{<:Real})
     require_matching_assets(weights, length(expected_returns))
@@ -114,9 +114,9 @@ portfolio_return(portfolio::Portfolio, expected_returns::AbstractVector{<:Real})
     portfolio_volatility(weights, covariance) -> Float64
     portfolio_volatility(portfolio, covariance)
 
-Expected portfolio volatility: `σ_p = sqrt(wᵀ Σ w)` (RF-30). `covariance` must
-be a square, symmetric matrix matching the number of weights; its period
-(daily, annual, ...) determines the period of the result.
+Volatilidad esperada de la cartera: `σ_p = sqrt(wᵀ Σ w)` (RF-30). `covariance` debe
+ser una matriz cuadrada y simétrica del tamaño de los pesos; su período
+(diario, anual, ...) define el período del resultado.
 """
 function portfolio_volatility(weights::AbstractVector{<:Real}, covariance::AbstractMatrix{<:Real})
     rows, cols = size(covariance)
@@ -127,7 +127,7 @@ function portfolio_volatility(weights::AbstractVector{<:Real}, covariance::Abstr
             throw(ArgumentError("covariance matrix must be symmetric"))
     end
     variance = sum(weights[i] * covariance[i, j] * weights[j] for i in 1:rows, j in 1:rows)
-    # Rounding can make a zero variance slightly negative.
+    # El redondeo puede volver levemente negativa una varianza que vale cero.
     return sqrt(max(variance, 0.0))
 end
 

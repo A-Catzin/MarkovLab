@@ -1,6 +1,6 @@
-# Pure financial metrics over ordered price and return series (RF-15 to RF-17).
-# Series are ordered from oldest to newest. Returns are expressed as fractions
-# (0.05 means 5 %). Formulas are documented in documentacion/tecnica/METRICAS_DOMINIO.md.
+# Métricas financieras puras sobre series ordenadas de precios y rendimientos (RF-15 a RF-17).
+# Las series van de la observación más antigua a la más reciente. Los rendimientos se expresan
+# como fracciones (0.05 equivale a 5 %). Fórmulas en documentacion/tecnica/METRICAS_DOMINIO.md.
 
 function validate_prices(prices::AbstractVector{<:Real})
     for (i, price) in pairs(prices)
@@ -27,8 +27,8 @@ end
 """
     simple_returns(prices) -> Vector{Float64}
 
-Period-over-period simple returns: `r_t = P_t / P_{t-1} - 1`.
-Needs at least 2 finite positive prices.
+Rendimientos simples entre períodos consecutivos: `r_t = P_t / P_{t-1} - 1`.
+Requiere al menos 2 precios finitos y positivos.
 """
 function simple_returns(prices::AbstractVector{<:Real})
     require_observations(prices, 2, "simple_returns")
@@ -39,8 +39,8 @@ end
 """
     log_returns(prices) -> Vector{Float64}
 
-Period-over-period logarithmic returns: `r_t = ln(P_t / P_{t-1})`.
-Needs at least 2 finite positive prices.
+Rendimientos logarítmicos entre períodos consecutivos: `r_t = ln(P_t / P_{t-1})`.
+Requiere al menos 2 precios finitos y positivos.
 """
 function log_returns(prices::AbstractVector{<:Real})
     require_observations(prices, 2, "log_returns")
@@ -51,7 +51,7 @@ end
 """
     cumulative_return(returns) -> Float64
 
-Compounded return of a series of simple returns: `prod(1 + r_t) - 1`.
+Rendimiento compuesto de una serie de rendimientos simples: `prod(1 + r_t) - 1`.
 """
 function cumulative_return(returns::AbstractVector{<:Real})
     require_observations(returns, 1, "cumulative_return")
@@ -62,7 +62,7 @@ end
 """
     mean_return(returns) -> Float64
 
-Arithmetic mean of a return series.
+Media aritmética de una serie de rendimientos.
 """
 function mean_return(returns::AbstractVector{<:Real})
     require_observations(returns, 1, "mean_return")
@@ -73,9 +73,9 @@ end
 """
     volatility(returns; periods_per_year=nothing) -> Float64
 
-Sample standard deviation (denominator `n - 1`) of a return series. When
-`periods_per_year` is given (for example 252 for daily data), the result is
-annualized by multiplying by `sqrt(periods_per_year)`.
+Desviación estándar muestral (denominador `n - 1`) de una serie de rendimientos.
+Si se indica `periods_per_year` (por ejemplo 252 para datos diarios), el resultado
+se anualiza multiplicándolo por `sqrt(periods_per_year)`.
 """
 function volatility(returns::AbstractVector{<:Real}; periods_per_year::Union{Nothing,Real}=nothing)
     require_observations(returns, 2, "volatility")
@@ -89,8 +89,8 @@ end
 """
     drawdowns(prices) -> Vector{Float64}
 
-Drawdown at each point relative to the running peak: `D_t = P_t / max(P_1..P_t) - 1`.
-Values are zero at a new peak and negative below it.
+Caída en cada punto respecto del máximo previo: `D_t = P_t / max(P_1..P_t) - 1`.
+Vale cero en un nuevo máximo y es negativa por debajo de él.
 """
 function drawdowns(prices::AbstractVector{<:Real})
     require_observations(prices, 1, "drawdowns")
@@ -102,8 +102,8 @@ end
 """
     max_drawdown(prices) -> Float64
 
-Worst drawdown of the series, as a non-positive fraction (-0.25 means a 25 % fall
-from the previous peak). Needs at least 2 prices.
+Peor caída de la serie, como fracción no positiva (-0.25 significa una caída de 25 %
+desde el máximo previo). Requiere al menos 2 precios.
 """
 function max_drawdown(prices::AbstractVector{<:Real})
     require_observations(prices, 2, "max_drawdown")
@@ -113,9 +113,9 @@ end
 """
     correlation(a, b) -> Float64
 
-Pearson correlation between two return series of equal length (at least 2
-observations). Throws `ArgumentError` if either series has zero variance,
-because the correlation is undefined.
+Correlación de Pearson entre dos series de rendimientos de igual longitud (al menos 2
+observaciones). Lanza `ArgumentError` si alguna serie tiene varianza cero, porque
+la correlación no está definida.
 """
 function correlation(a::AbstractVector{<:Real}, b::AbstractVector{<:Real})
     length(a) == length(b) ||
@@ -133,9 +133,9 @@ end
 """
     correlation_matrix(returns) -> Matrix{Float64}
 
-Pearson correlation matrix for a matrix whose rows are observations (dates) and
-whose columns are assets. Needs at least 2 assets and 2 observations. The
-result is symmetric with ones on the diagonal.
+Matriz de correlación de Pearson para una matriz cuyas filas son observaciones (fechas)
+y cuyas columnas son activos. Requiere al menos 2 activos y 2 observaciones. El
+resultado es simétrico, con unos en la diagonal.
 """
 function correlation_matrix(returns::AbstractMatrix{<:Real})
     observations, assets = size(returns)

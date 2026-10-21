@@ -1,6 +1,6 @@
-# Monte Carlo simulation of portfolio outcomes and tail-risk measures
-# (RF-41 to RF-44, RF-48). Outcomes are returns over the whole horizon, expressed
-# as fractions. Formulas are documented in documentacion/tecnica/SIMULACION_RIESGO.md.
+# Simulación Monte Carlo de resultados de una cartera y medidas de riesgo de cola
+# (RF-41 a RF-44, RF-48). Los resultados son rendimientos de todo el horizonte,
+# expresados como fracciones. Fórmulas en documentacion/tecnica/SIMULACION_RIESGO.md.
 
 const SUMMARY_PERCENTILES = (1, 5, 25, 50, 75, 95, 99)
 
@@ -13,8 +13,8 @@ end
 """
     empirical_quantile(values, p) -> Float64
 
-Empirical quantile with linear interpolation between order statistics
-(Hyndman–Fan type 7, the default of most statistics packages). `p` must be in [0, 1].
+Cuantil empírico con interpolación lineal entre valores ordenados (tipo 7 de
+Hyndman y Fan, el predeterminado de la mayoría de los paquetes estadísticos). `p` debe estar en [0, 1].
 """
 function empirical_quantile(values::AbstractVector{<:Real}, p::Real)
     require_observations(values, 1, "empirical_quantile")
@@ -30,9 +30,9 @@ end
 """
     value_at_risk(outcomes; confidence=0.95) -> Float64
 
-Historical/simulated Value at Risk: the loss not exceeded with probability
-`confidence`, `VaR = -q_(1 - confidence)(outcomes)`. A positive value is a loss
-(0.08 means an 8 % loss); a negative value means even the tail is a gain (RF-44).
+Valor en Riesgo histórico o simulado: la pérdida que no se supera con probabilidad
+`confidence`, `VaR = -q_(1 - confidence)(outcomes)`. Un valor positivo es una pérdida
+(0.08 significa 8 % de pérdida); uno negativo indica que incluso la cola es ganancia (RF-44).
 """
 function value_at_risk(outcomes::AbstractVector{<:Real}; confidence::Real=0.95)
     validate_confidence(confidence)
@@ -42,8 +42,8 @@ end
 """
     conditional_value_at_risk(outcomes; confidence=0.95) -> Float64
 
-Conditional VaR (expected shortfall): the average loss of the outcomes at or
-below the VaR threshold. Always greater than or equal to `value_at_risk` (RF-44).
+VaR condicional (pérdida esperada en la cola): la pérdida promedio de los resultados
+iguales o peores que el umbral del VaR. Siempre es mayor o igual que `value_at_risk` (RF-44).
 """
 function conditional_value_at_risk(outcomes::AbstractVector{<:Real}; confidence::Real=0.95)
     validate_confidence(confidence)
@@ -55,9 +55,9 @@ end
 """
     summarize_outcomes(outcomes; confidence=0.95) -> NamedTuple
 
-Summary of a simulated distribution (RF-48): `scenarios`, `mean`, `worst`,
-`best`, `percentiles` (`Dict` from percentile to value for 1, 5, 25, 50, 75, 95
-and 99), `confidence`, `value_at_risk` and `conditional_value_at_risk`.
+Resumen de una distribución simulada (RF-48): `scenarios`, `mean`, `worst`,
+`best`, `percentiles` (`Dict` de percentil a valor para 1, 5, 25, 50, 75, 95
+y 99), `confidence`, `value_at_risk` y `conditional_value_at_risk`.
 """
 function summarize_outcomes(outcomes::AbstractVector{<:Real}; confidence::Real=0.95)
     validate_confidence(confidence)
@@ -79,15 +79,16 @@ end
                                simulations=10_000, horizon=1, seed=nothing) -> Vector{Float64}
     simulate_portfolio_returns(portfolio, expected_returns, covariance; ...)
 
-Monte Carlo simulation of the portfolio return over `horizon` periods (RF-41 to
-RF-43). Asset returns per period are assumed multivariate normal with mean
-`expected_returns` and covariance `covariance`; the portfolio is rebalanced each
-period, so its period return is normal with `μ_p = wᵀμ` and `σ_p = sqrt(wᵀΣw)`.
-Each scenario compounds `horizon` period returns: `prod(1 + r_p,t) - 1`.
+Simulación Monte Carlo del rendimiento de la cartera en `horizon` períodos (RF-41 a
+RF-43). Se supone que los rendimientos de los activos por período siguen una normal
+multivariada con media `expected_returns` y covarianza `covariance`; la cartera se
+rebalancea en cada período, así que su rendimiento por período es normal con
+`μ_p = wᵀμ` y `σ_p = sqrt(wᵀΣw)`. Cada escenario capitaliza `horizon` rendimientos:
+`prod(1 + r_p,t) - 1`.
 
-`expected_returns` and `covariance` must share the period of `horizon` (for
-example daily data and a horizon in trading days). A fixed integer `seed` makes
-the result reproducible (RNF-16).
+`expected_returns` y `covariance` deben estar en el mismo período que `horizon` (por
+ejemplo, datos diarios y un horizonte en días hábiles). Una semilla entera fija
+(`seed`) hace que el resultado sea reproducible (RNF-16).
 """
 function simulate_portfolio_returns(weights::AbstractVector{<:Real}, expected_returns::AbstractVector{<:Real},
                                     covariance::AbstractMatrix{<:Real};

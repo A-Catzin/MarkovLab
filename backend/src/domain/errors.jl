@@ -1,9 +1,9 @@
 """
     InsufficientDataError(required, available, context)
 
-Raised when a calculation receives fewer observations than it needs (RF-20).
-`required` is the minimum number of observations, `available` the number received
-and `context` names the calculation that failed.
+Se lanza cuando un cálculo recibe menos observaciones de las que necesita (RF-20).
+`required` es la cantidad mínima de observaciones, `available` la cantidad recibida
+y `context` el nombre del cálculo que falló.
 """
 struct InsufficientDataError <: Exception
     required::Int

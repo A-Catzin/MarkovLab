@@ -14,7 +14,7 @@ using MarkovLabBackend
     @test_throws ArgumentError PriceBar("X", Date(2026, 1, 2), 0, 1, 1, 1, 1)
     @test_throws ArgumentError PriceBar("X", Date(2026, 1, 2), 1, NaN, 1, 1, 1)
     @test_throws ArgumentError PriceBar("X", Date(2026, 1, 2), 1, 1, 1, 1, -1)
-    # high below open/close, low above open/close
+    # high menor que open/close, low mayor que open/close
     @test_throws ArgumentError PriceBar("X", Date(2026, 1, 2), 5, 4, 3, 4, 1)
     @test_throws ArgumentError PriceBar("X", Date(2026, 1, 2), 5, 6, 5.5, 5.8, 1)
 end

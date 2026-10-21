@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-/** Adds `is-in` once to every [data-reveal] element as it enters the viewport. */
+/** Agrega `is-in` una sola vez a cada elemento [data-reveal] cuando entra en pantalla. */
 export function RevealOnScroll() {
   useEffect(() => {
     const targets = document.querySelectorAll<HTMLElement>("[data-reveal], .tile--photo");

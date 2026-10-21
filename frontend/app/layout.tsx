@@ -31,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${display.variable} ${text.variable}`} suppressHydrationWarning>
       <head>
-        {/* Enables entrance animations only when scripts run; without it all content stays visible. */}
+        {/* Activa las animaciones de entrada solo si se ejecutan scripts; sin esto, todo el contenido queda visible. */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
       </head>
       <body>{children}</body>
