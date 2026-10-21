@@ -30,7 +30,7 @@ function Histogram({ result }: { result: Result }) {
               y={40 - h}
               width={barWidth - 0.3}
               height={h}
-              fill={binTop <= threshold ? "var(--ink)" : "var(--field-pale)"}
+              fill={binTop <= threshold ? "var(--accent)" : "var(--field-strong)"}
             />
           );
         })}

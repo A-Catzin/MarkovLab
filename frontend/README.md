@@ -13,7 +13,7 @@ Este directorio reserva la interfaz de usuario de MarkovLab: presentación de da
 
 ## Alcance actual
 
-Configuración de **Next.js (App Router)**, **TypeScript** y **Tailwind CSS**, con la página de inicio rediseñada como un informe impreso a dos tintas. Incluye un simulador Monte Carlo que corre en el navegador con el mismo modelo que el backend. Diseño, secciones, datos de ejemplo e imágenes en [`LANDING.md`](../documentacion/tecnica/LANDING.md).
+Configuración de **Next.js (App Router)**, **TypeScript** y **Tailwind CSS**, con la página de inicio rediseñada como un informe científico sobre fondo oscuro. Incluye un simulador Monte Carlo que corre en el navegador con el mismo modelo que el backend. Diseño, secciones, datos de ejemplo e imágenes en [`LANDING.md`](../documentacion/tecnica/LANDING.md).
 
 ### Comandos principales
 

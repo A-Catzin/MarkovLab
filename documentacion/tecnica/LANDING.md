@@ -4,7 +4,7 @@ Referencia del diseño y del código de la página de inicio (`frontend/app/page
 
 ## Idea
 
-La página se compone como un **informe científico impreso a dos tintas**, en referencia a la memoria de Andréi Márkov de 1913, de donde viene el nombre del proyecto. Su figura principal es una simulación real del modelo del backend: 60 de 10,000 trayectorias con semilla 42.
+La página se compone como un **informe científico** —columna fija, mosaicos sin márgenes y bloques de color plano—, en referencia a la memoria de Andréi Márkov de 1913, de donde viene el nombre del proyecto. Se presenta sobre un fondo oscuro. Su figura principal es una simulación real del modelo del backend: 60 de 10,000 trayectorias con semilla 42.
 
 Lo interactivo es el simulador: el visitante cambia pesos, horizonte, confianza y semilla, y su navegador calcula 10,000 escenarios con el mismo modelo que el motor Julia (`normal-rebalanced-v1`).
 
@@ -12,17 +12,23 @@ Lo interactivo es el simulador: el visitante cambia pesos, horizonte, confianza 
 
 | Elemento | Valor |
 |---|---|
-| Fondo (arena) | `--bg: #e6dbc7`; superficies `--surface: #ddd0b9` y `--surface-2: #d3c4a8` |
-| Tinta y acento (cobalto) | `--ink: #062b8a`; secundaria `--muted: #2c4a99`; campo claro `--field-pale: #b9c3dc` |
+| Fondo (negro azulado) | `--bg: #0a0d14`; superficies `--surface: #131824` y `--surface-2: #1c2333` |
+| Campos azules | `--field: #16223a`, `--field-strong: #22365c`, `--field-accent: #2b4c88`, para bloques del mosaico, etapas y el dato de 3 ms |
+| Texto | `--ink: #e9edf3` (blanco plateado); secundario `--muted: #8891a1` |
+| Acento (aciano) | `--accent: #5a9bfc`, hover `--accent-hover: #82b4fd`, texto sobre acento `--accent-ink: #0a0d14` |
 | Títulos | Young Serif 400, interletra -0.02em a -0.04em |
 | Texto | Source Serif 4, 400 y 600, interlineado 1.55 |
 | Tamaños | Cinco pasos: `--step-small`, `--step-body`, `--step-lead`, `--step-head`, `--step-display` |
 | Márgenes | 32 px en escritorio, 20 px en teléfono; grilla de 12 columnas |
-| Botón | Bloque cobalto de esquinas rectas con texto arena |
+| Botón | Bloque aciano de esquinas rectas con texto oscuro |
 
 Reglas que se mantienen en toda la página: títulos de dos líneas como máximo, sin etiquetas pequeñas sobre los títulos, sin gradientes, sombras, monoespaciadas, numeración decorativa ni líneas divisorias. Las líneas solo aparecen dentro de fragmentos de interfaz marcados con `data-ui` (tablas, controles, gráfico).
 
+Paleta de la biblioteca de la skill: "Night and cornflower". El aciano se reserva para el botón, la etiqueta "Resuelta", los controles del simulador, las bandas de percentiles del gráfico y las barras por debajo del VaR. Ninguna sección cambia el color de fondo; el pie usa `--surface`.
+
 Los tokens viven en `frontend/app/globals.css`; los componentes no usan colores sueltos.
+
+**Historial:** la primera versión usaba cobalto sobre arena (`#062b8a` sobre `#e6dbc7`). Se reemplazó el 2026-10-21 por una paleta oscura menos brillante, a pedido del equipo.
 
 ## Secciones
 
@@ -73,7 +79,7 @@ Si el backend cambia (por ejemplo, ordenar una sola vez en `summarize_outcomes`)
 
 ## Imágenes
 
-Todas están en `frontend/public/archive/`, en escala de grises vía CSS, con su crédito en el pie y en `public/archive/credits.json`:
+Todas están en `frontend/public/archive/`, en escala de grises y con brillo reducido vía CSS (`grayscale(1) contrast(1.05) brightness(0.82)`) para que no destaquen sobre el fondo oscuro, con su crédito en el pie y en `public/archive/credits.json`:
 
 | Archivo | Imagen | Licencia |
 |---|---|---|

@@ -2,18 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* MarkovLab landing: a two-colour printed report. Cobalt ink on sand paper,
-   Young Serif for display and Source Serif 4 for text. */
+/* MarkovLab landing: a printed report set on a dark field. Silver-white type on
+   blue-black, one cornflower accent; Young Serif for display, Source Serif 4 for text. */
 
 :root {
-  --bg: #e6dbc7;
-  --surface: #ddd0b9;
-  --surface-2: #d3c4a8;
-  --ink: #062b8a;
-  --muted: #2c4a99;
-  --accent: #062b8a;
-  --accent-ink: #e6dbc7;
-  --field-pale: #b9c3dc;
+  --bg: #0a0d14;
+  --surface: #131824;
+  --surface-2: #1c2333;
+  --field: #16223a;
+  --field-strong: #22365c;
+  --field-accent: #2b4c88;
+  --ink: #e9edf3;
+  --muted: #8891a1;
+  --accent: #5a9bfc;
+  --accent-hover: #82b4fd;
+  --accent-ink: #0a0d14;
 
   --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
   --step-body: clamp(1.125rem, 1.05rem + 0.3vw, 1.3125rem);
@@ -51,7 +54,7 @@
 
 html {
   scroll-behavior: smooth;
-  background: var(--ink);
+  background: var(--bg);
 }
 
 body {
@@ -65,8 +68,8 @@ body {
 }
 
 ::selection {
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 :focus-visible {
@@ -151,7 +154,7 @@ img {
 }
 
 .button:hover {
-  background: var(--muted);
+  background: var(--accent-hover);
 }
 
 .button:active {
@@ -172,7 +175,7 @@ img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: grayscale(1) contrast(1.05);
+  filter: grayscale(1) contrast(1.05) brightness(0.82);
 }
 
 .caption {
@@ -263,8 +266,8 @@ img {
   z-index: 2;
   width: 260px;
   padding: 20px 22px 24px;
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--field-strong);
+  color: var(--ink);
 }
 
 .accent-block strong {
@@ -473,8 +476,8 @@ img {
 }
 
 .ui-tag--done {
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .ui-table {
@@ -517,7 +520,7 @@ img {
 
 .ui-weight input[type="range"] {
   width: 100%;
-  accent-color: var(--ink);
+  accent-color: var(--accent);
 }
 
 .ui-fields {
@@ -624,17 +627,17 @@ img {
 }
 
 .tile--ink {
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--field-strong);
+  color: var(--ink);
 }
 
 .tile--muted {
-  background: var(--muted);
-  color: var(--bg);
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .tile--pale {
-  background: var(--field-pale);
+  background: var(--field);
 }
 
 .tile--head {
@@ -753,21 +756,21 @@ img {
 }
 
 .stage:nth-child(1) .stage__block {
-  background: var(--field-pale);
-}
-
-.stage:nth-child(2) .stage__block {
   background: var(--surface-2);
 }
 
+.stage:nth-child(2) .stage__block {
+  background: var(--field);
+}
+
 .stage:nth-child(3) .stage__block {
-  background: var(--muted);
-  color: var(--bg);
+  background: var(--field-strong);
+  color: var(--ink);
 }
 
 .stage:nth-child(4) .stage__block {
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--field-accent);
+  color: var(--ink);
 }
 
 .stage__clause {
@@ -821,8 +824,8 @@ img {
   grid-template-rows: auto 1fr auto;
   min-height: 100svh;
   padding: 40px var(--m) 24px;
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--surface);
+  color: var(--ink);
 }
 
 .footer__cols {
@@ -847,25 +850,25 @@ img {
 }
 
 .footer__col .first {
-  color: var(--bg);
+  color: var(--ink);
   font-weight: 600;
 }
 
 .footer__col .rest {
-  color: var(--field-pale);
+  color: var(--muted);
 }
 
 .footer__wordmark {
   display: block;
   width: 100%;
   height: auto;
-  fill: var(--bg);
+  fill: var(--ink);
 }
 
 .footer__legal {
   margin-top: 20px;
   font-size: var(--step-small);
-  color: var(--field-pale);
+  color: var(--muted);
 }
 
 /* ---------- Tablet ---------- */

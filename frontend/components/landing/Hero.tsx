@@ -109,13 +109,13 @@ export function Hero() {
                 style={{ ["--i" as string]: i }}
                 fill="none"
                 stroke="var(--ink)"
-                strokeOpacity={0.28}
+                strokeOpacity={0.22}
                 strokeWidth={1.2}
               />
             ))}
-            <path d={toPath(low)} fill="none" stroke="var(--ink)" strokeWidth={3} />
-            <path d={toPath(median)} fill="none" stroke="var(--ink)" strokeWidth={3} strokeDasharray="10 8" />
-            <path d={toPath(high)} fill="none" stroke="var(--ink)" strokeWidth={3} />
+            <path d={toPath(low)} fill="none" stroke="var(--accent)" strokeWidth={3} />
+            <path d={toPath(median)} fill="none" stroke="var(--accent)" strokeWidth={3} strokeDasharray="10 8" />
+            <path d={toPath(high)} fill="none" stroke="var(--accent)" strokeWidth={3} />
             <text x={WIDTH - 8} y={y(high[TRADING_DAYS]) - 10} textAnchor="end" fill="var(--ink)" fontSize={15}>
               Percentil 95
             </text>
