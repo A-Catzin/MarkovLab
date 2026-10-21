@@ -4,6 +4,29 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Agregado — 2026-10-21: API HTTP mínima con Oxygen.jl
+
+- `src/services/analysis.jl`: `analyze_prices`, resumen de métricas de una serie de precios.
+- `src/services/risk.jl`: `run_monte_carlo`, de precios a simulación resumida con los parámetros para reproducirla (RF-47, RNF-16, RNF-17). Límites `MAX_SIMULATIONS = 100_000` y `MAX_HORIZON = 2_520` (RNF-05).
+- `src/api/`: submódulo `MarkovLabBackend.Api` con `GET /health`, `POST /api/analysis/metrics` y `POST /api/risk/monte-carlo`; errores JSON uniformes (`invalid_json`, `invalid_input`, `insufficient_data`, `internal_error`) y CORS por `ALLOWED_ORIGINS`.
+- `scripts/serve.jl`: inicia el servidor con `HOST`, `PORT` y `ALLOWED_ORIGINS`.
+- `test/services/` y `test/api/`: casos de uso, cada endpoint, cada código de error y CORS sin abrir puertos.
+- Documentación en [`API.md`](../documentacion/tecnica/API.md) y variables en [`config/README.md`](config/README.md).
+- Dependencias externas: `Oxygen` 1.11 y `HTTP` 2.11.
+
+**Decisiones**
+
+- Capa `services/` entre API y dominio: las rutas solo leen JSON y traducen errores.
+- CORS propio en lugar del middleware `Cors` de Oxygen, que admite un único origen; el SRS pide una lista (`ALLOWED_ORIGINS`).
+- Si no se envía `seed`, se genera y se devuelve, para que cualquier resultado sea reproducible.
+- Los errores 500 no exponen detalles internos; se registran en el servidor.
+
+**Siguientes pasos**
+
+1. Endpoint de carga de CSV que use el importador existente.
+2. `Dockerfile` para Railway (SRS 6.5).
+3. Escenarios de estrés (RF-46) y optimización (RF-34 a RF-40).
+
 ### Agregado — 2026-10-21: simulación Monte Carlo, VaR y CVaR
 
 - `src/domain/simulation.jl`:
