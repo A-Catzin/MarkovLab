@@ -11,12 +11,13 @@ julia --project=backend -e 'using MarkovLabBackend'
 julia --project=backend backend/test/runtests.jl
 ```
 
-`Project.toml` define nombre, UUID, versión y dependencias (solo la biblioteca estándar `Dates` por ahora); `Manifest.toml` fija las versiones resueltas para que el entorno sea reproducible. `src/` contiene el módulo y sus capas; `test/` contiene las pruebas; `config/` y `scripts/` reservan límites para configuración y automatización. Consulte cada README local antes de incorporar archivos.
+`Project.toml` define nombre, UUID, versión y dependencias (solo `Dates` y `Random`, de la biblioteca estándar, por ahora); `Manifest.toml` fija las versiones resueltas para que el entorno sea reproducible. `src/` contiene el módulo y sus capas; `test/` contiene las pruebas; `config/` y `scripts/` reservan límites para configuración y automatización. Consulte cada README local antes de incorporar archivos.
 
 ## Implementado
 
 - Métricas financieras puras en `src/domain/`: rendimientos, volatilidad, drawdown y correlación. Ver [`METRICAS_DOMINIO.md`](../documentacion/tecnica/METRICAS_DOMINIO.md).
 - Carteras: composición validada, covarianza, rendimiento y volatilidad. Ver [`CARTERAS_DOMINIO.md`](../documentacion/tecnica/CARTERAS_DOMINIO.md).
+- Simulación Monte Carlo de carteras, VaR y CVaR. Ver [`SIMULACION_RIESGO.md`](../documentacion/tecnica/SIMULACION_RIESGO.md).
 - Importación de precios históricos desde CSV con validación y detección de duplicados. Ver [`IMPORTACION_CSV.md`](../documentacion/tecnica/IMPORTACION_CSV.md).
 
 El historial de cambios está en [`CHANGELOG.md`](CHANGELOG.md).

@@ -2,7 +2,7 @@
 
 julia_version = "1.12.7"
 manifest_format = "2.0"
-project_hash = "4ce6eac9ae138b8cb4a763ebc8c0c7c0e6766169"
+project_hash = "e3671adf2887ab41552b4a9e50fd5c376ea27f0d"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -10,7 +10,7 @@ uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 version = "1.11.0"
 
 [[deps.MarkovLabBackend]]
-deps = ["Dates"]
+deps = ["Dates", "Random"]
 path = "."
 uuid = "a52f9f0b-3d56-471b-a712-a3e35b4c8cf2"
 version = "0.1.0"
@@ -19,6 +19,15 @@ version = "0.1.0"
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 version = "1.11.0"
+
+[[deps.Random]]
+deps = ["SHA"]
+uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+version = "1.11.0"
+
+[[deps.SHA]]
+uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+version = "0.7.0"
 
 [[deps.Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"

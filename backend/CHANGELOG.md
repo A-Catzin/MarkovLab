@@ -4,6 +4,27 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Agregado — 2026-10-21: simulación Monte Carlo, VaR y CVaR
+
+- `src/domain/simulation.jl`:
+  - `simulate_portfolio_returns`: escenarios Monte Carlo del rendimiento de una cartera en un horizonte, con cantidad de simulaciones y semilla configurables (RF-41 a RF-43, RNF-03, RNF-16).
+  - `value_at_risk` y `conditional_value_at_risk` con nivel de confianza configurable (RF-42, RF-44).
+  - `summarize_outcomes`: media, peor y mejor resultado, percentiles, VaR y CVaR (RF-48).
+  - `empirical_quantile`: cuantil con interpolación lineal (tipo 7).
+- `test/domain/simulation_tests.jl`: valores a mano, reproducibilidad, propiedades estadísticas y 10.000 escenarios.
+- Documentación en [`SIMULACION_RIESGO.md`](../documentacion/tecnica/SIMULACION_RIESGO.md).
+- Dependencia `Random` (biblioteca estándar).
+
+**Decisiones**
+
+- Se simula el rendimiento de la cartera como una normal univariada (`μ_p`, `σ_p`) en lugar de cada activo: es exacto con rebalanceo por período y evita la descomposición de Cholesky.
+- VaR y CVaR se informan como pérdidas positivas y funcionan también con rendimientos históricos.
+
+**Siguientes pasos**
+
+1. Escenarios de estrés sobre rendimientos, volatilidades y correlaciones (RF-46).
+2. API mínima con Oxygen.jl.
+
 ### Agregado — 2026-10-16: carteras en el dominio
 
 - `src/domain/portfolio.jl`:

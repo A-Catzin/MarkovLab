@@ -23,7 +23,7 @@ Flujo futuro: usuario → frontend → solicitud HTTP/JSON al backend → valida
 backend/
 ├── README.md                 # Inicio y límites del paquete
 ├── CHANGELOG.md              # Registro de lo implementado
-├── Project.toml              # Identidad, versión y dependencias Julia (solo Dates)
+├── Project.toml              # Identidad, versión y dependencias Julia (Dates y Random, estándar)
 ├── Manifest.toml             # Versiones resueltas del entorno
 ├── src/
 │   ├── README.md             # Mapa del código fuente
@@ -34,7 +34,8 @@ backend/
 │   │   ├── errors.jl         # InsufficientDataError
 │   │   ├── metrics.jl        # Rendimientos, volatilidad, drawdown y correlación
 │   │   ├── prices.jl         # PriceBar (observación OHLCV)
-│   │   └── portfolio.jl      # Portfolio, covarianza y riesgo de cartera
+│   │   ├── portfolio.jl      # Portfolio, covarianza y riesgo de cartera
+│   │   └── simulation.jl     # Monte Carlo, VaR y CVaR
 │   ├── services/README.md    # Orquestación futura
 │   └── infrastructure/
 │       ├── README.md         # Adaptadores externos
@@ -42,7 +43,7 @@ backend/
 ├── test/
 │   ├── README.md             # Estrategia de pruebas
 │   ├── runtests.jl           # Punto de entrada de las pruebas
-│   ├── domain/               # Pruebas de métricas, PriceBar y carteras
+│   ├── domain/               # Pruebas de métricas, PriceBar, carteras y simulación
 │   ├── infrastructure/       # Pruebas de importación CSV
 │   └── fixtures/             # Archivos CSV de ejemplo
 ├── config/README.md          # Configuración no sensible futura
