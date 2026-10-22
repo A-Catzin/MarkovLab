@@ -43,3 +43,6 @@ pnpm-debug.log*
 # Temporary files
 *.tmp
 *.temp
+
+# Documentación personal (no se sube por ahora)
+mis-docs/
