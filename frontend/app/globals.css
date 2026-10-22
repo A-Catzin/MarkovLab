@@ -23,7 +23,7 @@
   --step-body: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
   --step-lead: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
   --step-head: clamp(2.25rem, 1.4rem + 2.6vw, 3.5rem);
-  --step-display: clamp(4rem, 7.2vw, 7.5rem);
+  --step-display: clamp(4rem, 7.2vw, 9rem);
 
   /* Escala de espaciado: todos los márgenes internos salen de aquí. */
   --space-1: 8px;
@@ -33,9 +33,7 @@
   --space-5: 64px;
   --space-6: 96px;
 
-  /* Margen exterior: 32 px, y en pantallas anchas crece para que el contenido
-     no supere 1600 px y nada se estire. */
-  --m: max(32px, calc((100vw - 1600px) / 2));
+  --m: 32px;
   --g: 24px;
   --section-gap: 160px;
   --radius: 0px;
@@ -360,7 +358,9 @@ img {
 
 .fan__plot {
   position: relative;
-  height: clamp(240px, 32vw, 520px);
+  /* El alto crece con el ancho de la pantalla para mantener una proporción cercana
+     a 2.8:1; así el gráfico no se aplasta en pantallas anchas. */
+  height: clamp(240px, 34vw, 760px);
 }
 
 .fan svg {

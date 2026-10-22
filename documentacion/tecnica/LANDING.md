@@ -18,9 +18,9 @@ Lo interactivo es el simulador: el visitante cambia pesos, horizonte, confianza 
 | Acento (aciano) | `--accent: #5a9bfc`, hover `--accent-hover: #82b4fd`, texto sobre acento `--accent-ink: #0a0d14` |
 | Títulos | Young Serif 400, interletra -0.02em a -0.04em |
 | Texto | Source Serif 4, 400 y 600, interlineado 1.55 |
-| Tamaños | Cinco pasos y ninguno más: `--step-small` 15 px, `--step-body` 18 px, `--step-lead` 24 px, `--step-head` 56 px y `--step-display` hasta 120 px (valores en escritorio; se reducen con `clamp`). El título de portada supera a propósito el límite de 6rem que sugiere impeccable, a pedido del equipo. |
+| Tamaños | Cinco pasos y ninguno más: `--step-small` 15 px, `--step-body` 18 px, `--step-lead` 24 px, `--step-head` 56 px y `--step-display` hasta 144 px (valores en escritorio; se reducen con `clamp`). El título de portada supera a propósito el límite de 6rem que sugiere impeccable, a pedido del equipo. |
 | Espaciado | Escala `--space-1` a `--space-6`: 8, 16, 24, 40, 64 y 96 px. Separación entre secciones `--section-gap`: 160 px en escritorio, 96 px en teléfono. Los valores sueltos solo aparecen dentro de fragmentos `data-ui`. |
-| Márgenes y ejes | 32 px en escritorio, 20 px en teléfono; en pantallas de más de 1664 px el margen crece para que el contenido no supere 1600 px de ancho; grilla de 12 columnas. El texto se alinea a tres ejes: columna 1, columna 5 (eje de la portada, del simulador y del hallazgo de etapas) y columna 8 (nota de la historia, imágenes y respuestas). |
+| Márgenes y ejes | 32 px en escritorio, 20 px en teléfono, también en pantallas anchas (la página ocupa todo el ancho); grilla de 12 columnas. El texto se alinea a tres ejes: columna 1, columna 5 (eje de la portada, del simulador y del hallazgo de etapas) y columna 8 (nota de la historia, imágenes y respuestas). |
 | Botón | Bloque aciano de esquinas rectas con texto oscuro |
 
 Las superficies del navegador también siguen la paleta: `color-scheme: dark`, barra de scroll (`scrollbar-color`), cursor de texto (`caret-color`), controles nativos (`accent-color`) y selección.
@@ -113,7 +113,7 @@ El 2026-10-22 se hizo una pasada de pulido con la skill `impeccable` (layout y p
 - El gráfico de la portada ocupa el ancho completo; sus etiquetas están en HTML, así que siguen legibles en el teléfono.
 - Bajo 1100 px la barra de etapas pasa a vertical para que su texto no se superponga.
 - La página bajó de unos 8,500 a 8,100 px de alto en escritorio.
-- Ajustes posteriores del mismo día: ancho máximo de 1600 px para que el gráfico no se estire en pantallas grandes, título de portada más grande (hasta 120 px), el dato de 3 ms junto al título y una barra de navegación con más presencia ("Lab" en aciano, enlaces de 18 px y botón "Ver el código" hacia el repositorio, que se oculta bajo 1100 px).
+- Ajustes posteriores del mismo día: el alto del gráfico de portada crece con el ancho de la pantalla (`clamp(240px, 34vw, 760px)`) para mantener una proporción cercana a 2.8:1 y no aplastarse en pantallas anchas; se probó un ancho máximo de 1600 px, pero dejaba franjas vacías a los costados y se descartó. Título de portada más grande (hasta 144 px), el dato de 3 ms junto al título y una barra de navegación con más presencia ("Lab" en aciano, enlaces de 18 px y botón "Ver el código" hacia el repositorio, que se oculta bajo 1100 px).
 
 Durante el rediseño se verificó además, con la skill `design-taste-frontend`:
 
