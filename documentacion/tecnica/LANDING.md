@@ -18,9 +18,12 @@ Lo interactivo es el simulador: el visitante cambia pesos, horizonte, confianza 
 | Acento (aciano) | `--accent: #5a9bfc`, hover `--accent-hover: #82b4fd`, texto sobre acento `--accent-ink: #0a0d14` |
 | Títulos | Young Serif 400, interletra -0.02em a -0.04em |
 | Texto | Source Serif 4, 400 y 600, interlineado 1.55 |
-| Tamaños | Cinco pasos: `--step-small`, `--step-body`, `--step-lead`, `--step-head`, `--step-display` |
-| Márgenes | 32 px en escritorio, 20 px en teléfono; grilla de 12 columnas |
+| Tamaños | Cinco pasos y ninguno más: `--step-small` 15 px, `--step-body` 18 px, `--step-lead` 24 px, `--step-head` 56 px y `--step-display` 96 px (valores en escritorio; se reducen con `clamp`). El título de portada no supera 6rem. |
+| Espaciado | Escala `--space-1` a `--space-6`: 8, 16, 24, 40, 64 y 96 px. Separación entre secciones `--section-gap`: 160 px en escritorio, 96 px en teléfono. Los valores sueltos solo aparecen dentro de fragmentos `data-ui`. |
+| Márgenes y ejes | 32 px en escritorio, 20 px en teléfono; grilla de 12 columnas. El texto se alinea a tres ejes: columna 1, columna 5 (eje de la portada, del simulador y del hallazgo de etapas) y columna 8 (nota de la historia, imágenes y respuestas). |
 | Botón | Bloque aciano de esquinas rectas con texto oscuro |
+
+Las superficies del navegador también siguen la paleta: `color-scheme: dark`, barra de scroll (`scrollbar-color`), cursor de texto (`caret-color`), controles nativos (`accent-color`) y selección.
 
 Reglas que se mantienen en toda la página: títulos de dos líneas como máximo, sin etiquetas pequeñas sobre los títulos, sin gradientes, sombras, monoespaciadas, numeración decorativa ni líneas divisorias. Las líneas solo aparecen dentro de fragmentos de interfaz marcados con `data-ui` (tablas, controles, gráfico).
 
@@ -102,6 +105,14 @@ cd frontend
 npm run typecheck
 npm run build
 ```
+
+El 2026-10-22 se hizo una pasada de pulido con la skill `impeccable` (layout y polish), enfocada en dimensiones:
+
+- La escala de tipo pasó de 14/21/26/64/141 px a 15/18/24/56/96 px, con saltos parejos.
+- Los bordes izquierdos del texto pasaron de seis a tres ejes.
+- El gráfico de la portada ocupa el ancho completo; sus etiquetas están en HTML, así que siguen legibles en el teléfono.
+- Bajo 1100 px la barra de etapas pasa a vertical para que su texto no se superponga.
+- La página bajó de unos 8,500 a 8,100 px de alto en escritorio.
 
 Durante el rediseño se verificó además, con la skill `design-taste-frontend`:
 
