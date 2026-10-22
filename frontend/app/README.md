@@ -6,6 +6,8 @@ Páginas, navegación y estructura de la aplicación frontend (Next.js App Route
 
 - `layout.tsx`: idioma, tipografías (Young Serif y Source Serif 4 con `next/font`) y la clase `js` que activa las animaciones.
 - `page.tsx`: página de inicio; compone las secciones de [`components/landing/`](../components/landing/).
+- `login/page.tsx`: acceso provisional, sin autenticación; el botón lleva a `/app`.
+- `app/page.tsx`: página principal de la aplicación con los módulos disponibles y próximos.
 - `globals.css`: tokens de color, tipo y espacio, estilos de cada sección y movimiento con alternativa para `prefers-reduced-motion`.
 
 Diseño documentado en [`LANDING.md`](../../documentacion/tecnica/LANDING.md). Los cálculos financieros y la persistencia pertenecen al backend Julia.

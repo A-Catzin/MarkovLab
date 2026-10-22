@@ -29,7 +29,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${display.variable} ${text.variable}`} suppressHydrationWarning>
+    <html
+      lang="es"
+      className={`${display.variable} ${text.variable}`}
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <head>
         {/* Activa las animaciones de entrada solo si se ejecutan scripts; sin esto, todo el contenido queda visible. */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />

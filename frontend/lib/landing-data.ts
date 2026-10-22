@@ -27,6 +27,9 @@ export const DEFAULT_REQUEST = {
   confidence: 0.95,
 };
 
+/** Monto de ejemplo (MXN) con el que el simulador traduce los porcentajes a dinero. */
+export const DEFAULT_CAPITAL = 10_000;
+
 export const HORIZON_OPTIONS = [
   { days: 1, label: "1 día" },
   { days: 5, label: "1 semana" },

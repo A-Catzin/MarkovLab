@@ -25,8 +25,8 @@ export function Modules() {
         </figure>
 
         <div className="tile tile--ink tile--figure" data-reveal style={{ ["--i" as string]: 2 }}>
-          <strong>±1e-6</strong>
-          <p>Tolerancia con la que los pesos deben sumar 100 %.</p>
+          <strong>100 %</strong>
+          <p>Lo que deben sumar los pesos de una cartera; el motor solo tolera una millonésima de redondeo.</p>
         </div>
 
         <div className="tile tile--pale tile--csv" data-reveal style={{ ["--i" as string]: 3 }}>

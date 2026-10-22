@@ -26,6 +26,8 @@ export interface SimulationSummary {
   confidence: number;
   valueAtRisk: number;
   conditionalValueAtRisk: number;
+  /** Fracción de escenarios que terminan con ganancia (resultado mayor que cero). */
+  probabilityOfGain: number;
 }
 
 export interface SimulationRequest {
@@ -108,8 +110,10 @@ export function summarize(outcomes: Float64Array, confidence: number): { summary
   let tailSum = 0;
   let tailCount = 0;
   let total = 0;
+  let gains = 0;
   for (const value of sorted) {
     total += value;
+    if (value > 0) gains++;
     if (value <= threshold) {
       tailSum += value;
       tailCount++;
@@ -129,6 +133,7 @@ export function summarize(outcomes: Float64Array, confidence: number): { summary
       confidence,
       valueAtRisk: -threshold,
       conditionalValueAtRisk: -(tailSum / tailCount),
+      probabilityOfGain: gains / sorted.length,
     },
   };
 }

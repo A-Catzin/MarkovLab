@@ -1,4 +1,5 @@
-import { DEFAULT_REQUEST, NAV_LINKS, REPOSITORY_URL, SAMPLE_ASSETS, SAMPLE_CORRELATION } from "@/lib/landing-data";
+import Link from "next/link";
+import { DEFAULT_REQUEST, NAV_LINKS, SAMPLE_ASSETS, SAMPLE_CORRELATION } from "@/lib/landing-data";
 import { TRADING_DAYS, portfolioMoments, samplePaths } from "@/lib/simulation";
 
 const WIDTH = 1300;
@@ -45,9 +46,9 @@ export function Hero() {
           <a className="wordmark" href="#top" id="top">
             Markov<span className="wordmark__accent">Lab</span>
           </a>
-          <a className="link hero__menu" href="#simulador">
-            Simulador
-          </a>
+          <Link className="link hero__menu" href="/login">
+            Entrar
+          </Link>
         </div>
         <div className="hero__talk">
           <p data-load style={{ ["--i" as string]: 0 }}>
@@ -71,9 +72,9 @@ export function Hero() {
               </li>
             ))}
           </ul>
-          <a className="button button--small" href={REPOSITORY_URL}>
-            Ver el código
-          </a>
+          <Link className="button button--small" href="/login">
+            Entrar
+          </Link>
         </nav>
         <div className="hero__headline">
         <h1 className="lines" aria-label="Simula tu cartera">
