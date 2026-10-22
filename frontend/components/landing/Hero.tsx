@@ -1,4 +1,4 @@
-import { DEFAULT_REQUEST, NAV_LINKS, SAMPLE_ASSETS, SAMPLE_CORRELATION } from "@/lib/landing-data";
+import { DEFAULT_REQUEST, NAV_LINKS, REPOSITORY_URL, SAMPLE_ASSETS, SAMPLE_CORRELATION } from "@/lib/landing-data";
 import { TRADING_DAYS, portfolioMoments, samplePaths } from "@/lib/simulation";
 
 const WIDTH = 1300;
@@ -43,7 +43,7 @@ export function Hero() {
       <div className="hero__side">
         <div className="hero__top">
           <a className="wordmark" href="#top" id="top">
-            MarkovLab
+            Markov<span className="wordmark__accent">Lab</span>
           </a>
           <a className="link hero__menu" href="#simulador">
             Simulador
@@ -71,7 +71,11 @@ export function Hero() {
               </li>
             ))}
           </ul>
+          <a className="button button--small" href={REPOSITORY_URL}>
+            Ver el código
+          </a>
         </nav>
+        <div className="hero__headline">
         <h1 className="lines" aria-label="Simula tu cartera">
           <span className="line" aria-hidden="true">
             <span data-line style={{ ["--i" as string]: 0 }}>
@@ -84,13 +88,14 @@ export function Hero() {
             </span>
           </span>
         </h1>
-      </div>
-
-      <div className="hero__figure">
-        <div className="accent-block">
+        <div className="accent-block" data-load style={{ ["--i" as string]: 2 }}>
           <strong>3 ms</strong>
           <p>10,000 escenarios a 21 días, de la solicitud a la respuesta, medidos en el motor Julia.</p>
         </div>
+        </div>
+      </div>
+
+      <div className="hero__figure">
         <figure className="fan" data-ui>
           {/* Las curvas se estiran a la altura de cada pantalla con trazo de grosor fijo;
               las etiquetas van en HTML para conservar su tamaño de texto. */}

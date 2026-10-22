@@ -23,7 +23,7 @@
   --step-body: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
   --step-lead: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
   --step-head: clamp(2.25rem, 1.4rem + 2.6vw, 3.5rem);
-  --step-display: clamp(4rem, 6.6vw, 6rem);
+  --step-display: clamp(4rem, 7.2vw, 7.5rem);
 
   /* Escala de espaciado: todos los márgenes internos salen de aquí. */
   --space-1: 8px;
@@ -33,7 +33,9 @@
   --space-5: 64px;
   --space-6: 96px;
 
-  --m: 32px;
+  /* Margen exterior: 32 px, y en pantallas anchas crece para que el contenido
+     no supere 1600 px y nada se estire. */
+  --m: max(32px, calc((100vw - 1600px) / 2));
   --g: 24px;
   --section-gap: 160px;
   --radius: 0px;
@@ -49,6 +51,20 @@
   .hero__talk .button {
     padding: 0 18px;
     font-size: var(--step-small);
+  }
+
+  .hero__nav .button--small {
+    display: none;
+  }
+
+  .hero__nav ul {
+    gap: var(--space-3);
+  }
+
+  .hero__headline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
   }
 }
 
@@ -170,6 +186,12 @@ img {
   background: var(--accent-hover);
 }
 
+.button--small {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  font-size: var(--step-small);
+}
+
 .button:active {
   transform: scale(0.97);
 }
@@ -218,6 +240,10 @@ img {
   text-decoration: none;
 }
 
+.wordmark__accent {
+  color: var(--accent);
+}
+
 .hero__talk {
   margin-top: auto;
   padding-top: var(--space-5);
@@ -238,13 +264,35 @@ img {
   grid-row: 1;
 }
 
+.hero__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  /* Sube la fila para que los enlaces queden a la altura del logo, que es más bajo que el botón. */
+  margin-top: -10px;
+}
+
 .hero__nav ul {
   display: flex;
-  gap: 32px;
+  gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: var(--step-small);
+  font-size: var(--step-body);
+}
+
+.hero__nav .link:hover,
+.hero__nav .link:focus-visible {
+  color: var(--accent);
+}
+
+.hero__headline {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
 }
 
 .hero__menu {
@@ -252,7 +300,6 @@ img {
 }
 
 .hero h1 {
-  margin-top: var(--space-6);
   font-size: var(--step-display);
   line-height: 0.88;
   letter-spacing: -0.04em;
@@ -276,8 +323,7 @@ img {
 }
 
 .accent-block {
-  position: relative;
-  z-index: 2;
+  flex: 0 0 auto;
   width: 280px;
   padding: var(--space-3);
   background: var(--field-strong);
@@ -299,10 +345,9 @@ img {
 }
 
 .fan {
-  margin-top: -48px;
   background: var(--surface);
   color: var(--ink);
-  padding: var(--space-5) var(--space-3) var(--space-3);
+  padding: var(--space-4) var(--space-3) var(--space-3);
 }
 
 .fan__head {
@@ -315,7 +360,7 @@ img {
 
 .fan__plot {
   position: relative;
-  height: clamp(240px, 30vw, 440px);
+  height: clamp(240px, 32vw, 520px);
 }
 
 .fan svg {
@@ -987,7 +1032,14 @@ img {
     order: 1;
   }
 
+  /* En el teléfono el título, la frase y el dato "3 ms" van en ese orden. */
+  .hero__main,
+  .hero__headline {
+    display: contents;
+  }
+
   .hero h1 {
+    order: 1;
     margin-top: var(--space-5);
     line-height: 0.85;
   }
@@ -1014,14 +1066,15 @@ img {
   }
 
   .hero__figure {
-    order: 3;
+    order: 4;
     margin-inline: calc(-1 * var(--m));
     margin-top: var(--space-5);
   }
 
   .accent-block {
-    width: 60%;
-    margin-left: var(--m);
+    order: 3;
+    width: 100%;
+    margin-top: var(--space-5);
   }
 
   .fan {
