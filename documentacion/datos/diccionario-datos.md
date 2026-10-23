@@ -1,11 +1,5 @@
 
----
 
-### 2. Crea el archivo `diccionario-datos.md`
-
-En la misma carpeta `documentacion/datos/` crea un archivo nuevo llamado **`diccionario-datos.md`** y pégale esto:
-
-```markdown
 # Diccionario de Datos – CSV de Precios
 
 Este documento describe el significado de cada columna que deben tener los archivos CSV de precios históricos utilizados en MarkovLab.
