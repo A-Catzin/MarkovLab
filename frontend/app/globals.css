@@ -88,6 +88,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 80px;
   background: var(--bg);
   color-scheme: dark;
   accent-color: var(--accent);
@@ -274,21 +275,46 @@ img {
 }
 
 .hero__nav {
+  position: fixed;
+  z-index: 20;
+  inset: 0 0 auto;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  /* Sube la fila para que los enlaces queden a la altura del logo, que es más bajo que el botón. */
-  margin-top: -10px;
+  justify-content: center;
+  min-height: 72px;
+  padding: 8px var(--m);
+  background: rgb(10 13 20 / 94%);
+  backdrop-filter: blur(12px);
+}
+
+.hero__top .wordmark {
+  position: fixed;
+  z-index: 21;
+  top: 24px;
+  left: var(--m);
+}
+
+.hero__top .hero__menu {
+  position: fixed;
+  z-index: 21;
+  top: 24px;
+  right: var(--m);
 }
 
 .hero__nav ul {
   display: flex;
+  justify-content: center;
   gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
   font-size: var(--step-body);
+}
+
+.hero__nav .button--small {
+  position: absolute;
+  right: var(--m);
 }
 
 .hero__nav .link:hover,
@@ -1241,12 +1267,35 @@ img {
   }
 
   .hero__nav {
+    justify-content: flex-start;
+    align-items: flex-end;
+    min-height: 96px;
+    padding-bottom: 12px;
+  }
+
+  .hero__nav ul {
+    justify-content: flex-start;
+    gap: var(--space-3);
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .hero__nav ul::-webkit-scrollbar {
     display: none;
   }
 
   .hero__menu {
-    display: inline;
     font-size: var(--step-small);
+  }
+
+  html {
+    scroll-padding-top: 104px;
+  }
+
+  .hero__top .wordmark,
+  .hero__top .hero__menu {
+    top: 14px;
   }
 
   .hero__main {
