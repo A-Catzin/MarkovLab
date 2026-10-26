@@ -13,4 +13,24 @@ Este directorio reserva la interfaz de usuario de MarkovLab: presentación de da
 
 ## Alcance actual
 
-La rama `feature/frontend-dashboard` agrupa el trabajo de la interfaz sin alterar la rama principal. Por ahora solo existe esta estructura documental: no hay proyecto Next.js configurado, dependencias, rutas, componentes, cliente HTTP ni código ejecutable. Las decisiones de implementación y los contratos concretos de la API se definirán antes de conectar la interfaz.
+Configuración de **Next.js (App Router)**, **TypeScript** y **Tailwind CSS**, con la página de inicio rediseñada como un informe científico sobre fondo oscuro. Incluye un simulador Monte Carlo que corre en el navegador con el mismo modelo que el backend. Diseño, secciones, datos de ejemplo e imágenes en [`LANDING.md`](../documentacion/tecnica/LANDING.md).
+
+### Rutas
+
+| Ruta | Archivo | Qué es |
+| --- | --- | --- |
+| `/` | `app/page.tsx` | Landing de presentación con el simulador. |
+| `/login` | `app/login/page.tsx` | Acceso provisional: un botón "Entrar a MarkovLab" que lleva a `/app`. Todavía no hay autenticación. |
+| `/app` | `app/app/page.tsx` | Página principal de la aplicación: lista de módulos, disponibles y próximos. |
+
+**Acceso provisional:** por decisión del equipo, `/login` no autentica; el botón solo redirige a `/app` para avanzar con la aplicación. El siguiente paso es integrar el inicio de sesión con Google; cuando exista, `/app` deberá protegerse y "Salir" deberá cerrar la sesión.
+
+### Comandos principales
+
+```bash
+cd frontend
+npm install
+npm run dev        # Servidor de desarrollo local
+npm run typecheck  # Verificación estática de tipos TypeScript
+npm run build      # Compilación de producción
+```
