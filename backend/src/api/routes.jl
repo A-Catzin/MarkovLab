@@ -15,6 +15,21 @@ post("/api/analysis/metrics") do req
     end
 end
 
+# Ruta interna: solo la llama el servidor de Next.js (Auth.js) cuando alguien entra con
+# Google. La clave se revisa antes de leer el cuerpo.
+post("/api/internal/users/google") do req
+    handle(req) do req
+        require_internal_key(req)
+        users = configured_users()
+        body = parse_body(req)
+        profile = GoogleProfile(string_value(required_field(body, "google_sub"), "google_sub"),
+                                string_value(required_field(body, "email"), "email"),
+                                optional_string(body, "name"))
+        user = sync_google_user(users, profile)
+        json(Dict("id" => user.id, "email" => user.email, "display_name" => user.display_name))
+    end
+end
+
 post("/api/risk/monte-carlo") do req
     handle(req) do req
         body = parse_body(req)

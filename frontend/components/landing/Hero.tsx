@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { Coin } from "@/components/brand/Coin";
+import { LogoMark } from "@/components/brand/LogoMark";
 import { DEFAULT_REQUEST, NAV_LINKS, SAMPLE_ASSETS, SAMPLE_CORRELATION } from "@/lib/landing-data";
 import { TRADING_DAYS, portfolioMoments, samplePaths } from "@/lib/simulation";
 
 const WIDTH = 1300;
 const HEIGHT = 420;
 const SHOWN_PATHS = 60;
+// Trayectorias que recorre el pulso de luz, de una en una y en ciclo (ver .trace-pulse en globals.css).
+const PULSES = 6;
 const BAND_PATHS = 2000;
 const Y_MIN = 0.7;
 const Y_MAX = 1.7;
@@ -44,7 +48,10 @@ export function Hero() {
       <div className="hero__side">
         <div className="hero__top">
           <a className="wordmark" href="#top" id="top">
-            Markov<span className="wordmark__accent">Lab</span>
+            <LogoMark className="wordmark__mark" />
+            <span>
+              Markov<span className="wordmark__accent">Lab</span>
+            </span>
           </a>
           <Link className="link hero__menu" href="/login">
             Entrar
@@ -96,6 +103,10 @@ export function Hero() {
         </div>
       </div>
 
+      <div className="hero__coin" data-load style={{ ["--i" as string]: 3 }}>
+        <Coin className="hero__coin-canvas" />
+      </div>
+
       <div className="hero__figure">
         <figure className="fan" data-ui>
           {/* Las curvas se estiran a la altura de cada pantalla con trazo de grosor fijo;
@@ -129,6 +140,20 @@ export function Hero() {
                   stroke="var(--ink)"
                   strokeOpacity={0.22}
                   strokeWidth={1.2}
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
+              {/* Un pulso de luz a la vez sobre estas trayectorias: la simulación sigue corriendo. */}
+              {shown.slice(0, PULSES).map((path, i) => (
+                <path
+                  key={`pulse-${i}`}
+                  d={toPath(path)}
+                  pathLength={1}
+                  className={i === 0 ? "trace-pulse trace-pulse--accent" : "trace-pulse"}
+                  style={{ ["--i" as string]: i, ["--start" as string]: "2000ms" }}
+                  fill="none"
+                  strokeWidth={i === 0 ? 3.2 : 2.6}
+                  strokeLinecap="round"
                   vectorEffect="non-scaling-stroke"
                 />
               ))}

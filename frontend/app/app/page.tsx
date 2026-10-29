@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { SignOutButton } from "@/components/auth/AuthButtons";
 import { Wordmark } from "@/components/brand/Wordmark";
+import { getSession } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Inicio · MarkovLab",
@@ -33,23 +36,25 @@ const MODULES = [
 ] as const;
 
 /**
- * Página principal provisional de la aplicación. Se llega desde /login mientras no
- * exista autenticación real.
+ * Página principal de la aplicación. Exige sesión: sin ella, redirige a /login.
  */
-export default function AppHomePage() {
+export default async function AppHomePage() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const firstName = session.user.name?.split(" ")[0];
+
   return (
     <div className="app">
       <header className="app__top">
         <Wordmark href="/app" />
-        <nav aria-label="Cuenta">
-          <Link className="link" href="/login">
-            Salir
-          </Link>
+        <nav className="app__account" aria-label="Cuenta">
+          <span className="app__user">{session.user.email}</span>
+          <SignOutButton className="link app__signout" />
         </nav>
       </header>
 
       <main className="app__main">
-        <h1>Tu laboratorio</h1>
+        <h1>{firstName ? `Hola, ${firstName}` : "Tu laboratorio"}</h1>
         <p className="app__lead">
           Desde aquí vas a crear carteras, simular su riesgo y revisar tus resultados. Empieza por el simulador mientras
           terminamos los demás módulos.

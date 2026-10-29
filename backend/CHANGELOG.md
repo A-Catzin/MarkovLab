@@ -4,6 +4,16 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Agregado — 2026-10-29: usuarios de Google en PostgreSQL
+
+- `src/domain/users.jl`: `GoogleProfile` (valida y normaliza), `AppUser`, `EmailConflictError` y el puerto `UserRepository` con `save_google_user`.
+- `src/services/users.jl`: `sync_google_user`, que crea el usuario o lo actualiza por `google_sub`.
+- `src/infrastructure/postgres_users.jl`: `PostgresUserRepository` sobre la tabla `app_users` (upsert con `ON CONFLICT`, reconexión y candado). `src/infrastructure/memory_users.jl`: adaptador en memoria para pruebas.
+- `src/api/`: `POST /api/internal/users/google`, protegida con `X-Internal-Key` (comparación en tiempo constante); `configure!`; errores `unauthorized` (401), `email_conflict` (409), `not_configured` y `database_unavailable` (503). `start()` lee `DATABASE_URL` e `INTERNAL_API_KEY`.
+- Pruebas: dominio y servicio, la ruta interna y una integración con PostgreSQL real que corre con `TEST_DATABASE_URL`.
+- Dependencia nueva: `LibPQ` 1.18.
+- Documentación en [`AUTENTICACION.md`](../documentacion/tecnica/AUTENTICACION.md).
+
 ### Agregado — 2026-10-21: API HTTP mínima con Oxygen.jl
 
 - `src/services/analysis.jl`: `analyze_prices`, resumen de métricas de una serie de precios.

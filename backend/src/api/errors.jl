@@ -15,6 +15,13 @@ error_response(err::RequestError) = json(error_body(err.code, err.message); stat
 error_response(err::InsufficientDataError) =
     json(error_body("insufficient_data", sprint(showerror, err)); status=422)
 error_response(err::ArgumentError) = json(error_body("invalid_input", err.msg); status=400)
+error_response(err::EmailConflictError) =
+    json(error_body("email_conflict", "the email belongs to another account"); status=409)
+# Una falla de la base no expone detalles al cliente; el detalle queda en el registro del servidor.
+function error_response(err::LibPQ.Errors.LibPQException)
+    @error "Database error" exception = (err, catch_backtrace())
+    return json(error_body("database_unavailable", "the database is not available"); status=503)
+end
 function error_response(err)
     @error "Unhandled API error" exception = (err, catch_backtrace())
     return json(error_body("internal_error", "unexpected server error"); status=500)
@@ -73,6 +80,44 @@ function number_vector(value, name)
     (value isa AbstractVector && all(is_number, value)) ||
         throw(invalid_input("\"$name\" must be an array of numbers"))
     return Float64.(value)
+end
+
+optional_string(object, name) = (value = optional_field(object, name, nothing);
+                                 value === nothing ? nothing : string_value(value, name))
+
+"""
+    secure_equals(expected, given)
+
+Compara dos claves en tiempo que no depende de dónde difieren: recorre siempre toda
+la clave esperada, para no filtrar por tiempo cuántos caracteres coinciden.
+"""
+function secure_equals(expected::AbstractString, given::AbstractString)
+    a, b = codeunits(expected), codeunits(given)
+    diff = UInt(length(a) ⊻ length(b))
+    for i in eachindex(a)
+        diff |= a[i] ⊻ (i <= length(b) ? b[i] : 0x00)
+    end
+    return diff == 0
+end
+
+"""
+    require_internal_key(req)
+
+Exige el encabezado `X-Internal-Key` de las rutas internas. Responde 503 si las rutas
+internas no están configuradas y 401 si la clave falta o no coincide.
+"""
+function require_internal_key(req)
+    expected = INTERNAL_KEY[]
+    isempty(expected) && throw(RequestError(503, "not_configured", "internal routes are not configured"))
+    given = HTTP.header(req, "X-Internal-Key", "")
+    secure_equals(expected, given) || throw(RequestError(401, "unauthorized", "missing or invalid internal key"))
+    return nothing
+end
+
+function configured_users()
+    users = USERS[]
+    users === nothing && throw(RequestError(503, "not_configured", "the database is not configured"))
+    return users
 end
 
 optional_number(object, name) = (value = optional_field(object, name, nothing);

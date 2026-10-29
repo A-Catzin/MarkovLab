@@ -244,10 +244,20 @@ img {
 }
 
 .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
   font-family: var(--font-display), Georgia, serif;
   font-size: var(--step-lead);
   line-height: 1;
   text-decoration: none;
+}
+
+/* El símbolo mide un poco más que el texto para que la curva se lea a 24 px. */
+.wordmark__mark {
+  flex: none;
+  width: 1.4em;
+  height: 1.4em;
 }
 
 .wordmark__accent {
@@ -351,8 +361,24 @@ img {
   display: block;
 }
 
+/* La moneda ocupa la columna izquierda, bajo "Probar el simulador", y el gráfico el resto. */
+.hero__coin {
+  grid-column: 1 / 5;
+  grid-row: 2;
+  display: grid;
+  place-items: center;
+  margin-top: var(--space-5);
+}
+
+.hero__coin-canvas {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1;
+}
+
 .hero__figure {
-  grid-column: 1 / 13;
+  grid-column: 5 / 13;
   grid-row: 2;
   margin-top: var(--space-5);
 }
@@ -1041,10 +1067,26 @@ img {
 /* ---------- Acceso (/login) ---------- */
 
 .auth {
+  position: relative;
   display: grid;
   grid-template-rows: auto 1fr auto;
   min-height: 100svh;
   padding: var(--space-3) var(--m);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Abanico de trayectorias: nace donde termina el texto y se abre hacia el panel. Se desvanece en
+   los bordes para no competir con el contenido. */
+.auth__backdrop {
+  position: absolute;
+  top: 22%;
+  left: 34%;
+  z-index: -1;
+  width: 66%;
+  height: 60%;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 14%, #000 80%, transparent 100%);
+  pointer-events: none;
 }
 
 .auth__top {
@@ -1067,34 +1109,119 @@ img {
 }
 
 .auth__intro h1 {
-  font-size: var(--step-head);
+  font-size: clamp(3rem, 2rem + 4vw, 6rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
 }
 
-.auth__intro p {
-  margin-top: var(--space-3);
-  max-width: 40ch;
+.auth__intro > p {
+  margin-top: var(--space-4);
+  max-width: 38ch;
   font-size: var(--step-lead);
   line-height: 1.4;
 }
 
+/* Tres datos del producto en una fila, separados por líneas finas. */
+.auth__facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 600px;
+  margin-top: var(--space-5);
+  border-top: 1px solid var(--surface-2);
+}
+
+.auth__facts div {
+  padding: var(--space-2) var(--space-3) 0 0;
+}
+
+.auth__facts div + div {
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--surface-2);
+}
+
+.auth__facts dt {
+  font-family: var(--font-text), Georgia, serif;
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-size: var(--step-lead);
+}
+
+.auth__facts dd {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: var(--step-small);
+  line-height: 1.4;
+}
+
+.auth__side {
+  grid-column: 7 / 13;
+  display: grid;
+  justify-items: end;
+}
+
 .auth__panel {
-  grid-column: 8 / 13;
-  padding: var(--space-4);
+  width: 100%;
+  max-width: 560px;
+  padding: var(--space-5);
+  border: 1px solid rgb(233 237 243 / 7%);
   border-radius: 8px;
-  background: var(--surface);
+  background: rgb(19 24 36 / 86%);
+  box-shadow: 0 24px 60px -20px rgb(0 0 0 / 60%);
+  backdrop-filter: blur(6px);
+}
+
+/* Chip blanco para que la "G" de Google conserve sus colores sobre el botón azul. */
+.google-mark__chip {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 12px;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.google-mark {
+  width: 18px;
+  height: 18px;
 }
 
 .auth__panel h2 {
-  font-size: var(--step-lead);
+  font-size: clamp(2rem, 1.5rem + 1.4vw, 2.75rem);
+  line-height: 1.05;
 }
 
 .auth__panel p {
   margin-top: var(--space-2);
+  font-size: var(--step-body);
 }
 
 .auth__action {
   width: 100%;
   margin-top: var(--space-4);
+}
+
+.auth__action {
+  min-height: 64px;
+  margin-top: var(--space-5);
+  padding-left: 14px;
+  font-size: var(--step-lead);
+}
+
+.auth__action:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+/* Error de inicio de sesión: fondo y borde fino en tono de alerta sobre la superficie. */
+.auth__error {
+  margin-top: var(--space-3);
+  padding: var(--space-2);
+  border: 1px solid rgb(240 122 106 / 45%);
+  border-radius: 6px;
+  background: rgb(240 122 106 / 10%);
+  color: var(--ink);
+  font-size: var(--step-small);
 }
 
 .auth__note,
@@ -1119,6 +1246,31 @@ img {
   justify-content: space-between;
   align-items: baseline;
   gap: var(--space-3);
+}
+
+.app__account {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* El correo se recorta con puntos suspensivos si no cabe en pantallas chicas. */
+.app__user {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--step-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "Salir" es un botón con aspecto de enlace. */
+.app__signout {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
 }
 
 .app__main {
@@ -1335,10 +1487,19 @@ img {
     font-size: var(--step-body);
   }
 
-  .hero__figure {
+  .hero__coin {
     order: 4;
+    margin-top: var(--space-4);
+  }
+
+  .hero__coin-canvas {
+    max-width: 260px;
+  }
+
+  .hero__figure {
+    order: 5;
     margin-inline: calc(-1 * var(--m));
-    margin-top: var(--space-5);
+    margin-top: var(--space-4);
   }
 
   .accent-block {
@@ -1448,13 +1609,53 @@ img {
   }
 
   .auth__intro,
-  .auth__panel {
+  .auth__side {
     grid-column: 1 / -1;
   }
 
+  .auth__side {
+    margin-top: var(--space-4);
+  }
+
   .auth__panel {
-    margin-top: var(--space-5);
-    padding: var(--space-3);
+    max-width: none;
+    padding: var(--space-4) var(--space-3);
+  }
+
+  .auth__action {
+    font-size: var(--step-body);
+  }
+
+  /* En el teléfono los datos van como filas: cifra a la izquierda y texto a la derecha. */
+  .auth__facts {
+    grid-template-columns: 1fr;
+  }
+
+  .auth__facts div,
+  .auth__facts div + div {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding: var(--space-1) 0;
+    border-left: 0;
+    border-bottom: 1px solid var(--surface-2);
+  }
+
+  .auth__facts dt {
+    flex: 0 0 5.5em;
+    font-size: var(--step-body);
+  }
+
+  .auth__facts dd {
+    margin: 0;
+  }
+
+  /* Detrás del panel, no del texto. */
+  .auth__backdrop {
+    top: 52%;
+    left: 0;
+    width: 100%;
+    height: 26%;
   }
 
   .app__module-link {
@@ -1504,6 +1705,42 @@ img {
     transform: none;
   }
 
+  /* En la portada las trayectorias son más densas y claras: el pulso va más intenso y largo.
+     Sin filtros (drop-shadow) a propósito: recalcularlos en cada cuadro es lo más costoso. */
+  .fan .trace-pulse {
+    --pulse-opacity: 1;
+    --pulse-length: 0.1;
+    --pulse-gap: 0.9;
+    --pulse-step: 2800ms;
+  }
+
+  /* Acceso: las trayectorias se trazan de izquierda a derecha, como una simulación en curso. */
+  .js .auth__backdrop [data-draw] {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw 1600ms var(--ease-expo) forwards;
+    animation-delay: calc(200ms + var(--i) * 14ms);
+  }
+
+  /* Un solo pulso de luz a la vez: recorre una trayectoria, se apaga y sigue el de la línea
+     siguiente (--i). Son 6 líneas en ciclo, así que cada una corre durante 1/6 del ciclo y
+     espera el resto. Lo usan el gráfico de la portada y el fondo de /login. */
+  .trace-pulse {
+    stroke: var(--ink);
+    stroke-opacity: var(--pulse-opacity, 0.55);
+    /* Trazo + hueco suman 1 (pathLength): el pulso recorre la línea completa. */
+    stroke-dasharray: var(--pulse-length, 0.07) var(--pulse-gap, 0.93);
+    stroke-dashoffset: 1;
+    opacity: 0;
+    animation: run-solo calc(var(--pulse-step, 2400ms) * 6) linear infinite;
+    animation-delay: calc(var(--start, 1500ms) + var(--i) * var(--pulse-step, 2400ms));
+  }
+
+  .trace-pulse--accent {
+    stroke: var(--accent-hover);
+    stroke-opacity: 0.9;
+  }
+
   .js .fan path[data-path] {
     opacity: 0;
     animation: path-in 900ms var(--ease-out) forwards;
@@ -1535,6 +1772,31 @@ img {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* 1/6 del ciclo recorriendo la línea de principio a fin; el resto, apagado. */
+@keyframes run-solo {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 1;
+  }
+
+  16% {
+    opacity: 1;
+    stroke-dashoffset: var(--pulse-length, 0.07);
+  }
+
+  16.67%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: var(--pulse-length, 0.07);
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
   }
 }
 

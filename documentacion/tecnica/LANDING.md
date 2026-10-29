@@ -39,7 +39,7 @@ Los tokens viven en `frontend/app/globals.css`; los componentes no usan colores 
 
 | Sección | Componente | Contenido |
 |---|---|---|
-| Portada | `Hero.tsx` | Nombre, frase de qué es, botón al simulador, titular "Simula tu cartera", dato de 3 ms y gráfico de trayectorias con percentiles 5, 50 y 95. |
+| Portada | `Hero.tsx` | Nombre, frase de qué es, botón al simulador, titular "Simula tu cartera", dato de 3 ms, moneda 3D de la marca (`brand/Coin.tsx`) y gráfico de trayectorias con percentiles 5, 50 y 95. |
 | Historia | `Intro.tsx` | Por qué Márkov: cronología 1900, 1913, 1948 y 10,000; relato de Eugenio Oneguin; retrato de Márkov y portada de 1825. |
 | Simulador | `Simulator.tsx` | "Prueba una cartera" en tres estados: la cartera, tus ajustes (interactivo) y el resultado, explicado en lenguaje común y en pesos. |
 | Módulos | `Modules.tsx` | Mosaico: qué calcula el motor, lo implementado, lo próximo y fotografías de archivo. |
@@ -145,3 +145,5 @@ Durante el rediseño se verificó además, con la skill `design-taste-frontend`:
 - `lint.mjs` sobre `app`, `components` y `lib`: 0 FAIL, 0 WARN.
 - `inspect.mjs` sobre el build de producción a 1440, 768 y 390 px: 0 FAIL, 1 WARN (sin video; el único clip de archivo disponible pesaba 77 MB).
 - En un navegador real: pesos inválidos desactivan el botón, la misma semilla repite el resultado y todas las entradas animadas aparecen.
+- **2026-10-29:** se agregó la moneda 3D de la marca (versión "Oro y esmalte azul") en la columna izquierda de la portada, bajo el botón "Probar el simulador". El gráfico de trayectorias pasa a ocupar las columnas 5 a 12, así que ya no se ve tan estirado. La moneda usa Three.js (`three@0.169`), que se importa de forma dinámica dentro de `useEffect`: no entra en la carga inicial. Gira sola, se puede arrastrar con mouse (no con dedo, para no bloquear el scroll), queda quieta con `prefers-reduced-motion` y deja de dibujarse cuando sale de pantalla. En el teléfono va entre el dato de 3 ms y el gráfico, a 260 px.
+- **2026-10-29:** el gráfico de trayectorias de la portada "corre". Cuando las líneas terminan de aparecer, un pulso de luz recorre 6 de ellas de una en una, en ciclo (la primera en azul). Antes eran 18 pulsos simultáneos con resplandor; se redujo por carga gráfica. La clase `.trace-pulse` de `globals.css` es la misma que usa el fondo de `/login`. Solo se anima con `prefers-reduced-motion: no-preference`. Trazo y hueco suman 1 (`pathLength`), así cada pulso recorre la línea completa. En la portada va más intenso y grueso, sin `drop-shadow`, porque recalcular ese filtro en cada cuadro era lo más costoso.

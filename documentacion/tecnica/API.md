@@ -15,6 +15,8 @@ PORT=8080 ALLOWED_ORIGINS="http://localhost:3000" julia --project=backend backen
 | `HOST` | `0.0.0.0` | Interfaz de escucha. |
 | `PORT` | `8080` | Puerto; Railway lo define automáticamente. |
 | `ALLOWED_ORIGINS` | `http://localhost:3000` | Orígenes del frontend separados por comas; `*` permite cualquiera (solo desarrollo). |
+| `DATABASE_URL` | vacío | PostgreSQL para las rutas de usuarios. Sin ella, esas rutas responden 503. |
+| `INTERNAL_API_KEY` | vacío | Clave de las rutas internas (al menos 32 caracteres). Sin ella, esas rutas responden 503. |
 
 Oxygen publica además documentación interactiva generada automáticamente en `/docs`.
 
@@ -37,8 +39,12 @@ Todos los errores devuelven el mismo formato:
 |---|---|---|
 | 400 | `invalid_json` | El cuerpo no es JSON válido. |
 | 400 | `invalid_input` | Falta un campo, tiene otro tipo o viola una regla (pesos, precios, límites). |
+| 401 | `unauthorized` | Ruta interna sin `X-Internal-Key` o con una clave incorrecta. |
+| 409 | `email_conflict` | El correo ya pertenece a otra cuenta de Google. |
 | 422 | `insufficient_data` | No hay observaciones suficientes para el cálculo (RF-20). |
 | 500 | `internal_error` | Error inesperado; el detalle se registra en el servidor y no se expone. |
+| 503 | `not_configured` | Falta `INTERNAL_API_KEY` o `DATABASE_URL` para una ruta interna. |
+| 503 | `database_unavailable` | La base no responde; el detalle queda en el registro del servidor. |
 
 ## Endpoints
 
@@ -138,6 +144,30 @@ Simulación Monte Carlo de una cartera con VaR y CVaR (RF-41 a RF-44, RF-48). Es
 
 Modelo y fórmulas en [`SIMULACION_RIESGO.md`](SIMULACION_RIESGO.md).
 
+### `POST /api/internal/users/google`
+
+**Ruta interna.** Solo la llama el servidor de Next.js (Auth.js) cuando alguien entra con Google; el navegador nunca la usa. El flujo completo está en [AUTENTICACION.md](AUTENTICACION.md).
+
+Requiere el encabezado `X-Internal-Key` con el valor de `INTERNAL_API_KEY`. La clave se revisa antes de leer el cuerpo.
+
+| Campo | Tipo | Obligatorio |
+|---|---|---|
+| `google_sub` | `string` (1 a 255 caracteres) | Sí |
+| `email` | `string` con forma `usuario@dominio` | Sí |
+| `name` | `string` o `null` | No |
+
+```json
+{ "google_sub": "1098765432", "email": "Ana@Example.com", "name": "Ana López" }
+```
+
+Crea el usuario o actualiza al que tiene el mismo `google_sub`. El correo se guarda en minúsculas y un nombre vacío se guarda como `null`.
+
+```json
+{ "id": "68c8f646-e505-432b-b856-396f04580976", "email": "ana@example.com", "display_name": "Ana López" }
+```
+
+Errores: `401 unauthorized`, `400 invalid_json` o `invalid_input`, `409 email_conflict`, `503 not_configured` o `database_unavailable`.
+
 ## CORS
 
 El middleware de `backend/src/api/cors.jl` solo devuelve `Access-Control-Allow-Origin` para los orígenes de `ALLOWED_ORIGINS`:
@@ -149,7 +179,7 @@ El middleware de `backend/src/api/cors.jl` solo devuelve `Access-Control-Allow-O
 
 ## Límites actuales
 
-- Sin autenticación: el SRS no define usuarios todavía.
+- Los endpoints de cálculo no exigen sesión; los usuarios por ahora solo se guardan al iniciar sesión.
 - Sin persistencia: los resultados no se guardan (RF-47 queda para la base de datos).
 - Sin carga de CSV por HTTP ni consulta de activos; el importador existe en `infrastructure/` y se expondrá en un próximo paso.
 - Sin progreso de simulaciones largas (RNF-02); con los límites actuales una solicitud tarda milisegundos.
@@ -158,6 +188,7 @@ El middleware de `backend/src/api/cors.jl` solo devuelve `Access-Control-Allow-O
 
 - `backend/test/services/services_tests.jl`: casos de uso y validación de límites.
 - `backend/test/api/api_tests.jl`: cada endpoint, cada código de error y CORS, mediante `internalrequest` (sin abrir puertos).
+- `backend/test/api/users_api_tests.jl`: la ruta interna de usuarios (clave, configuración, alta, actualización y errores).
 
 ```bash
 julia --project=backend backend/test/runtests.jl

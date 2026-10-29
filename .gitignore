@@ -46,3 +46,9 @@ pnpm-debug.log*
 
 # Documentación personal (no se sube por ahora)
 mis-docs/
+
+.mcp.json
+
+Drifts/
+
+.claude/
