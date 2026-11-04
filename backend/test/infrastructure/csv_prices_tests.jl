@@ -19,6 +19,22 @@ parse_text(text; kwargs...) = parse_prices_csv(IOBuffer(text); kwargs...)
         @test result.bars[1] == PriceBar("AAPL", Date(2026, 1, 2), 1, 2, 0.5, 1.5, 10)
     end
 
+    @testset "Adj Close is read when the column exists, and is optional per row" begin
+        result = parse_text("Date,Open,High,Low,Close,Adj Close,Volume,Symbol\n" *
+            "2026-01-02,1,2,0.5,1.5,1.25,10,AAPL\n" *
+            "2026-01-05,1,2,0.5,1.5,,10,AAPL\n" *
+            "2026-01-06,1,2,0.5,1.5,abc,10,AAPL\n")
+        @test [b.adj_close for b in result.bars] == [1.25, nothing]
+        @test only(result.errors).line == 4
+        @test occursin("adj close", only(result.errors).message)
+        # Sin la columna, el cierre ajustado queda vacío.
+        @test parse_text(HEADER * "AAPL,2026-01-02,1,2,0.5,1.5,10\n").bars[1].adj_close === nothing
+        # El encabezado se puede mapear como las demás columnas.
+        mapped = parse_text("symbol,date,open,high,low,close,volume,adjusted\nAAPL,2026-01-02,1,2,0.5,1.5,10,1.1\n";
+                            columns=Dict("adj_close" => "adjusted"))
+        @test mapped.bars[1].adj_close == 1.1
+    end
+
     @testset "duplicates by symbol and date keep the first row (RF-05)" begin
         result = parse_text(HEADER *
             "AAPL,2026-01-02,1,2,0.5,1.5,10\n" *
@@ -48,9 +64,10 @@ parse_text(text; kwargs...) = parse_prices_csv(IOBuffer(text); kwargs...)
     end
 
     @testset "header is case-insensitive, column order is free and extra columns are ignored" begin
-        result = parse_text("Date,Close,Volume,Low,High,Open,Symbol,Adj Close\n" *
-                            "2026-01-02,1.5,10,0.5,2,1,AAPL,1.4\n")
-        @test result.bars == [PriceBar("AAPL", Date(2026, 1, 2), 1, 2, 0.5, 1.5, 10)]
+        # Adj Close se lee como cierre ajustado; Dividends no se usa y se ignora.
+        result = parse_text("Date,Close,Volume,Low,High,Open,Symbol,Adj Close,Dividends\n" *
+                            "2026-01-02,1.5,10,0.5,2,1,AAPL,1.4,0.2\n")
+        @test result.bars == [PriceBar("AAPL", Date(2026, 1, 2), 1, 2, 0.5, 1.5, 10, 1.4)]
     end
 
     @testset "provider column names can be mapped" begin

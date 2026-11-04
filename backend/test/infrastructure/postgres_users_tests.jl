@@ -2,8 +2,8 @@ using Test
 using LibPQ
 using MarkovLabBackend
 
-# Prueba de integración contra un PostgreSQL real con la tabla `usuarios` (correo único sin
-# distinguir mayúsculas).
+# Prueba de integración contra un PostgreSQL real con el esquema oficial
+# (database/migrations/esquema.sql).
 # Solo corre si se define TEST_DATABASE_URL; usa una transacción por cada prueba que
 # se revierte al final, así que no deja datos en la base.
 @testset "PostgresUserRepository" begin

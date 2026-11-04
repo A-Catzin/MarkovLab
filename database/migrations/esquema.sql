@@ -1,19 +1,19 @@
 -- =============================================================================
--- MarkovLab · Migración 0001: esquema inicial
+-- MarkovLab · Esquema base (0001)
 --
--- Primera versión de la base de datos (PostgreSQL 15+, administrado por Supabase).
--- Cubre lo que el backend ya calcula o necesita a corto plazo:
---   usuarios, activos, precios históricos, sincronizaciones, lista de seguimiento,
---   carteras con sus posiciones y simulaciones Monte Carlo guardadas (RF-47).
--- Predicción, optimización, escenarios de estrés y backtesting llegarán en
--- migraciones posteriores.
+-- Esquema de la base en PostgreSQL 15+, administrada por Supabase. Refleja
+-- exactamente lo que está aplicado en el proyecto: mismos nombres de tablas, columnas,
+-- restricciones, índices y triggers, leídos de la base el 2026-11-04.
+-- Los cambios posteriores van en migraciones numeradas de esta carpeta (0002, 0003…).
 --
--- Acceso: solo la API Julia se conecta a la base (SRS 6.5). Por eso todas las
--- tablas activan RLS sin políticas: los roles públicos de Supabase (anon,
--- authenticated) no pueden leer ni escribir nada, y el backend entra con un
--- rol que omite RLS.
+-- Tablas: usuarios, activos, precios_historicos, sincronizaciones,
+-- lista_seguimiento, carteras, posiciones_cartera y simulaciones.
 --
--- Todo el script corre en una sola transacción: o se aplica completo o nada.
+-- Acceso: solo la API Julia se conecta a la base (SRS 6.5). Todas las tablas tienen
+-- RLS activado y sin políticas: los roles públicos de Supabase (anon, authenticated)
+-- no ven nada, y el backend entra con el usuario dueño de las tablas.
+--
+-- Todo corre en una sola transacción: se aplica completo o no se aplica nada.
 -- =============================================================================
 
 BEGIN;
@@ -22,11 +22,11 @@ BEGIN;
 -- Utilidades
 -- -----------------------------------------------------------------------------
 
--- Actualiza la columna updated_at en cada UPDATE.
-CREATE FUNCTION set_updated_at() RETURNS trigger
+-- Actualiza la columna actualizado_en en cada UPDATE.
+CREATE FUNCTION establecer_actualizado_en() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
-    NEW.updated_at := now();
+    NEW.actualizado_en := now();
     RETURN NEW;
 END;
 $$;
@@ -36,229 +36,229 @@ $$;
 -- -----------------------------------------------------------------------------
 
 -- Origen de un dato de precio (RF-13, RNF-10).
-CREATE TYPE price_source AS ENUM ('csv', 'api', 'manual');
+CREATE TYPE origen_precio AS ENUM ('csv', 'api', 'manual');
 
 -- Estado de una cartera.
-CREATE TYPE portfolio_status AS ENUM ('draft', 'active', 'archived');
+CREATE TYPE estado_cartera AS ENUM ('borrador', 'activa', 'archivada');
 
 -- Estado de una sincronización con una fuente de datos (SRS 7.1).
-CREATE TYPE sync_status AS ENUM ('running', 'success', 'partial', 'failed');
+CREATE TYPE estado_sincronizacion AS ENUM ('en_curso', 'exitosa', 'parcial', 'fallida');
 
 -- -----------------------------------------------------------------------------
 -- Usuarios
 -- -----------------------------------------------------------------------------
 
--- Usuario de la aplicación. El inicio de sesión será con Google; google_sub es
--- el identificador estable que entrega Google ("sub" del token).
-CREATE TABLE app_users (
-    id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-    email        text        NOT NULL,
-    display_name text,
-    google_sub   text        UNIQUE,
-    created_at   timestamptz NOT NULL DEFAULT now(),
-    updated_at   timestamptz NOT NULL DEFAULT now(),
-    CONSTRAINT app_users_email_format CHECK (email ~ '^[^@\s]+@[^@\s]+$')
+-- Usuario de la aplicación. El inicio de sesión es con Google; google_sub es el
+-- identificador estable que entrega Google ("sub" del token).
+CREATE TABLE usuarios (
+    id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    correo         text        NOT NULL,
+    nombre_visible text,
+    google_sub     text        CONSTRAINT usuarios_google_sub_key UNIQUE,
+    creado_en      timestamptz NOT NULL DEFAULT now(),
+    actualizado_en timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT usuarios_formato_correo CHECK (correo ~ '^[^@\s]+@[^@\s]+$')
 );
 
 -- El correo es único sin distinguir mayúsculas.
-CREATE UNIQUE INDEX app_users_email_key ON app_users (lower(email));
+CREATE UNIQUE INDEX usuarios_correo_key ON usuarios (lower(correo));
 
-CREATE TRIGGER app_users_set_updated_at
-    BEFORE UPDATE ON app_users
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER usuarios_establecer_actualizado_en
+    BEFORE UPDATE ON usuarios
+    FOR EACH ROW EXECUTE FUNCTION establecer_actualizado_en();
 
 -- -----------------------------------------------------------------------------
 -- Activos (RF-01, RF-04)
 -- -----------------------------------------------------------------------------
 
-CREATE TABLE assets (
-    id              bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    symbol          text        NOT NULL,
-    name            text        NOT NULL,
-    market          text        NOT NULL,
-    category        text        NOT NULL,
-    currency        char(3)     NOT NULL,
+CREATE TABLE activos (
+    id                    bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    simbolo               text        NOT NULL,
+    nombre                text        NOT NULL,
+    -- El backend lo guarda siempre en mayúsculas (NASDAQ, BMV).
+    mercado               text        NOT NULL,
+    categoria             text        NOT NULL,
+    moneda                char(3)     NOT NULL,
     -- Última vez que se actualizaron sus precios (RF-04); nulo si nunca.
-    last_synced_at  timestamptz,
-    created_at      timestamptz NOT NULL DEFAULT now(),
-    updated_at      timestamptz NOT NULL DEFAULT now(),
+    ultima_sincronizacion timestamptz,
+    creado_en             timestamptz NOT NULL DEFAULT now(),
+    actualizado_en        timestamptz NOT NULL DEFAULT now(),
     -- Mismo criterio que PriceBar: sin espacios y en mayúsculas.
-    CONSTRAINT assets_symbol_normalized CHECK (symbol <> '' AND symbol = upper(btrim(symbol))),
-    CONSTRAINT assets_currency_iso      CHECK (currency ~ '^[A-Z]{3}$'),
+    CONSTRAINT activos_simbolo_normalizado CHECK (simbolo <> '' AND simbolo = upper(btrim(simbolo))),
+    CONSTRAINT activos_moneda_iso          CHECK (moneda ~ '^[A-Z]{3}$'),
     -- Símbolo único dentro de su mercado (SRS 7.2).
-    CONSTRAINT assets_market_symbol_key UNIQUE (market, symbol)
+    CONSTRAINT activos_mercado_simbolo_key UNIQUE (mercado, simbolo)
 );
 
-CREATE TRIGGER assets_set_updated_at
-    BEFORE UPDATE ON assets
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER activos_establecer_actualizado_en
+    BEFORE UPDATE ON activos
+    FOR EACH ROW EXECUTE FUNCTION establecer_actualizado_en();
 
 -- -----------------------------------------------------------------------------
 -- Precios históricos (RF-02, RF-05)
 -- -----------------------------------------------------------------------------
 
--- Una barra OHLCV por activo, fecha y fuente. Las restricciones replican los
+-- Una barra OHLCV por activo, fecha y origen. Las restricciones replican los
 -- invariantes de PriceBar (backend/src/domain/prices.jl).
-CREATE TABLE price_bars (
-    asset_id    bigint           NOT NULL REFERENCES assets (id) ON DELETE CASCADE,
-    trade_date  date             NOT NULL,
-    source      price_source     NOT NULL,
-    open        double precision NOT NULL,
-    high        double precision NOT NULL,
-    low         double precision NOT NULL,
-    close       double precision NOT NULL,
-    volume      double precision NOT NULL,
-    imported_at timestamptz      NOT NULL DEFAULT now(),
-    -- Sin duplicados para el mismo activo, fecha y fuente (RF-05, SRS 7.2).
-    -- El índice de la clave primaria sirve también para leer una serie en orden.
-    PRIMARY KEY (asset_id, trade_date, source),
+CREATE TABLE precios_historicos (
+    activo_id       bigint           NOT NULL REFERENCES activos (id) ON DELETE CASCADE,
+    fecha_operacion date             NOT NULL,
+    origen          origen_precio    NOT NULL,
+    apertura        double precision NOT NULL,
+    maximo          double precision NOT NULL,
+    minimo          double precision NOT NULL,
+    cierre          double precision NOT NULL,
+    volumen         double precision NOT NULL,
+    importado_en    timestamptz      NOT NULL DEFAULT now(),
+    -- Sin duplicados para el mismo activo, fecha y origen (RF-05, SRS 7.2).
+    PRIMARY KEY (activo_id, fecha_operacion, origen),
     -- 'NaN' e 'Infinity' son valores válidos de double precision, por eso se excluyen.
-    CONSTRAINT price_bars_prices_positive CHECK (
-        open  > 0 AND open  < 'Infinity' AND
-        high  > 0 AND high  < 'Infinity' AND
-        low   > 0 AND low   < 'Infinity' AND
-        close > 0 AND close < 'Infinity'
+    CONSTRAINT precios_historicos_precios_positivos CHECK (
+        apertura > 0 AND apertura < 'Infinity' AND
+        maximo   > 0 AND maximo   < 'Infinity' AND
+        minimo   > 0 AND minimo   < 'Infinity' AND
+        cierre   > 0 AND cierre   < 'Infinity'
     ),
-    CONSTRAINT price_bars_high_is_max CHECK (high >= greatest(open, low, close)),
-    CONSTRAINT price_bars_low_is_min  CHECK (low  <= least(open, close)),
-    CONSTRAINT price_bars_volume_valid CHECK (volume >= 0 AND volume < 'Infinity')
+    CONSTRAINT precios_historicos_maximo_es_mayor CHECK (maximo >= greatest(apertura, minimo, cierre)),
+    CONSTRAINT precios_historicos_minimo_es_menor CHECK (minimo <= least(apertura, cierre)),
+    CONSTRAINT precios_historicos_volumen_valido  CHECK (volumen >= 0 AND volumen < 'Infinity')
 );
 
 -- -----------------------------------------------------------------------------
 -- Sincronizaciones (RF-06, SRS 7.1)
 -- -----------------------------------------------------------------------------
 
--- Bitácora de cada carga de datos: importación de CSV o consulta a la API.
-CREATE TABLE sync_runs (
-    id             bigint       GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    source         price_source NOT NULL,
-    -- Nulo cuando la carga abarca varios activos.
-    asset_id       bigint       REFERENCES assets (id) ON DELETE SET NULL,
-    status         sync_status  NOT NULL DEFAULT 'running',
-    records_saved  integer      NOT NULL DEFAULT 0,
-    records_failed integer      NOT NULL DEFAULT 0,
-    error_message  text,
-    started_at     timestamptz  NOT NULL DEFAULT now(),
-    finished_at    timestamptz,
-    CONSTRAINT sync_runs_counts_valid CHECK (records_saved >= 0 AND records_failed >= 0),
-    CONSTRAINT sync_runs_finished_after_start CHECK (finished_at IS NULL OR finished_at >= started_at),
+-- Registro de cada carga de datos: importación de CSV o consulta a la API.
+CREATE TABLE sincronizaciones (
+    id                  bigint                GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    origen              origen_precio         NOT NULL,
+    -- Nulo cuando la carga no llegó a crear el activo (importación fallida).
+    activo_id           bigint                REFERENCES activos (id) ON DELETE SET NULL,
+    estado              estado_sincronizacion NOT NULL DEFAULT 'en_curso',
+    registros_guardados integer               NOT NULL DEFAULT 0,
+    registros_fallidos  integer               NOT NULL DEFAULT 0,
+    mensaje_error       text,
+    iniciado_en         timestamptz           NOT NULL DEFAULT now(),
+    finalizado_en       timestamptz,
+    CONSTRAINT sincronizaciones_conteos_validos        CHECK (registros_guardados >= 0 AND registros_fallidos >= 0),
+    CONSTRAINT sincronizaciones_fin_despues_inicio     CHECK (finalizado_en IS NULL OR finalizado_en >= iniciado_en),
     -- Una sincronización terminada tiene fecha de fin; una en curso no.
-    CONSTRAINT sync_runs_finished_matches_status CHECK ((status = 'running') = (finished_at IS NULL))
+    CONSTRAINT sincronizaciones_fin_coincide_con_estado CHECK ((estado = 'en_curso') = (finalizado_en IS NULL))
 );
 
-CREATE INDEX sync_runs_started_at_idx ON sync_runs (started_at DESC);
+CREATE INDEX sincronizaciones_iniciado_en_idx ON sincronizaciones (iniciado_en DESC);
 
 -- -----------------------------------------------------------------------------
 -- Lista de seguimiento (RF-08)
 -- -----------------------------------------------------------------------------
 
-CREATE TABLE watchlist_items (
-    user_id  uuid        NOT NULL REFERENCES app_users (id) ON DELETE CASCADE,
-    asset_id bigint      NOT NULL REFERENCES assets (id) ON DELETE CASCADE,
-    added_at timestamptz NOT NULL DEFAULT now(),
-    PRIMARY KEY (user_id, asset_id)
+CREATE TABLE lista_seguimiento (
+    usuario_id  uuid        NOT NULL REFERENCES usuarios (id) ON DELETE CASCADE,
+    activo_id   bigint      NOT NULL REFERENCES activos (id) ON DELETE CASCADE,
+    agregado_en timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (usuario_id, activo_id)
 );
 
 -- -----------------------------------------------------------------------------
 -- Carteras (RF-27 a RF-33)
 -- -----------------------------------------------------------------------------
 
-CREATE TABLE portfolios (
-    id              uuid             PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         uuid             NOT NULL REFERENCES app_users (id) ON DELETE CASCADE,
-    name            text             NOT NULL,
-    initial_capital numeric(18, 2)   NOT NULL,
-    currency        char(3)          NOT NULL,
-    start_date      date             NOT NULL DEFAULT current_date,
-    status          portfolio_status NOT NULL DEFAULT 'draft',
+CREATE TABLE carteras (
+    id              uuid           PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id      uuid           NOT NULL REFERENCES usuarios (id) ON DELETE CASCADE,
+    nombre          text           NOT NULL,
+    capital_inicial numeric(18, 2) NOT NULL,
+    moneda          char(3)        NOT NULL,
+    fecha_inicio    date           NOT NULL DEFAULT CURRENT_DATE,
+    estado          estado_cartera NOT NULL DEFAULT 'borrador',
     -- Cartera de la que se copió, para versiones y duplicados (RF-32, RF-33).
-    derived_from_id uuid             REFERENCES portfolios (id) ON DELETE SET NULL,
-    created_at      timestamptz      NOT NULL DEFAULT now(),
-    updated_at      timestamptz      NOT NULL DEFAULT now(),
-    CONSTRAINT portfolios_name_not_blank   CHECK (btrim(name) <> ''),
-    CONSTRAINT portfolios_capital_positive CHECK (initial_capital > 0),
-    CONSTRAINT portfolios_currency_iso     CHECK (currency ~ '^[A-Z]{3}$')
+    derivada_de_id  uuid           REFERENCES carteras (id) ON DELETE SET NULL,
+    creado_en       timestamptz    NOT NULL DEFAULT now(),
+    actualizado_en  timestamptz    NOT NULL DEFAULT now(),
+    CONSTRAINT carteras_nombre_no_vacio  CHECK (btrim(nombre) <> ''),
+    CONSTRAINT carteras_capital_positivo CHECK (capital_inicial > 0),
+    CONSTRAINT carteras_moneda_iso       CHECK (moneda ~ '^[A-Z]{3}$')
 );
 
-CREATE INDEX portfolios_user_id_idx ON portfolios (user_id);
-CREATE INDEX portfolios_derived_from_id_idx ON portfolios (derived_from_id);
+CREATE INDEX carteras_usuario_id_idx ON carteras (usuario_id);
+CREATE INDEX carteras_derivada_de_id_idx ON carteras (derivada_de_id);
 
-CREATE TRIGGER portfolios_set_updated_at
-    BEFORE UPDATE ON portfolios
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER carteras_establecer_actualizado_en
+    BEFORE UPDATE ON carteras
+    FOR EACH ROW EXECUTE FUNCTION establecer_actualizado_en();
 
--- Activo y peso dentro de una cartera (RF-28).
--- Que los pesos sumen 100 % (RF-29) lo valida el backend con Portfolio
--- (backend/src/domain/portfolio.jl), porque es una regla entre varias filas.
-CREATE TABLE portfolio_positions (
-    portfolio_id       uuid           NOT NULL REFERENCES portfolios (id) ON DELETE CASCADE,
-    asset_id           bigint         NOT NULL REFERENCES assets (id) ON DELETE RESTRICT,
-    weight             numeric(9, 8)  NOT NULL,
-    estimated_quantity numeric(20, 8),
-    PRIMARY KEY (portfolio_id, asset_id),
-    CONSTRAINT portfolio_positions_weight_range    CHECK (weight >= 0 AND weight <= 1),
-    CONSTRAINT portfolio_positions_quantity_valid  CHECK (estimated_quantity IS NULL OR estimated_quantity >= 0)
+-- Activo y peso dentro de una cartera (RF-28). Que los pesos sumen 100 % (RF-29) lo
+-- valida el backend con Portfolio (backend/src/domain/portfolio.jl), porque es una
+-- regla entre varias filas.
+CREATE TABLE posiciones_cartera (
+    cartera_id        uuid           NOT NULL REFERENCES carteras (id) ON DELETE CASCADE,
+    activo_id         bigint         NOT NULL REFERENCES activos (id) ON DELETE RESTRICT,
+    peso              numeric(9, 8)  NOT NULL,
+    cantidad_estimada numeric(20, 8),
+    PRIMARY KEY (cartera_id, activo_id),
+    CONSTRAINT posiciones_cartera_peso_en_rango   CHECK (peso >= 0 AND peso <= 1),
+    CONSTRAINT posiciones_cartera_cantidad_valida CHECK (cantidad_estimada IS NULL OR cantidad_estimada >= 0)
 );
 
-CREATE INDEX portfolio_positions_asset_id_idx ON portfolio_positions (asset_id);
+CREATE INDEX posiciones_cartera_activo_id_idx ON posiciones_cartera (activo_id);
 
 -- -----------------------------------------------------------------------------
 -- Simulaciones Monte Carlo (RF-41 a RF-48, RNF-16, RNF-17)
 -- -----------------------------------------------------------------------------
 
--- Una corrida guardada de POST /api/risk/monte-carlo con todo lo necesario
--- para repetirla: parámetros, semilla y versión del modelo.
-CREATE TABLE simulation_runs (
-    id                         uuid             PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id                    uuid             NOT NULL REFERENCES app_users (id) ON DELETE CASCADE,
+-- Una corrida guardada de POST /api/risk/monte-carlo con todo lo necesario para
+-- repetirla: parámetros, semilla y versión del modelo.
+CREATE TABLE simulaciones (
+    id                           uuid             PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id                   uuid             NOT NULL REFERENCES usuarios (id) ON DELETE CASCADE,
     -- Nulo si se simuló una combinación de activos sin cartera guardada.
-    portfolio_id               uuid             REFERENCES portfolios (id) ON DELETE SET NULL,
+    cartera_id                   uuid             REFERENCES carteras (id) ON DELETE SET NULL,
     -- Identificador del modelo, por ejemplo 'normal-rebalanced-v1' (RNF-17).
-    model                      text             NOT NULL,
-    simulations                integer          NOT NULL,
-    horizon                    integer          NOT NULL,
-    confidence                 double precision NOT NULL,
-    seed                       bigint           NOT NULL,
-    observations               integer          NOT NULL,
+    modelo                       text             NOT NULL,
+    num_simulaciones             integer          NOT NULL,
+    horizonte                    integer          NOT NULL,
+    confianza                    double precision NOT NULL,
+    semilla                      bigint           NOT NULL,
+    observaciones                integer          NOT NULL,
     -- Símbolos y pesos usados, en el mismo orden: {"symbols": [...], "weights": [...]}.
-    assets                     jsonb            NOT NULL,
-    expected_period_return     double precision NOT NULL,
-    expected_period_volatility double precision NOT NULL,
-    -- VaR y CVaR como pérdidas positivas; duplicados de summary para poder filtrar y ordenar.
-    value_at_risk              double precision NOT NULL,
-    conditional_value_at_risk  double precision NOT NULL,
+    activos                      jsonb            NOT NULL,
+    retorno_esperado_periodo     double precision NOT NULL,
+    volatilidad_esperada_periodo double precision NOT NULL,
+    -- VaR y CVaR como pérdidas positivas; duplicados del resumen para poder filtrar y ordenar.
+    valor_en_riesgo              double precision NOT NULL,
+    valor_en_riesgo_condicional  double precision NOT NULL,
     -- Objeto summary completo que devuelve la API (percentiles, peor y mejor resultado, etc.).
-    summary                    jsonb            NOT NULL,
-    created_at                 timestamptz      NOT NULL DEFAULT now(),
+    resumen                      jsonb            NOT NULL,
+    creado_en                    timestamptz      NOT NULL DEFAULT now(),
     -- Mismos límites que backend/src/services/risk.jl.
-    CONSTRAINT simulation_runs_simulations_range CHECK (simulations BETWEEN 1 AND 100000),
-    CONSTRAINT simulation_runs_horizon_range     CHECK (horizon BETWEEN 1 AND 2520),
-    CONSTRAINT simulation_runs_confidence_range  CHECK (confidence > 0 AND confidence < 1),
-    CONSTRAINT simulation_runs_observations_valid CHECK (observations >= 3),
-    CONSTRAINT simulation_runs_assets_shape CHECK (
-        jsonb_typeof(assets -> 'symbols') = 'array' AND
-        jsonb_typeof(assets -> 'weights') = 'array' AND
-        jsonb_array_length(assets -> 'symbols') >= 1 AND
-        jsonb_array_length(assets -> 'symbols') = jsonb_array_length(assets -> 'weights')
+    CONSTRAINT simulaciones_num_simulaciones_rango CHECK (num_simulaciones >= 1 AND num_simulaciones <= 100000),
+    CONSTRAINT simulaciones_horizonte_rango        CHECK (horizonte >= 1 AND horizonte <= 2520),
+    CONSTRAINT simulaciones_confianza_rango        CHECK (confianza > 0 AND confianza < 1),
+    CONSTRAINT simulaciones_observaciones_validas  CHECK (observaciones >= 3),
+    CONSTRAINT simulaciones_forma_activos CHECK (
+        jsonb_typeof(activos -> 'symbols') = 'array' AND
+        jsonb_typeof(activos -> 'weights') = 'array' AND
+        jsonb_array_length(activos -> 'symbols') >= 1 AND
+        jsonb_array_length(activos -> 'symbols') = jsonb_array_length(activos -> 'weights')
     ),
-    CONSTRAINT simulation_runs_cvar_not_below_var CHECK (conditional_value_at_risk >= value_at_risk),
-    CONSTRAINT simulation_runs_summary_is_object  CHECK (jsonb_typeof(summary) = 'object')
+    CONSTRAINT simulaciones_cvar_no_menor_que_var CHECK (valor_en_riesgo_condicional >= valor_en_riesgo),
+    CONSTRAINT simulaciones_resumen_es_objeto     CHECK (jsonb_typeof(resumen) = 'object')
 );
 
-CREATE INDEX simulation_runs_user_created_idx ON simulation_runs (user_id, created_at DESC);
-CREATE INDEX simulation_runs_portfolio_id_idx ON simulation_runs (portfolio_id);
+CREATE INDEX simulaciones_usuario_creado_idx ON simulaciones (usuario_id, creado_en DESC);
+CREATE INDEX simulaciones_cartera_id_idx ON simulaciones (cartera_id);
 
 -- -----------------------------------------------------------------------------
 -- Seguridad: RLS activado y sin políticas (ver encabezado)
 -- -----------------------------------------------------------------------------
 
-ALTER TABLE app_users           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE assets              ENABLE ROW LEVEL SECURITY;
-ALTER TABLE price_bars          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE sync_runs           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE watchlist_items     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE portfolios          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE portfolio_positions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE simulation_runs     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE usuarios           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activos            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE precios_historicos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sincronizaciones   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lista_seguimiento  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE carteras           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE posiciones_cartera ENABLE ROW LEVEL SECURITY;
+ALTER TABLE simulaciones       ENABLE ROW LEVEL SECURITY;
 
 COMMIT;

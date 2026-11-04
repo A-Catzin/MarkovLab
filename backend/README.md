@@ -32,7 +32,7 @@ julia --project=backend backend/scripts/serve.jl            # API en http://loca
 
 ## Side Effects
 
-- Iniciar el servidor mediante `scripts/serve.jl` o `MarkovLabBackend.Api.start()` lee variables de entorno (`ENV`), abre un socket HTTP con Oxygen/HTTP.jl y, cuando `DATABASE_URL` está configurada, abre conexiones `LibPQ` hacia PostgreSQL para sincronizar registros en `app_users`.
+- Iniciar el servidor mediante `scripts/serve.jl` o `MarkovLabBackend.Api.start()` lee variables de entorno (`ENV`), abre un socket HTTP con Oxygen/HTTP.jl y, cuando `DATABASE_URL` está configurada, abre conexiones `LibPQ` hacia PostgreSQL para sincronizar registros en `usuarios` y, con `scripts/import_prices.jl`, en `activos`, `precios_historicos` y `sincronizaciones`.
 - La importación de archivos mediante `read_prices_csv` lee archivos CSV del sistema de archivos local.
 
 ## Verification

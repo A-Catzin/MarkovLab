@@ -10,6 +10,16 @@ using MarkovLabBackend
 
     @test PriceBar("X", Date(2026, 1, 2), 10, 10, 10, 10, 0).volume == 0.0
 
+    # Cierre ajustado (Adj Close): opcional; si se da, finito y positivo. Puede quedar
+    # fuera del rango del día, porque descuenta dividendos y splits posteriores.
+    @test bar.adj_close === nothing
+    adjusted = PriceBar("X", Date(2026, 1, 2), 98.0, 100.5, 97.5, 100.0, 1200, 61.25)
+    @test adjusted.adj_close == 61.25
+    @test PriceBar("X", Date(2026, 1, 2), 1, 1, 1, 1, 1, nothing).adj_close === nothing
+    @test_throws ArgumentError PriceBar("X", Date(2026, 1, 2), 1, 1, 1, 1, 1, 0)
+    @test_throws ArgumentError PriceBar("X", Date(2026, 1, 2), 1, 1, 1, 1, 1, NaN)
+    @test_throws ArgumentError PriceBar("X", Date(2026, 1, 2), 1, 1, 1, 1, 1, Inf)
+
     @test_throws ArgumentError PriceBar("", Date(2026, 1, 2), 1, 1, 1, 1, 1)
     @test_throws ArgumentError PriceBar("X", Date(2026, 1, 2), 0, 1, 1, 1, 1)
     @test_throws ArgumentError PriceBar("X", Date(2026, 1, 2), 1, NaN, 1, 1, 1)

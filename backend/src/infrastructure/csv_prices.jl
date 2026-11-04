@@ -4,6 +4,9 @@
 
 const PRICE_COLUMNS = ("symbol", "date", "open", "high", "low", "close", "volume")
 const PRICE_DATE_FORMAT = dateformat"yyyy-mm-dd"
+# Columna opcional del cierre ajustado (Adj Close) y su encabezado por defecto.
+const ADJ_CLOSE_COLUMN = "adj_close"
+const ADJ_CLOSE_HEADER = "adj close"
 
 """
     ImportIssue(line, message)
@@ -74,6 +77,8 @@ function resolve_columns(header::Vector{String}, columns::AbstractDict, symbol)
     end
     isempty(missing_columns) ||
         throw(ArgumentError("CSV is missing required columns: $(join(missing_columns, ", "))"))
+    adj_index = findfirst(==(lowercase(strip(get(columns, ADJ_CLOSE_COLUMN, ADJ_CLOSE_HEADER)))), normalized)
+    adj_index === nothing || (indexes[ADJ_CLOSE_COLUMN] = adj_index)
     return indexes
 end
 
@@ -91,12 +96,22 @@ function parse_price_row(fields, indexes, expected_fields, symbol)
     date = tryparse(Date, raw_date, PRICE_DATE_FORMAT)
     date === nothing && throw(ArgumentError("invalid date \"$raw_date\", expected YYYY-MM-DD"))
     row_symbol = haskey(indexes, "symbol") ? fields[indexes["symbol"]] : symbol
+    # El cierre ajustado es opcional también por fila: un campo vacío queda como `nothing`.
+    adj_close = nothing
+    if haskey(indexes, ADJ_CLOSE_COLUMN)
+        raw_adj = strip(fields[indexes[ADJ_CLOSE_COLUMN]])
+        if !isempty(raw_adj)
+            adj_close = tryparse(Float64, raw_adj)
+            adj_close === nothing && throw(ArgumentError("invalid adj close value \"$raw_adj\""))
+        end
+    end
     return PriceBar(row_symbol, date,
                     parse_price_field(fields, indexes, "open"),
                     parse_price_field(fields, indexes, "high"),
                     parse_price_field(fields, indexes, "low"),
                     parse_price_field(fields, indexes, "close"),
-                    parse_price_field(fields, indexes, "volume"))
+                    parse_price_field(fields, indexes, "volume"),
+                    adj_close)
 end
 
 """
@@ -104,10 +119,11 @@ end
 
 Lee precios históricos de un flujo CSV con un encabezado que contenga
 `symbol,date,open,high,low,close,volume` (sin distinguir mayúsculas, en cualquier
-orden; las columnas adicionales se ignoran).
+orden). Si además hay una columna `Adj Close`, se lee como cierre ajustado (`adj_close`);
+un valor vacío en una fila queda como `nothing`. Las demás columnas se ignoran.
 
 - `columns` asocia los nombres internos con los encabezados del proveedor, por
-  ejemplo `Dict("close" => "Adj Close")`.
+  ejemplo `Dict("close" => "Cierre")` o `Dict("adj_close" => "Ajustado")`.
 - `symbol` indica el símbolo del activo cuando el archivo no tiene columna de símbolo.
 
 Las filas inválidas se informan en `errors` y las filas con símbolo y fecha

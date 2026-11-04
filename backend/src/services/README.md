@@ -13,6 +13,8 @@ Contenido permitido: orquestación y validaciones de aplicación independientes 
 - **Riesgo y simulación Monte Carlo (`risk.jl`)**:
   - `run_monte_carlo(portfolio, prices; simulations=DEFAULT_SIMULATIONS, horizon=DEFAULT_HORIZON, confidence=DEFAULT_CONFIDENCE, seed=nothing) -> NamedTuple` (`[risk.jl:run_monte_carlo]`): Estima rendimientos y covarianza a partir de precios históricos, simula la cartera, resume resultados y devuelve los parámetros de reproducción.
   - Constantes: `MONTE_CARLO_MODEL` (`"normal-rebalanced-v1"`), `DEFAULT_SIMULATIONS` (`10_000`), `DEFAULT_HORIZON` (`1`), `DEFAULT_CONFIDENCE` (`0.95`), `MAX_SIMULATIONS` (`100_000`), `MAX_HORIZON` (`2_520`) (`[risk.jl:MONTE_CARLO_MODEL]`, `[risk.jl:DEFAULT_SIMULATIONS]`, `[risk.jl:DEFAULT_HORIZON]`, `[risk.jl:DEFAULT_CONFIDENCE]`, `[risk.jl:MAX_SIMULATIONS]`, `[risk.jl:MAX_HORIZON]`).
+- **Importación de precios (`prices.jl`)**:
+  - `import_prices(prices::PriceRepository, io, details::AssetDetails; symbol=nothing, columns=Dict()) -> PriceImportSummary` (`[prices.jl:import_prices]`): Lee un CSV de un solo activo y lo guarda con su registro de importación; devuelve filas válidas, guardadas, ya guardadas, inválidas, repetidas y el estado (`:success`, `:partial`, `:failed`).
 - **Usuarios (`users.jl`)**:
   - `sync_google_user(users::UserRepository, profile::GoogleProfile) -> AppUser` (`[users.jl:sync_google_user]`): Crea o actualiza un usuario verificado por Google mediante el repositorio configurado.
 
@@ -20,6 +22,7 @@ Contenido permitido: orquestación y validaciones de aplicación independientes 
 
 - `analyze_prices` exige al menos 3 observaciones de precios (`InsufficientDataError`) para que el cálculo de volatilidad disponga de al menos 2 rendimientos simples (`[analysis.jl:analyze_prices]`).
 - `run_monte_carlo` exige una serie de precios por cada activo de `portfolio`, igual longitud de observaciones en todas las series (`>= 2` precios), `1 <= simulations <= MAX_SIMULATIONS` (`100_000`), `1 <= horizon <= MAX_HORIZON` (`2_520`) y `0 < confidence < 1`, devolviendo siempre la semilla utilizada y `model = MONTE_CARLO_MODEL` (`[risk.jl:MONTE_CARLO_MODEL]`, `[risk.jl:MAX_SIMULATIONS]`, `[risk.jl:MAX_HORIZON]`, `[risk.jl:run_monte_carlo]`).
+- `import_prices` rechaza con `ArgumentError`, sin guardar nada, un archivo con varios símbolos o con un símbolo distinto del indicado; marca `:partial` si hubo filas inválidas y `:failed` si no hubo ninguna válida (`[prices.jl:import_prices]`).
 - `sync_google_user` delega la persistencia en `save_google_user(users, profile)` y propaga `EmailConflictError` si el correo ya pertenece a otra cuenta (`[users.jl:sync_google_user]`).
 
 ## Side Effects

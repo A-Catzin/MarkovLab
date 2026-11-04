@@ -4,6 +4,24 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Agregado — 2026-11-04: cierre ajustado y esquema real en el repositorio
+
+- `PriceBar` acepta el cierre ajustado opcional (`adj_close`), y `parse_prices_csv` lee la columna `Adj Close` cuando existe (mapeable con `columns["adj_close"]`).
+- `PostgresPriceRepository` guarda el cierre ajustado en `precios_historicos.cierre_ajustado` (migración `database/migrations/0002_cierre_ajustado.sql`).
+- `AssetDetails` guarda el mercado en mayúsculas: `NASDAQ` y `nasdaq` son el mismo activo.
+- `database/migrations/esquema.sql` ahora es idéntico a la base de Supabase (nombres en español), y las pruebas de integración lo usan directamente. Se quitó la réplica `test/fixtures/esquema_pruebas.sql`.
+- Corregido: la búsqueda del activo leía el resultado después de cerrarlo y no encontraba activos existentes. Lo detectó la integración contra el esquema real.
+
+### Agregado — 2026-11-04: carga de precios desde CSV a la base
+
+- `src/domain/assets.jl`: `AssetDetails` (nombre, mercado, categoría y moneda ISO, validados) y el puerto `PriceRepository` con `save_price_import`.
+- `src/services/prices.jl`: `import_prices` y `PriceImportSummary`. Un activo por archivo; estados completa, parcial y fallida; reimportar no duplica (RF-01, RF-02, RF-05, RF-06).
+- `src/infrastructure/postgres.jl`: `PostgresConnection`, que concentra la validación de la URL, el candado, `with_connection` (reintento ante conexión perdida) e `in_transaction`. `PostgresUserRepository` ahora la usa.
+- `src/infrastructure/postgres_prices.jl`: `PostgresPriceRepository` sobre `activos`, `precios_historicos` (inserción masiva con `unnest` y `ON CONFLICT DO NOTHING`) y `sincronizaciones`, en una transacción. `src/infrastructure/memory_prices.jl`: adaptador en memoria.
+- `scripts/import_prices.jl`: carga desde la terminal.
+- Pruebas: servicio con el adaptador en memoria, e integración con PostgreSQL sobre el esquema oficial `database/migrations/esquema.sql`.
+- Documentación en [`IMPORTACION_CSV.md`](../documentacion/tecnica/IMPORTACION_CSV.md#cargar-un-csv-a-la-base).
+
 ### Agregado — 2026-10-29: usuarios de Google en PostgreSQL
 
 - `src/domain/users.jl`: `GoogleProfile` (valida y normaliza), `AppUser`, `EmailConflictError` y el puerto `UserRepository` con `save_google_user`.

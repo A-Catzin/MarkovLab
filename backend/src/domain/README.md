@@ -15,7 +15,7 @@ Fórmulas, supuestos y ejemplos en [`METRICAS_DOMINIO.md`](../../../documentacio
 - **Métricas financieras (`metrics.jl`)**:
   - `simple_returns(prices)` (`[metrics.jl:simple_returns]`), `log_returns(prices)` (`[metrics.jl:log_returns]`), `cumulative_return(returns)` (`[metrics.jl:cumulative_return]`), `mean_return(returns)` (`[metrics.jl:mean_return]`), `volatility(returns; periods_per_year=nothing)` (`[metrics.jl:volatility]`), `drawdowns(prices)` (`[metrics.jl:drawdowns]`), `max_drawdown(prices)` (`[metrics.jl:max_drawdown]`), `correlation(a, b)` (`[metrics.jl:correlation]`), `correlation_matrix(returns)` (`[metrics.jl:correlation_matrix]`).
 - **Precios históricos (`prices.jl`)**:
-  - `PriceBar(symbol, date, open, high, low, close, volume)` (`[prices.jl:PriceBar]`).
+  - `PriceBar(symbol, date, open, high, low, close, volume, adj_close=nothing)` (`[prices.jl:PriceBar]`). `adj_close` es el cierre ajustado opcional: si viene, finito y positivo.
 - **Carteras (`portfolio.jl`)**:
   - `Portfolio(symbols, weights)` / `Portfolio(allocation)` (`[portfolio.jl:Portfolio]`), `PORTFOLIO_WEIGHT_TOLERANCE` (`1e-6`) (`[portfolio.jl:PORTFOLIO_WEIGHT_TOLERANCE]`), `covariance_matrix(returns; periods_per_year=nothing)` (`[portfolio.jl:covariance_matrix]`), `portfolio_returns(weights_or_portfolio, returns)` (`[portfolio.jl:portfolio_returns]`), `portfolio_return(weights_or_portfolio, expected_returns)` (`[portfolio.jl:portfolio_return]`), `portfolio_volatility(weights_or_portfolio, covariance)` (`[portfolio.jl:portfolio_volatility]`).
 - **Simulación y riesgo (`simulation.jl`)**:

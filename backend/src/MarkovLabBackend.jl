@@ -10,12 +10,17 @@ include("domain/prices.jl")
 include("domain/portfolio.jl")
 include("domain/simulation.jl")
 include("domain/users.jl")
+include("domain/assets.jl")
 include("infrastructure/csv_prices.jl")
 include("infrastructure/memory_users.jl")
+include("infrastructure/memory_prices.jl")
+include("infrastructure/postgres.jl")
 include("infrastructure/postgres_users.jl")
+include("infrastructure/postgres_prices.jl")
 include("services/analysis.jl")
 include("services/risk.jl")
 include("services/users.jl")
+include("services/prices.jl")
 include("api/Api.jl")
 
 export InsufficientDataError
@@ -30,5 +35,7 @@ export ImportIssue, PriceImportResult, parse_prices_csv, read_prices_csv
 export analyze_prices, run_monte_carlo, MONTE_CARLO_MODEL, MAX_SIMULATIONS, MAX_HORIZON
 export GoogleProfile, AppUser, EmailConflictError, UserRepository, save_google_user, sync_google_user
 export InMemoryUserRepository, PostgresUserRepository
+export AssetDetails, PriceRepository, save_price_import, IMPORT_STATUSES
+export PriceImportSummary, import_prices, InMemoryPriceRepository, PostgresPriceRepository
 
 end # módulo MarkovLabBackend
