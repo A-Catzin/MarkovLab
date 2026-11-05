@@ -30,6 +30,38 @@ using MarkovLabBackend
             LibPQ.execute(conn, "ROLLBACK")
         end
 
+        # Roles: todo usuario nuevo es 'usuario' y el cambio de rol es atómico. `set_user_role`
+        # usa su propia transacción, así que aquí no hay transacción externa: los usuarios de
+        # prueba se borran al final. La regla del último admin solo se prueba si la base empieza
+        # sin admins (nunca se les quita el rol a usuarios que ya existían).
+        conn = MarkovLabBackend.connection!(users)
+        admins_before = only(LibPQ.columntable(LibPQ.execute(conn, "SELECT count(*) AS n FROM usuarios WHERE rol = 'admin'")).n)
+        try
+            ana = sync_google_user(users, GoogleProfile("it-role-1", "it.role1@example.com", "Ana"))
+            beto = sync_google_user(users, GoogleProfile("it-role-2", "it.role2@example.com", "Beto"))
+            @test ana.role == :user
+            @test find_user(users, ana.id) == ana
+            @test find_user(users, "00000000-0000-4000-8000-000000000000") === nothing
+            @test find_user(users, "not-a-uuid") === nothing
+
+            @test set_user_role(users, ana.id, :admin).role == :admin
+            # Volver a entrar no cambia el rol.
+            @test sync_google_user(users, GoogleProfile("it-role-1", "it.role1@example.com", "Ana L.")).role == :admin
+            if admins_before == 0
+                @test_throws LastAdminError set_user_role(users, ana.id, :user)
+                @test find_user(users, ana.id).role == :admin
+            else
+                @test_skip "the database already had admins; last-admin rule not exercised"
+            end
+            @test set_user_role(users, beto.id, :admin).role == :admin
+            @test set_user_role(users, ana.id, :user).role == :user
+            @test set_user_role(users, "00000000-0000-4000-8000-000000000000", :admin) === nothing
+            @test any(u -> u.id == beto.id && u.role == :admin, list_users(users))
+        finally
+            conn = MarkovLabBackend.connection!(users)
+            LibPQ.execute(conn, "DELETE FROM usuarios WHERE google_sub IN ('it-role-1', 'it-role-2')")
+        end
+
         # Si el servidor corta la conexión (reinicio o inactividad), el siguiente uso reconecta
         # y reintenta una vez, en lugar de fallar el inicio de sesión.
         try

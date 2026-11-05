@@ -58,3 +58,17 @@ y registra la importación (RF-06). Si `bars` está vacío no toca el activo y d
 abstract type PriceRepository end
 
 function save_price_import end
+
+"""
+Lecturas del catálogo para las páginas de admin, que también implementa cada adaptador
+de [`PriceRepository`](@ref):
+
+- `list_assets(repository)`: un `NamedTuple` por activo con `id`, `symbol`, `name`,
+  `market`, `category`, `currency`, `last_synced_at`, `price_rows`, `first_date` y
+  `last_date`, ordenados por mercado y símbolo.
+- `list_imports(repository; limit)`: las últimas importaciones, de la más nueva a la más
+  vieja, con `id`, `source`, `status`, `asset_symbol`, `asset_market`, `saved`, `failed`,
+  `message`, `started_at` y `finished_at`.
+"""
+function list_assets end
+function list_imports end

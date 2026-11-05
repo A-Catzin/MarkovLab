@@ -21,6 +21,7 @@ include("services/analysis.jl")
 include("services/risk.jl")
 include("services/users.jl")
 include("services/prices.jl")
+include("services/admin.jl")
 include("api/Api.jl")
 
 export InsufficientDataError
@@ -37,5 +38,7 @@ export GoogleProfile, AppUser, EmailConflictError, UserRepository, save_google_u
 export InMemoryUserRepository, PostgresUserRepository
 export AssetDetails, PriceRepository, save_price_import, IMPORT_STATUSES
 export PriceImportSummary, import_prices, InMemoryPriceRepository, PostgresPriceRepository
+export USER_ROLES, parse_role, ForbiddenError, LastAdminError, find_user, list_users, set_user_role
+export list_assets, list_imports, require_admin, change_user_role, admin_summary
 
 end # módulo MarkovLabBackend

@@ -12,7 +12,13 @@ El diseño y componentes están documentados en [`LANDING.md`](../documentacion/
 | --- | --- | --- |
 | `/` | `app/page.tsx` | Portada científica con navegación, contexto histórico y simulador interactivo. |
 | `/login` | `app/login/page.tsx` | Inicio de sesión con Google, con un abanico de trayectorias que se dibuja al entrar y sigue corriendo con pulsos de luz. Redirige a `/app` si ya existe sesión activa. |
-| `/app` | `app/app/page.tsx` | Dashboard principal autenticado con acceso a los módulos cuantitativos. |
+| `/app` | `app/app/page.tsx` | Inicio con sesión (cualquier rol): saludo y módulos. El layout `app/app/layout.tsx` exige sesión y pone la navegación. |
+| `/app/carteras` | `app/app/carteras/page.tsx` | Mis carteras: estado vacío por ahora. |
+| `/app/simulador` | `app/app/simulador/page.tsx` | Simulador con la cartera de ejemplo. |
+| `/admin` | `app/admin/page.tsx` | Solo admins (`app/admin/layout.tsx`): resumen de usuarios, activos, precios y última importación. |
+| `/admin/activos` | `app/admin/activos/page.tsx` | Catálogo de activos con precios cargados. |
+| `/admin/importaciones` | `app/admin/importaciones/page.tsx` | Historial de importaciones. |
+| `/admin/usuarios` | `app/admin/usuarios/page.tsx` | Usuarios y cambio de rol (acción de servidor en `actions.ts`). Ver [`ROLES.md`](../documentacion/tecnica/ROLES.md). |
 | `/api/auth/*` | `app/api/auth/[...nextauth]/route.ts` | Endpoints de Auth.js (OAuth sign-in, callbacks, sesión y cierre de sesión). |
 
 ## Subdirectories & Boundaries

@@ -41,7 +41,7 @@ Qué hace en la base, en **una sola transacción** (o se guarda todo o nada):
 
 1. **`activos`:** busca el activo por mercado y símbolo (SRS 7.2). Si no existe lo crea, y si existe actualiza su nombre, categoría y moneda. En ambos casos fija `ultima_sincronizacion` (RF-04).
 2. **`precios_historicos`:** inserta todas las filas en una sola consulta (`unnest` de arreglos) con origen `csv`. Las que ya existen para el mismo activo, fecha y origen se omiten con `ON CONFLICT DO NOTHING`.
-   Si el CSV trae `Adj Close`, se guarda en `cierre_ajustado` (requiere la migración `0002`).
+   Si el CSV trae `Adj Close`, se guarda en `cierre_ajustado` (migración `0002`, aplicada).
 3. **`sincronizaciones`:** registra la importación con su estado (`exitosa`, `parcial` o `fallida`), las filas guardadas y fallidas, y un mensaje con la primera fila inválida (RF-06).
 
 Si la conexión con Supabase se corta a mitad de camino, la transacción se revierte y se reintenta una vez.

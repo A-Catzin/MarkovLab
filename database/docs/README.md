@@ -11,16 +11,16 @@ usuarios ─┬─< carteras ─┬─< posiciones_cartera >── activos ─�
 
 | Tabla | Clave | Qué guarda | Reglas principales |
 |---|---|---|---|
-| `usuarios` | `id` (uuid) | Usuarios que entraron con Google. | `google_sub` único; correo único sin distinguir mayúsculas. |
+| `usuarios` | `id` (uuid) | Usuarios que entraron con Google y su rol (`rol`, migración 0003: `usuario` o `admin`). | `google_sub` único; correo único sin distinguir mayúsculas. |
 | `activos` | `id` (identity) | Activos: símbolo, nombre, mercado, categoría y moneda. | Único por `(mercado, simbolo)`; símbolo en mayúsculas; moneda ISO de 3 letras. El backend guarda el mercado en mayúsculas. |
-| `precios_historicos` | `(activo_id, fecha_operacion, origen)` | Barras OHLCV y, opcional, el cierre ajustado (`cierre_ajustado`, migración 0002). | Precios positivos y finitos; máximo ≥ apertura, mínimo y cierre; mínimo ≤ apertura y cierre. |
+| `precios_historicos` | `(activo_id, fecha_operacion, origen)` | Barras OHLCV y, opcional, el cierre ajustado (`cierre_ajustado`, migración 0002, aplicada). | Precios positivos y finitos; máximo ≥ apertura, mínimo y cierre; mínimo ≤ apertura y cierre. |
 | `sincronizaciones` | `id` (identity) | Una fila por carga de datos. | Estado `en_curso`, `exitosa`, `parcial` o `fallida`; con fecha de fin si y solo si terminó. |
 | `lista_seguimiento` | `(usuario_id, activo_id)` | Activos que sigue cada usuario. | |
 | `carteras` | `id` (uuid) | Carteras de cada usuario. | Capital positivo; estado `borrador`, `activa` o `archivada`; `derivada_de_id` para versiones. |
 | `posiciones_cartera` | `(cartera_id, activo_id)` | Peso de cada activo en una cartera. | Peso entre 0 y 1; la suma = 1 la valida el backend. |
 | `simulaciones` | `id` (uuid) | Corridas Monte Carlo guardadas. | Mismos límites que el backend (1 a 100,000 escenarios, horizonte de 1 a 2,520). |
 
-**Tipos enumerados:** `origen_precio` (`csv`, `api`, `manual`), `estado_cartera` y `estado_sincronizacion`.
+**Tipos enumerados:** `origen_precio` (`csv`, `api`, `manual`), `estado_cartera`, `estado_sincronizacion` y `rol_usuario` (`usuario`, `admin`; migración 0003).
 
 **Fechas:** `creado_en` y `actualizado_en` tienen `now()` por defecto, y en `usuarios`, `activos` y `carteras` el trigger `establecer_actualizado_en` actualiza `actualizado_en` en cada `UPDATE`.
 

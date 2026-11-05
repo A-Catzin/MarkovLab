@@ -1234,30 +1234,93 @@ img {
   margin-top: var(--space-3);
 }
 
-/* ---------- Aplicación (/app) ---------- */
+/* ---------- Aplicación (/app y /admin) ---------- */
 
-.app {
+/* Marco de las páginas con sesión: barra superior con navegación por rol. */
+.shell {
   min-height: 100svh;
   padding: var(--space-3) var(--m) var(--space-6);
 }
 
-.app__top {
+.shell__top {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--surface-2);
 }
 
-.app__account {
+.shell__nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  flex: 1;
+}
+
+.shell__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shell__link {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: var(--step-small);
+  text-decoration: none;
+  transition:
+    background-color var(--t-hover) ease,
+    color var(--t-hover) ease;
+}
+
+.shell__link:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.shell__link[aria-current="page"] {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+/* La sección de admin se separa con una línea y una etiqueta, para que se lea como otro grupo. */
+.shell__admin {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--surface-2);
+}
+
+.shell__badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--field-accent);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.shell__account {
   display: flex;
   align-items: baseline;
   gap: var(--space-3);
   min-width: 0;
+  margin-left: auto;
 }
 
 /* El correo se recorta con puntos suspensivos si no cabe en pantallas chicas. */
-.app__user {
+.shell__email {
   overflow: hidden;
+  max-width: 28ch;
   color: var(--muted);
   font-size: var(--step-small);
   text-overflow: ellipsis;
@@ -1265,7 +1328,7 @@ img {
 }
 
 /* "Salir" es un botón con aspecto de enlace. */
-.app__signout {
+.shell__signout {
   padding: 0;
   border: 0;
   background: none;
@@ -1273,9 +1336,239 @@ img {
   cursor: pointer;
 }
 
+.shell__main {
+  max-width: 1120px;
+  margin-top: var(--space-5);
+}
+
+.shell__main h1 {
+  font-size: var(--step-head);
+}
+
+.shell__lead {
+  margin-top: var(--space-2);
+  max-width: 65ch;
+  color: var(--muted);
+}
+
+.shell__simulator {
+  margin-top: var(--space-4);
+}
+
+/* Métricas del resumen de admin: cifra grande con su etiqueta, en una fila. */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+}
+
+.metrics > div {
+  padding: var(--space-3);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.metrics dt {
+  color: var(--muted);
+  font-size: var(--step-small);
+}
+
+.metrics dd {
+  margin: 0;
+}
+
+.metrics dd:first-of-type {
+  margin-top: var(--space-1);
+  font-family: var(--font-text), Georgia, serif;
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-size: var(--step-head);
+  line-height: 1;
+}
+
+.metrics__note {
+  margin-top: var(--space-1) !important;
+  color: var(--muted);
+  font-size: var(--step-small);
+}
+
+/* Enlaces dentro de métricas y paneles: subrayados para que se lean como enlaces. */
+.metrics__note a,
+.panel a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--muted);
+  text-underline-offset: 3px;
+}
+
+.metrics__note a:hover,
+.panel a:hover {
+  text-decoration-color: var(--accent);
+}
+
+.panel {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.panel h2 {
+  margin-bottom: var(--space-1);
+  font-family: var(--font-text), Georgia, serif;
+  font-size: var(--step-body);
+  font-weight: 600;
+}
+
+/* Tablas de admin: filas separadas por líneas finas y cifras alineadas a la derecha. */
+.table-wrap {
+  margin-top: var(--space-4);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--step-small);
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px var(--space-2);
+  border-bottom: 1px solid var(--surface-2);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.data-table thead th {
+  color: var(--muted);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.data-table tbody th {
+  font-weight: 600;
+}
+
+.data-table .num {
+  text-align: right;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.data-table__message {
+  max-width: 40ch;
+  color: var(--muted);
+}
+
+.data-table__hint {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.data-table__action {
+  text-align: right;
+}
+
+/* Botón secundario para acciones dentro de tablas. */
+.button--quiet {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.button--quiet:hover {
+  background: var(--field-strong);
+}
+
+/* Estado de una importación y rol de un usuario. */
+.status,
+.role {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status--success {
+  background: rgb(95 196 154 / 16%);
+  color: #5fc49a;
+}
+
+.status--partial {
+  background: rgb(230 184 92 / 16%);
+  color: #e6b85c;
+}
+
+.status--failed {
+  background: rgb(240 122 106 / 16%);
+  color: #f07a6a;
+}
+
+.role--user {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.role--admin {
+  background: var(--field-accent);
+  color: var(--ink);
+}
+
+/* Avisos de resultado y de error. */
+.notice {
+  margin-top: var(--space-3);
+  padding: var(--space-2);
+  border: 1px solid rgb(95 196 154 / 40%);
+  border-radius: 6px;
+  background: rgb(95 196 154 / 10%);
+  font-size: var(--step-small);
+}
+
+.notice--error {
+  border-color: rgb(240 122 106 / 45%);
+  background: rgb(240 122 106 / 10%);
+}
+
+/* Estado vacío: qué falta y qué hacer mientras tanto. */
+.empty {
+  margin-top: var(--space-4);
+  max-width: 60ch;
+  padding: var(--space-4);
+  border: 1px dashed var(--surface-2);
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.empty h2 {
+  margin-bottom: var(--space-1);
+  color: var(--ink);
+  font-family: var(--font-text), Georgia, serif;
+  font-size: var(--step-lead);
+  font-weight: 600;
+}
+
+.empty p + p {
+  margin-top: var(--space-1);
+}
+
+.empty__action {
+  margin-top: var(--space-3);
+}
+
+/* Texto solo para lectores de pantalla. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .app__main {
   max-width: 880px;
-  margin-top: var(--space-6);
 }
 
 .app__main h1 {
@@ -1396,6 +1689,58 @@ img {
 /* ---------- Composición en teléfono ---------- */
 
 @media (max-width: 760px) {
+  /* En el teléfono: logo arriba y cada grupo de enlaces en una fila que se desliza de lado. */
+  /* En columna, sin `wrap`: con wrap cada línea mide lo que su contenido más ancho y se desborda. */
+  .shell__top {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+
+  .shell__nav {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    min-width: 0;
+    gap: var(--space-1);
+  }
+
+  .shell__links {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .shell__links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .shell__link {
+    white-space: nowrap;
+  }
+
+  .shell__admin {
+    padding-left: 0;
+    border-left: 0;
+    min-width: 0;
+  }
+
+  /* La fila de enlaces ocupa el resto del ancho y se desliza dentro de él, sin empujar la página. */
+  .shell__admin .shell__links {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .shell__account {
+    margin-left: 0;
+    justify-content: space-between;
+  }
+
+  .shell__main {
+    margin-top: var(--space-4);
+  }
+
   .hero__side,
   .hero__main,
   .hero__figure {

@@ -15,6 +15,9 @@ error_response(err::RequestError) = json(error_body(err.code, err.message); stat
 error_response(err::InsufficientDataError) =
     json(error_body("insufficient_data", sprint(showerror, err)); status=422)
 error_response(err::ArgumentError) = json(error_body("invalid_input", err.msg); status=400)
+error_response(err::ForbiddenError) = json(error_body("forbidden", err.message); status=403)
+error_response(::LastAdminError) =
+    json(error_body("last_admin", "the last admin cannot lose the admin role"); status=409)
 error_response(err::EmailConflictError) =
     json(error_body("email_conflict", "the email belongs to another account"); status=409)
 # Una falla de la base no expone detalles al cliente; el detalle queda en el registro del servidor.
@@ -113,6 +116,31 @@ function require_internal_key(req)
     secure_equals(expected, given) || throw(RequestError(401, "unauthorized", "missing or invalid internal key"))
     return nothing
 end
+
+function configured_prices()
+    prices = PRICES[]
+    prices === nothing && throw(RequestError(503, "not_configured", "the database is not configured"))
+    return prices
+end
+
+not_found(message) = RequestError(404, "not_found", message)
+
+"""
+    require_admin_actor(req, users) -> AppUser
+
+Exige el encabezado `X-Actor-Id` con el id del usuario que navega en Next.js, y que ese
+usuario sea admin según la base (no según su token). Responde 403 si falta o no es admin.
+"""
+require_admin_actor(req, users) = require_admin(users, HTTP.header(req, "X-Actor-Id", nothing))
+
+"""Rol de la API (`"user"`, `"admin"`) a partir del símbolo del dominio."""
+role_value(role::Symbol) = String(role)
+
+user_json(user::AppUser) =
+    Dict("id" => user.id, "email" => user.email, "display_name" => user.display_name, "role" => role_value(user.role))
+
+# Las fechas viajan como texto ISO; `nothing` queda como null.
+iso(value) = value === nothing ? nothing : string(value)
 
 function configured_users()
     users = USERS[]

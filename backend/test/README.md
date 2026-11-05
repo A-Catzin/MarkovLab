@@ -8,6 +8,8 @@ Las pruebas de integración con PostgreSQL (`infrastructure/postgres_*_tests.jl`
 
 ```bash
 docker run -d --rm --name mlab-pg -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:15-alpine
-psql "postgresql://postgres:test@localhost:55432/postgres" -f database/migrations/esquema.sql
+for f in esquema.sql 0002_cierre_ajustado.sql 0003_roles.sql; do
+  psql "postgresql://postgres:test@localhost:55432/postgres" -v ON_ERROR_STOP=1 -f database/migrations/$f
+done
 TEST_DATABASE_URL="postgresql://postgres:test@localhost:55432/postgres" julia --project=backend backend/test/runtests.jl
 ``` Nunca apunte `TEST_DATABASE_URL` a la base real: las pruebas crean y borran datos.

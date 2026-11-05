@@ -40,7 +40,10 @@ Todos los errores devuelven el mismo formato:
 | 400 | `invalid_json` | El cuerpo no es JSON válido. |
 | 400 | `invalid_input` | Falta un campo, tiene otro tipo o viola una regla (pesos, precios, límites). |
 | 401 | `unauthorized` | Ruta interna sin `X-Internal-Key` o con una clave incorrecta. |
+| 403 | `forbidden` | Ruta de admin sin `X-Actor-Id` o con un actor que no es admin según la base. |
+| 404 | `not_found` | El usuario pedido no existe. |
 | 409 | `email_conflict` | El correo ya pertenece a otra cuenta de Google. |
+| 409 | `last_admin` | Se intentó quitar el rol al último admin. |
 | 422 | `insufficient_data` | No hay observaciones suficientes para el cálculo (RF-20). |
 | 500 | `internal_error` | Error inesperado; el detalle se registra en el servidor y no se expone. |
 | 503 | `not_configured` | Falta `INTERNAL_API_KEY` o `DATABASE_URL` para una ruta interna. |
@@ -163,8 +166,28 @@ Requiere el encabezado `X-Internal-Key` con el valor de `INTERNAL_API_KEY`. La c
 Crea el usuario o actualiza al que tiene el mismo `google_sub`. El correo se guarda en minúsculas y un nombre vacío se guarda como `null`.
 
 ```json
-{ "id": "68c8f646-e505-432b-b856-396f04580976", "email": "ana@example.com", "display_name": "Ana López" }
+{ "id": "68c8f646-e505-432b-b856-396f04580976", "email": "ana@example.com", "display_name": "Ana López", "role": "user" }
 ```
+
+Un usuario nuevo entra con rol `user`; volver a entrar no cambia el rol.
+
+### `GET /api/internal/users/{id}`
+
+**Ruta interna.** Devuelve el usuario con el mismo formato (incluido `role`). Next.js la usa para refrescar el rol de la sesión cada minuto. 404 si no existe.
+
+### Rutas internas de admin
+
+Además de `X-Internal-Key`, exigen `X-Actor-Id` con el id del usuario que navega. El backend verifica **en la base** que ese usuario sea admin y, si no, responde 403 `forbidden` sin datos. Detalle en [ROLES.md](ROLES.md).
+
+| Ruta | Respuesta |
+|---|---|
+| `GET /api/internal/admin/summary` | `{ users, admins, assets, price_rows, last_import }`; `last_import` es `null` si no hubo ninguna. |
+| `GET /api/internal/admin/assets` | `{ assets: [{ id, symbol, name, market, category, currency, last_synced_at, price_rows, first_date, last_date }] }` |
+| `GET /api/internal/admin/imports?limit=50` | `{ imports: [{ id, source, status, asset_symbol, asset_market, saved, failed, message, started_at, finished_at }] }`; `limit` entre 1 y 500. |
+| `GET /api/internal/admin/users` | `{ users: [{ id, email, display_name, role }] }` |
+| `PUT /api/internal/admin/users/{id}/role` | Cuerpo `{ "role": "user" | "admin" }`. Devuelve el usuario actualizado. Errores: 400 rol inválido, 404 usuario inexistente y 409 `last_admin`. |
+
+Las listas van dentro de un objeto (`{ "assets": [...] }`) para poder agregar paginación sin romper el contrato. Las fechas con hora van en ISO UTC (`2026-11-04T19:13:07Z`) y las fechas de precios como `YYYY-MM-DD`.
 
 Errores: `401 unauthorized`, `400 invalid_json` o `invalid_input`, `409 email_conflict`, `503 not_configured` o `database_unavailable`.
 

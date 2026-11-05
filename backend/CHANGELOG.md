@@ -4,6 +4,14 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Agregado — 2026-11-04: roles de usuario y admin
+
+- `AppUser.role` (`:user` o `:admin`); `find_user`, `list_users` y `set_user_role` en el puerto de usuarios (en memoria y PostgreSQL). Volver a entrar no cambia el rol.
+- `src/services/admin.jl`: `require_admin` (verifica el rol en la base), `change_user_role` (nunca deja el sistema sin admins: `LastAdminError`) y `admin_summary`.
+- `list_assets` y `list_imports` en el puerto de precios, para las páginas de admin.
+- Rutas internas: `GET /api/internal/users/{id}` y `/api/internal/admin/{summary,assets,imports,users}`, más `PUT /api/internal/admin/users/{id}/role`. Exigen `X-Actor-Id` de un admin. Errores nuevos: `forbidden` (403), `not_found` (404) y `last_admin` (409).
+- Migración `database/migrations/0003_roles.sql`. Documentación en [`ROLES.md`](../documentacion/tecnica/ROLES.md).
+
 ### Agregado — 2026-11-04: cierre ajustado y esquema real en el repositorio
 
 - `PriceBar` acepta el cierre ajustado opcional (`adj_close`), y `parse_prices_csv` lee la columna `Adj Close` cuando existe (mapeable con `columns["adj_close"]`).

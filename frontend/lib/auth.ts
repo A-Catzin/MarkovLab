@@ -1,22 +1,21 @@
 import "server-only";
 import type { NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth";
+import { cache } from "react";
 import GoogleProvider from "next-auth/providers/google";
+import { BackendError, backendFetch, type BackendUser, type Role } from "./backend";
 
 /**
  * Configuración de Auth.js (next-auth v4). Google hace el inicio de sesión; al entrar,
  * el servidor de Next avisa al backend Julia, que guarda o actualiza al usuario en
- * PostgreSQL. La sesión vive en una cookie cifrada (JWT) con el id del usuario en la base.
+ * PostgreSQL. La sesión vive en una cookie cifrada (JWT) con el id del usuario en la base y
+ * su rol (`user` o `admin`). Pasado un minuto desde el inicio de sesión, el rol se vuelve a
+ * leer de la base en cada carga de página: sin SessionProvider, el token renovado no se
+ * vuelve a escribir en la cookie, así que la lectura se repite (una vez por solicitud).
  *
  * Variables de entorno (solo del servidor): GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
  * NEXTAUTH_SECRET, NEXTAUTH_URL, BACKEND_URL e INTERNAL_API_KEY.
  */
-
-interface BackendUser {
-  id: string;
-  email: string;
-  display_name: string | null;
-}
 
 /** Perfil que entrega Google en el token de identidad (OpenID Connect). */
 interface GoogleOidcProfile {
@@ -26,8 +25,9 @@ interface GoogleOidcProfile {
   name?: string;
 }
 
-// Margen para el primer llamado después de arrancar el backend (conexión al pooler de Supabase).
-const BACKEND_TIMEOUT_MS = 10_000;
+// Cada cuánto se vuelve a leer el rol de la base para la sesión. Solo afecta la navegación:
+// los datos de admin los vuelve a verificar el backend en cada solicitud.
+const ROLE_REFRESH_MS = 60_000;
 
 /**
  * Guarda o actualiza al usuario en el backend (POST /api/internal/users/google).
@@ -35,28 +35,27 @@ const BACKEND_TIMEOUT_MS = 10_000;
  * abre sesión, para no tener sesiones de usuarios que no existen en la base.
  */
 async function syncUser(profile: { sub: string; email: string; name: string | null }): Promise<BackendUser | null> {
-  const baseUrl = process.env.BACKEND_URL;
-  const key = process.env.INTERNAL_API_KEY;
-  if (!baseUrl || !key) {
-    console.error("[auth] BACKEND_URL o INTERNAL_API_KEY no están configuradas");
+  try {
+    return await backendFetch<BackendUser>("/api/internal/users/google", {
+      method: "POST",
+      body: { google_sub: profile.sub, email: profile.email, name: profile.name },
+    });
+  } catch (error) {
+    console.error("[auth] no se pudo guardar el usuario en el backend:", error instanceof BackendError ? `${error.status} ${error.code}` : error);
     return null;
   }
+}
+
+/**
+ * Rol actual del usuario según la base, o `null` si ya no existe. Si el backend falla, se
+ * conserva el rol anterior: un corte momentáneo no debe cerrar la sesión.
+ */
+async function currentRole(userId: string, fallback: Role): Promise<Role | null> {
   try {
-    const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/internal/users/google`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Internal-Key": key },
-      body: JSON.stringify({ google_sub: profile.sub, email: profile.email, name: profile.name }),
-      cache: "no-store",
-      signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
-    });
-    if (!response.ok) {
-      console.error(`[auth] el backend rechazó el usuario: HTTP ${response.status}`);
-      return null;
-    }
-    return (await response.json()) as BackendUser;
+    return (await backendFetch<BackendUser>(`/api/internal/users/${encodeURIComponent(userId)}`)).role;
   } catch (error) {
-    console.error("[auth] no se pudo contactar al backend", error);
-    return null;
+    if (error instanceof BackendError && error.status === 404) return null;
+    return fallback;
   }
 }
 
@@ -86,22 +85,53 @@ export const authOptions: NextAuthOptions = {
       user.id = saved.id;
       user.email = saved.email;
       user.name = saved.display_name;
+      user.role = saved.role;
       return true;
     },
-    /** Al entrar, guarda en el token el id del usuario en la base. */
+    /**
+     * Al entrar, guarda en el token el id y el rol del usuario en la base. Después, cada
+     * minuto vuelve a leer el rol, para que un ascenso o una baja se reflejen sin volver a
+     * entrar. Si el usuario ya no existe, el token queda sin id y la sesión se trata como cerrada.
+     */
     async jwt({ token, user }) {
-      if (user) token.userId = user.id;
+      if (user) {
+        token.userId = user.id;
+        token.role = user.role ?? "user";
+        token.roleCheckedAt = Date.now();
+        return token;
+      }
+      if (typeof token.userId === "string" && Date.now() - (token.roleCheckedAt ?? 0) > ROLE_REFRESH_MS) {
+        const role = await currentRole(token.userId, token.role ?? "user");
+        if (role === null) {
+          delete token.userId;
+          delete token.role;
+        } else {
+          token.role = role;
+        }
+        token.roleCheckedAt = Date.now();
+      }
       return token;
     },
-    /** Expone el id de la base en la sesión que leen las páginas. */
+    /** Expone el id de la base y el rol en la sesión que leen las páginas. */
     async session({ session, token }) {
-      if (session.user && typeof token.userId === "string") session.user.id = token.userId;
+      if (session.user && typeof token.userId === "string") {
+        session.user.id = token.userId;
+        session.user.role = token.role ?? "user";
+      }
       return session;
     },
   },
 };
 
-/** Sesión del usuario actual en componentes de servidor, o `null` si no entró. */
-export function getSession() {
-  return getServerSession(authOptions);
-}
+/**
+ * Sesión del usuario actual en componentes de servidor, o `null` si no entró. Una sesión
+ * sin id (el usuario ya no existe en la base) cuenta como cerrada en todas partes: si /login
+ * y /app la juzgaran distinto, se redirigirían entre sí sin fin.
+ *
+ * `cache` hace que el layout y la página de una misma solicitud compartan una sola lectura
+ * (y una sola consulta del rol al backend).
+ */
+export const getSession = cache(async () => {
+  const session = await getServerSession(authOptions);
+  return session?.user?.id ? session : null;
+});

@@ -35,15 +35,65 @@ struct GoogleProfile
 end
 
 """
-    AppUser(id, email, display_name)
+Roles de la aplicación: `:user` (todo el que entra con Google; en la base, `usuario`) y
+`:admin` (además administra activos, importaciones y usuarios).
+"""
+const USER_ROLES = (:user, :admin)
 
-Usuario guardado en la base (tabla `usuarios`). `id` es el UUID en texto.
+# Un UUID en texto (8-4-4-4-12 hexadecimales), para no mandar a la base ids mal formados.
+const UUID_PATTERN = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+is_uuid(value) = value isa AbstractString && occursin(UUID_PATTERN, value)
+
+"""
+    AppUser(id, email, display_name, role=:user)
+
+Usuario guardado en la base (tabla `usuarios`). `id` es el UUID en texto y `role` uno de
+[`USER_ROLES`](@ref).
 """
 struct AppUser
     id::String
     email::String
     display_name::Union{Nothing,String}
+    role::Symbol
+
+    function AppUser(id::AbstractString, email::AbstractString, display_name::Union{Nothing,AbstractString},
+                     role::Symbol=:user)
+        role in USER_ROLES || throw(ArgumentError("role must be one of $(join(USER_ROLES, ", ")), got $role"))
+        return new(String(id), String(email), display_name === nothing ? nothing : String(display_name), role)
+    end
 end
+
+"""
+    parse_role(value) -> Symbol
+
+Convierte el rol que llega por la API (`"user"` o `"admin"`) en un símbolo de
+[`USER_ROLES`](@ref); cualquier otro valor lanza `ArgumentError`.
+"""
+function parse_role(value::AbstractString)
+    role = Symbol(lowercase(strip(value)))
+    role in USER_ROLES || throw(ArgumentError("role must be one of $(join(USER_ROLES, ", "))"))
+    return role
+end
+
+"""
+    ForbiddenError(message)
+
+Quien hace la solicitud no tiene permiso: no existe o no es admin.
+"""
+struct ForbiddenError <: Exception
+    message::String
+end
+
+Base.showerror(io::IO, err::ForbiddenError) = print(io, "ForbiddenError: ", err.message)
+
+"""
+    LastAdminError()
+
+Se intentó quitar el rol al último admin: el sistema siempre conserva al menos uno.
+"""
+struct LastAdminError <: Exception end
+
+Base.showerror(io::IO, ::LastAdminError) = print(io, "LastAdminError: the last admin cannot lose the admin role")
 
 """
     EmailConflictError(email)
@@ -58,11 +108,23 @@ Base.showerror(io::IO, err::EmailConflictError) =
     print(io, "EmailConflictError: the email ", err.email, " belongs to another account")
 
 """
-Puerto de persistencia de usuarios. Cada adaptador implementa
-`save_google_user(repository, profile::GoogleProfile) -> AppUser`, que crea el usuario
-o actualiza el que tiene el mismo `subject`, y lanza `EmailConflictError` si el correo
-ya pertenece a otro usuario.
+Puerto de persistencia de usuarios. Cada adaptador implementa:
+
+- `save_google_user(repository, profile::GoogleProfile) -> AppUser`: crea el usuario
+  (con rol `:user`) o actualiza el que tiene el mismo `subject` sin tocar su rol. Lanza
+  `EmailConflictError` si el correo ya pertenece a otro usuario.
+- `find_user(repository, id) -> Union{AppUser,Nothing}`: el usuario con ese id, o
+  `nothing` si no existe o el id no es un UUID.
+- `list_users(repository) -> Vector{AppUser}`: todos, del más antiguo al más nuevo.
+- `set_user_role(repository, id, role; actor_id=nothing) -> Union{AppUser,Nothing}`: cambia
+  el rol en una operación atómica; lanza `LastAdminError` si dejaría el sistema sin admins y
+  devuelve `nothing` si el usuario no existe. Con `actor_id`, dentro de la misma operación
+  verifica que el actor siga siendo admin (`ForbiddenError` si no), para que nadie actúe
+  con un rol que acaba de perder en un cambio simultáneo.
 """
 abstract type UserRepository end
 
 function save_google_user end
+function find_user end
+function list_users end
+function set_user_role end

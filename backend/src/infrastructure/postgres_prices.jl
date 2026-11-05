@@ -51,6 +51,60 @@ const INSERT_SYNC_SQL = """
     VALUES ('csv'::origen_precio, \$1, \$2::estado_sincronizacion, \$3, \$4, \$5, \$6, now())
     """
 
+# Lecturas para las páginas de admin. Las fechas viajan como texto ISO (UTC) para no
+# depender de la conversión de zonas horarias del cliente.
+const LIST_ASSETS_SQL = """
+    SELECT a.id, a.simbolo, a.nombre, a.mercado, a.categoria, a.moneda,
+           to_char(a.ultima_sincronizacion AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS ultima_sincronizacion,
+           count(p.fecha_operacion) AS filas,
+           min(p.fecha_operacion)::text AS desde,
+           max(p.fecha_operacion)::text AS hasta
+    FROM activos a
+    LEFT JOIN precios_historicos p ON p.activo_id = a.id
+    GROUP BY a.id
+    ORDER BY a.mercado, a.simbolo
+    """
+
+const LIST_IMPORTS_SQL = """
+    SELECT s.id, s.origen::text AS origen, s.estado::text AS estado, a.simbolo, a.mercado,
+           s.registros_guardados, s.registros_fallidos, s.mensaje_error,
+           to_char(s.iniciado_en AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS iniciado_en,
+           to_char(s.finalizado_en AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS finalizado_en
+    FROM sincronizaciones s
+    LEFT JOIN activos a ON a.id = s.activo_id
+    ORDER BY s.iniciado_en DESC, s.id DESC
+    LIMIT \$1
+    """
+
+const STATUS_FROM_DB = Dict(value => key for (key, value) in SYNC_STATUS_VALUES)
+
+# `missing` de la base → `nothing` del dominio.
+orelse(value) = ismissing(value) ? nothing : value
+
+function rows_from(result)
+    try
+        table = LibPQ.columntable(result)
+        return [NamedTuple{keys(table)}(map(column -> column[i], values(table))) for i in eachindex(first(table))]
+    finally
+        close(result)
+    end
+end
+
+function list_assets(prices::PostgresPriceRepository)
+    rows = with_connection(conn -> rows_from(LibPQ.execute(conn, LIST_ASSETS_SQL; throw_error=true)), prices.db)
+    return [(id=Int(r.id), symbol=r.simbolo, name=r.nombre, market=r.mercado, category=r.categoria,
+             currency=strip(r.moneda), last_synced_at=orelse(r.ultima_sincronizacion), price_rows=Int(r.filas),
+             first_date=orelse(r.desde), last_date=orelse(r.hasta)) for r in rows]
+end
+
+function list_imports(prices::PostgresPriceRepository; limit::Integer=50)
+    rows = with_connection(conn -> rows_from(LibPQ.execute(conn, LIST_IMPORTS_SQL, [Int(limit)]; throw_error=true)), prices.db)
+    return [(id=Int(r.id), source=Symbol(r.origen), status=STATUS_FROM_DB[r.estado], asset_symbol=orelse(r.simbolo),
+             asset_market=orelse(r.mercado), saved=Int(r.registros_guardados), failed=Int(r.registros_fallidos),
+             message=orelse(r.mensaje_error), started_at=orelse(r.iniciado_en), finished_at=orelse(r.finalizado_en))
+            for r in rows]
+end
+
 # Arreglo literal de PostgreSQL ({a,b,NULL}) a partir de valores que no necesitan comillas:
 # fechas ISO y números; `nothing` se vuelve NULL. `repr` de un Float64 conserva todos sus dígitos.
 pg_array_item(value) = value === nothing ? "NULL" : value isa AbstractFloat ? repr(Float64(value)) : string(value)

@@ -1,27 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { SignOutButton } from "@/components/auth/AuthButtons";
-import { Wordmark } from "@/components/brand/Wordmark";
-import { getSession } from "@/lib/auth";
+import { requireUser } from "@/lib/guards";
 
 export const metadata: Metadata = {
   title: "Inicio · MarkovLab",
   description: "Página principal de la aplicación de MarkovLab.",
 };
 
-/** Módulos de la aplicación según el SRS; solo el simulador está disponible por ahora. */
+/** Módulos de la aplicación según el SRS. Los que tienen `href` ya tienen página. */
 const MODULES = [
   {
     name: "Simulador de riesgo",
     description: "Reparte tu dinero entre cuatro empresas de ejemplo y mira 10,000 futuros posibles.",
-    href: "/#simulador",
+    href: "/app/simulador",
     status: "Disponible",
   },
   {
     name: "Mis carteras",
     description: "Crea carteras con tus propios activos y pesos, y guarda varias versiones.",
-    status: "Próximamente",
+    href: "/app/carteras",
+    status: "En construcción",
   },
   {
     name: "Optimización",
@@ -36,24 +34,15 @@ const MODULES = [
 ] as const;
 
 /**
- * Página principal de la aplicación. Exige sesión: sin ella, redirige a /login.
+ * Página principal de la aplicación. La sesión y el marco (logo, navegación y "Salir")
+ * los pone el layout de /app.
  */
 export default async function AppHomePage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  const firstName = session.user.name?.split(" ")[0];
+  const user = await requireUser();
+  const firstName = user.name?.split(" ")[0];
 
   return (
-    <div className="app">
-      <header className="app__top">
-        <Wordmark href="/app" />
-        <nav className="app__account" aria-label="Cuenta">
-          <span className="app__user">{session.user.email}</span>
-          <SignOutButton className="link app__signout" />
-        </nav>
-      </header>
-
-      <main className="app__main">
+    <div className="app__main">
         <h1>{firstName ? `Hola, ${firstName}` : "Tu laboratorio"}</h1>
         <p className="app__lead">
           Desde aquí vas a crear carteras, simular su riesgo y revisar tus resultados. Empieza por el simulador mientras
@@ -62,10 +51,10 @@ export default async function AppHomePage() {
 
         <ul className="app__modules" aria-label="Módulos">
           {MODULES.map((module) => {
-            const available = module.status === "Disponible";
+            const available = "href" in module;
             const body = (
               <>
-                <span className={`app__status ${available ? "app__status--on" : ""}`}>{module.status}</span>
+                <span className={`app__status ${module.status === "Disponible" ? "app__status--on" : ""}`}>{module.status}</span>
                 <h2>{module.name}</h2>
                 <p>{module.description}</p>
               </>
@@ -85,7 +74,6 @@ export default async function AppHomePage() {
             );
           })}
         </ul>
-      </main>
     </div>
   );
 }

@@ -39,3 +39,28 @@ function save_price_import(prices::InMemoryPriceRepository, symbol, details::Ass
         return (asset_id, inserted)
     end
 end
+
+function list_assets(prices::InMemoryPriceRepository)
+    lock(prices.lock) do
+        rows = map(collect(prices.assets)) do ((market, symbol), asset)
+            dates = sort!([key[2] for key in keys(prices.bars) if key[1] == asset.id])
+            (id=asset.id, symbol=symbol, name=asset.details.name, market=market,
+             category=asset.details.category, currency=asset.details.currency, last_synced_at=nothing,
+             price_rows=length(dates), first_date=isempty(dates) ? nothing : first(dates),
+             last_date=isempty(dates) ? nothing : last(dates))
+        end
+        return sort!(rows; by=row -> (row.market, row.symbol))
+    end
+end
+
+function list_imports(prices::InMemoryPriceRepository; limit::Integer=50)
+    lock(prices.lock) do
+        symbols = Dict(asset.id => (symbol, market) for ((market, symbol), asset) in prices.assets)
+        rows = map(enumerate(prices.syncs)) do (index, sync)
+            symbol, market = sync.asset_id === nothing ? (nothing, nothing) : symbols[sync.asset_id]
+            (id=index, source=:csv, status=sync.status, asset_symbol=symbol, asset_market=market,
+             saved=sync.saved, failed=sync.failed, message=sync.message, started_at=nothing, finished_at=nothing)
+        end
+        return first(reverse!(rows), limit)
+    end
+end

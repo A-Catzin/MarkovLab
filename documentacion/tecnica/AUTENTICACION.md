@@ -21,7 +21,7 @@ Navegador            Next.js (Auth.js)                  Google            Julia 
 2. Google vuelve a `/api/auth/callback/google`. Auth.js cambia el código por los tokens y valida el token de identidad.
 3. El callback `signIn` (`frontend/lib/auth.ts`) exige `email_verified` y llama al backend. Si el backend no responde, responde con error o tarda más de 5 s, **no se abre sesión** y `/login` muestra el error.
 4. El backend guarda o actualiza al usuario por `google_sub` y devuelve su `id`.
-5. Auth.js guarda ese `id` en una cookie de sesión cifrada (JWT, 30 días por defecto). Las páginas lo leen con `getSession()`.
+5. Auth.js guarda ese `id` y el rol (`user` o `admin`) en una cookie de sesión cifrada (JWT, 30 días por defecto). Pasado el primer minuto, el rol se vuelve a leer de la base en cada carga de página (`GET /api/internal/users/{id}`, una vez por solicitud), porque sin `SessionProvider` el token renovado no se reescribe en la cookie. Las páginas lo leen con `getSession()`; los roles y las páginas de cada uno están en [ROLES.md](ROLES.md).
 
 ## Rutas y protección
 

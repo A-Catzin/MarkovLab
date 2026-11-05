@@ -58,6 +58,17 @@ using MarkovLabBackend
             @test occursin("1 invalid rows", first(syncs.mensaje_error))
             @test all(!ismissing, syncs.finalizado_en)
 
+            # Lecturas de las páginas de admin.
+            listed = only(filter(a -> a.id == first_run.asset_id, list_assets(prices)))
+            @test listed.symbol == "ITST" && listed.market == "TEST-MKT" && listed.currency == "USD"
+            @test listed.price_rows == 2
+            @test listed.first_date == "2024-06-10" && listed.last_date == "2024-06-11"
+            @test listed.last_synced_at isa String
+            recent = list_imports(prices; limit=2)
+            @test length(recent) == 2
+            @test all(i -> i.asset_symbol == "ITST" && i.status == :partial && i.source == :csv, recent)
+            @test endswith(first(recent).started_at, "Z")
+
             # Un archivo sin filas válidas queda como fallida y no crea activos.
             failed = import_prices(prices, IOBuffer("Date,Open,High,Low,Close,Volume,Symbol\n2024-06-13,1,0.5,1,1,1,NOPE\n"), details)
             @test failed.status == :failed && failed.asset_id === nothing
