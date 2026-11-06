@@ -13,6 +13,11 @@ Referencia del importador de precios históricos del backend. Cubre RF-02 (impor
 
 ## Cargar un CSV a la base
 
+Hay dos formas, y las dos usan el mismo servicio (`import_prices`):
+
+- **Desde la app (admins):** en `/admin/importaciones`, con el formulario "Importar un CSV". Se elige el archivo (hasta 5 MB) y se completan los mismos datos que en el script. El resultado aparece debajo: filas guardadas, ya guardadas e inválidas, con su línea. Si hay error, el formulario conserva lo escrito.
+- **Desde la terminal,** con el script de abajo.
+
 Un archivo por activo, con el formato de [`diccionario-datos.md`](../datos/diccionario-datos.md). El CSV no trae el nombre, el mercado, la categoría ni la moneda del activo, así que se pasan como opciones:
 
 ```bash
@@ -146,7 +151,6 @@ Los números de línea cuentan desde 1 e incluyen el encabezado y las líneas va
 
 ## Límites actuales
 
-- La carga es desde la terminal; todavía no hay endpoint ni pantalla para subir un CSV.
 - Un archivo por activo.
 - `Dividends` y `Stock Splits` se ignoran por ahora.
 

@@ -12,10 +12,13 @@ using MarkovLabBackend
     include("services/users_tests.jl")
     include("services/prices_import_tests.jl")
     include("services/roles_tests.jl")
+    include("services/portfolios_tests.jl")
     include("api/api_tests.jl")
     include("api/users_api_tests.jl")
     include("api/admin_api_tests.jl")
+    include("api/portfolios_api_tests.jl")
     include("infrastructure/csv_prices_tests.jl")
     include("infrastructure/postgres_users_tests.jl")
     include("infrastructure/postgres_prices_tests.jl")
+    include("infrastructure/postgres_portfolios_tests.jl")
 end

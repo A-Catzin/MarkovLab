@@ -1387,6 +1387,12 @@ img {
   line-height: 1;
 }
 
+/* Variante para valores con texto (montos con moneda, estados): cifra más chica. */
+.metrics--compact dd:first-of-type {
+  font-size: var(--step-lead);
+  line-height: 1.2;
+}
+
 .metrics__note {
   margin-top: var(--space-1) !important;
   color: var(--muted);
@@ -1557,6 +1563,273 @@ img {
   margin-top: var(--space-3);
 }
 
+/* Encabezado de página con el título y una acción a la derecha. */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* Migas de pan: de dónde viene la página. */
+.crumbs {
+  margin-bottom: var(--space-1);
+  color: var(--muted);
+  font-size: var(--step-small);
+}
+
+.crumbs a {
+  color: var(--muted);
+}
+
+.section-title {
+  margin-top: var(--space-5);
+  font-family: var(--font-text), Georgia, serif;
+  font-size: var(--step-lead);
+  font-weight: 600;
+}
+
+.panel__help {
+  max-width: 70ch;
+  color: var(--muted);
+  font-size: var(--step-small);
+}
+
+/* Campo de formulario: etiqueta arriba y control debajo, con el mismo estilo que el simulador. */
+.field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  font-size: var(--step-small);
+}
+
+.field > span {
+  color: var(--muted);
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--surface-2);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--step-body);
+}
+
+.field input[type="file"] {
+  padding: 9px 12px;
+  font-size: var(--step-small);
+}
+
+.field input:focus-visible,
+.field select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+/* Lista de carteras: una tarjeta por cartera, con nombre, capital y sus activos. */
+.pf-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pf-card {
+  display: grid;
+  gap: var(--space-1);
+  height: 100%;
+  padding: var(--space-3);
+  border-radius: 8px;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color var(--t-hover) ease;
+}
+
+.pf-card:hover,
+.pf-card:focus-visible {
+  background: var(--surface-2);
+}
+
+.pf-card__name {
+  font-family: var(--font-text), Georgia, serif;
+  font-size: var(--step-lead);
+  font-weight: 600;
+}
+
+.pf-card__capital {
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.pf-card__meta {
+  color: var(--muted);
+  font-size: var(--step-small);
+}
+
+/* Formulario de nueva cartera. */
+.pf-form {
+  max-width: 760px;
+  margin-top: var(--space-4);
+}
+
+.pf-form__fields {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.pf-form__positions {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3);
+  border: 1px solid var(--surface-2);
+  border-radius: 8px;
+}
+
+.pf-form__positions legend {
+  padding: 0 var(--space-1);
+  font-weight: 600;
+}
+
+.pf-row {
+  display: grid;
+  grid-template-columns: 1fr 8rem auto;
+  align-items: end;
+  gap: var(--space-2);
+}
+
+.pf-row__remove {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--step-small);
+  cursor: pointer;
+}
+
+.pf-row__remove:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.pf-row__remove:disabled {
+  visibility: hidden;
+}
+
+.pf-form__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.pf-form__tool {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--step-small);
+  cursor: pointer;
+}
+
+.pf-form__tool:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.pf-form__total {
+  margin-left: auto;
+  color: #e6b85c;
+  font-size: var(--step-small);
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.pf-form__total--ok {
+  color: #5fc49a;
+}
+
+.pf-form__submit {
+  margin-top: var(--space-3);
+}
+
+.pf-form__submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Barra de composición: un tramo por activo, del ancho de su peso. */
+.pf-bar {
+  display: flex;
+  height: 14px;
+  margin: var(--space-2) 0 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.pf-bar__part {
+  height: 100%;
+}
+
+.pf-bar__part + .pf-bar__part {
+  box-shadow: inset 2px 0 0 var(--surface);
+}
+
+.pf-bar__part--0 { background: #5a9bfc; }
+.pf-bar__part--1 { background: #5fc49a; }
+.pf-bar__part--2 { background: #e6b85c; }
+.pf-bar__part--3 { background: #b98cf2; }
+.pf-bar__part--4 { background: #f07a6a; }
+.pf-bar__part--5 { background: #8891a1; }
+
+.pf-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 999px;
+}
+
+.pf-delete {
+  margin-top: var(--space-4);
+}
+
+/* Subida de CSV en /admin/importaciones. */
+.import-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.import-form__file {
+  grid-column: 1 / -1;
+}
+
+.import-form__issues {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-3);
+  color: var(--muted);
+}
+
 /* Texto solo para lectores de pantalla. */
 .sr-only {
   position: absolute;
@@ -1689,6 +1962,26 @@ img {
 /* ---------- Composición en teléfono ---------- */
 
 @media (max-width: 760px) {
+  /* Formularios de una columna en el teléfono. */
+  .pf-form__fields,
+  .import-form {
+    grid-template-columns: 1fr;
+  }
+
+  .pf-row {
+    grid-template-columns: 1fr 6rem;
+  }
+
+  .pf-row__remove {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-height: 32px;
+  }
+
+  .pf-form__total {
+    margin-left: 0;
+  }
+
   /* En el teléfono: logo arriba y cada grupo de enlaces en una fila que se desliza de lado. */
   /* En columna, sin `wrap`: con wrap cada línea mide lo que su contenido más ancho y se desborda. */
   .shell__top {

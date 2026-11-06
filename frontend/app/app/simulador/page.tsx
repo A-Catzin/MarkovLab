@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RevealOnScroll } from "@/components/landing/RevealOnScroll";
 import { Simulator } from "@/components/landing/Simulator";
 import { runDemo } from "@/lib/demo";
 import { DEFAULT_REQUEST } from "@/lib/landing-data";
@@ -24,6 +25,8 @@ export default function SimulatorPage() {
       <div className="shell__simulator">
         <Simulator initial={initial} />
       </div>
+      {/* El simulador viene de la landing: sus bloques [data-reveal] están ocultos hasta que esto los muestra. */}
+      <RevealOnScroll />
     </>
   );
 }

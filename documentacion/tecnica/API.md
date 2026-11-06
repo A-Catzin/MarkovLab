@@ -175,6 +175,26 @@ Un usuario nuevo entra con rol `user`; volver a entrar no cambia el rol.
 
 **Ruta interna.** Devuelve el usuario con el mismo formato (incluido `role`). Next.js la usa para refrescar el rol de la sesión cada minuto. 404 si no existe.
 
+### Rutas internas de usuario
+
+Exigen `X-Internal-Key` y `X-Actor-Id` con el id de un usuario que exista en la base (si no, 403 `forbidden`). Cada usuario ve y modifica **solo sus carteras**: la cartera de otro responde 404, como si no existiera. Detalle en [CARTERAS.md](CARTERAS.md).
+
+| Ruta | Respuesta |
+|---|---|
+| `GET /api/internal/assets` | `{ assets: [...] }` con el mismo formato que la ruta de admin: el catálogo para elegir activos. |
+| `GET /api/internal/portfolios` | `{ portfolios: [cartera, ...] }`, de la más nueva a la más vieja. |
+| `POST /api/internal/portfolios` | Cuerpo `{ name, capital, currency, positions: [{ asset_id, weight }] }`, con pesos como fracciones que suman 1. Responde **201** con la cartera. Errores: 400 `invalid_input` (nombre, capital, moneda, pesos, activos repetidos o inexistentes). |
+| `GET /api/internal/portfolios/{id}` | La cartera, o 404 si no existe o es de otro usuario. |
+| `DELETE /api/internal/portfolios/{id}` | `{ deleted: id }`, o 404 en los mismos casos. |
+
+Cada cartera tiene esta forma:
+
+```json
+{ "id": "e295e3ff-…", "name": "Tecnología", "capital": 10000.0, "currency": "USD", "start_date": "2026-11-05",
+  "status": "draft", "created_at": "2026-11-05T18:26:01Z",
+  "positions": [{ "asset_id": 1, "symbol": "AAPL", "market": "NASDAQ", "name": "Apple", "weight": 0.6 }] }
+```
+
 ### Rutas internas de admin
 
 Además de `X-Internal-Key`, exigen `X-Actor-Id` con el id del usuario que navega. El backend verifica **en la base** que ese usuario sea admin y, si no, responde 403 `forbidden` sin datos. Detalle en [ROLES.md](ROLES.md).
@@ -185,6 +205,7 @@ Además de `X-Internal-Key`, exigen `X-Actor-Id` con el id del usuario que naveg
 | `GET /api/internal/admin/assets` | `{ assets: [{ id, symbol, name, market, category, currency, last_synced_at, price_rows, first_date, last_date }] }` |
 | `GET /api/internal/admin/imports?limit=50` | `{ imports: [{ id, source, status, asset_symbol, asset_market, saved, failed, message, started_at, finished_at }] }`; `limit` entre 1 y 500. |
 | `GET /api/internal/admin/users` | `{ users: [{ id, email, display_name, role }] }` |
+| `POST /api/internal/admin/prices/import` | Cuerpo `{ csv, name, market, category, currency, symbol? }`, con el CSV como texto (hasta 5 MB). Devuelve `{ symbol, asset_id, status, valid_rows, inserted, already_stored, invalid_count, invalid: [{ line, message }], file_duplicates_count }`, con un máximo de 20 filas inválidas detalladas. 400 si el archivo está vacío, trae varios símbolos o le faltan columnas. |
 | `PUT /api/internal/admin/users/{id}/role` | Cuerpo `{ "role": "user" | "admin" }`. Devuelve el usuario actualizado. Errores: 400 rol inválido, 404 usuario inexistente y 409 `last_admin`. |
 
 Las listas van dentro de un objeto (`{ "assets": [...] }`) para poder agregar paginación sin romper el contrato. Las fechas con hora van en ISO UTC (`2026-11-04T19:13:07Z`) y las fechas de precios como `YYYY-MM-DD`.

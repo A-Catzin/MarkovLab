@@ -34,7 +34,7 @@ export class BackendError extends Error {
 const BACKEND_TIMEOUT_MS = 10_000;
 
 interface BackendRequest {
-  method?: "GET" | "POST" | "PUT";
+  method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
   /** Id del usuario que hace la acción; obligatorio en las rutas de admin. */
   actorId?: string;

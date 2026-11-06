@@ -11,17 +11,21 @@ include("domain/portfolio.jl")
 include("domain/simulation.jl")
 include("domain/users.jl")
 include("domain/assets.jl")
+include("domain/saved_portfolios.jl")
 include("infrastructure/csv_prices.jl")
 include("infrastructure/memory_users.jl")
 include("infrastructure/memory_prices.jl")
+include("infrastructure/memory_portfolios.jl")
 include("infrastructure/postgres.jl")
 include("infrastructure/postgres_users.jl")
 include("infrastructure/postgres_prices.jl")
+include("infrastructure/postgres_portfolios.jl")
 include("services/analysis.jl")
 include("services/risk.jl")
 include("services/users.jl")
 include("services/prices.jl")
 include("services/admin.jl")
+include("services/portfolios.jl")
 include("api/Api.jl")
 
 export InsufficientDataError
@@ -40,5 +44,9 @@ export AssetDetails, PriceRepository, save_price_import, IMPORT_STATUSES
 export PriceImportSummary, import_prices, InMemoryPriceRepository, PostgresPriceRepository
 export USER_ROLES, parse_role, ForbiddenError, LastAdminError, find_user, list_users, set_user_role
 export list_assets, list_imports, require_admin, change_user_role, admin_summary
+export PositionDraft, PortfolioDraft, SavedPosition, SavedPortfolio, PortfolioRepository
+export create_portfolio, list_portfolios, get_portfolio, delete_portfolio
+export InMemoryPortfolioRepository, PostgresPortfolioRepository, require_user
+export create_user_portfolio, list_user_portfolios, get_user_portfolio, delete_user_portfolio
 
 end # módulo MarkovLabBackend

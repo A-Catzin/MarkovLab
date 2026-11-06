@@ -13,11 +13,13 @@ El diseño y componentes están documentados en [`LANDING.md`](../documentacion/
 | `/` | `app/page.tsx` | Portada científica con navegación, contexto histórico y simulador interactivo. |
 | `/login` | `app/login/page.tsx` | Inicio de sesión con Google, con un abanico de trayectorias que se dibuja al entrar y sigue corriendo con pulsos de luz. Redirige a `/app` si ya existe sesión activa. |
 | `/app` | `app/app/page.tsx` | Inicio con sesión (cualquier rol): saludo y módulos. El layout `app/app/layout.tsx` exige sesión y pone la navegación. |
-| `/app/carteras` | `app/app/carteras/page.tsx` | Mis carteras: estado vacío por ahora. |
+| `/app/carteras` | `app/app/carteras/page.tsx` | Mis carteras: lista de las carteras del usuario. |
+| `/app/carteras/nueva` | `app/app/carteras/nueva/page.tsx` | Formulario de nueva cartera (`components/app/PortfolioForm.tsx`, acción en `actions.ts`). |
+| `/app/carteras/{id}` | `app/app/carteras/[id]/page.tsx` | Detalle de una cartera, con su composición y el botón para borrarla. Ver [`CARTERAS.md`](../documentacion/tecnica/CARTERAS.md). |
 | `/app/simulador` | `app/app/simulador/page.tsx` | Simulador con la cartera de ejemplo. |
 | `/admin` | `app/admin/page.tsx` | Solo admins (`app/admin/layout.tsx`): resumen de usuarios, activos, precios y última importación. |
 | `/admin/activos` | `app/admin/activos/page.tsx` | Catálogo de activos con precios cargados. |
-| `/admin/importaciones` | `app/admin/importaciones/page.tsx` | Historial de importaciones. |
+| `/admin/importaciones` | `app/admin/importaciones/page.tsx` | Subida de CSV (`components/app/ImportForm.tsx`, acción en `actions.ts`) e historial de importaciones. |
 | `/admin/usuarios` | `app/admin/usuarios/page.tsx` | Usuarios y cambio de rol (acción de servidor en `actions.ts`). Ver [`ROLES.md`](../documentacion/tecnica/ROLES.md). |
 | `/api/auth/*` | `app/api/auth/[...nextauth]/route.ts` | Endpoints de Auth.js (OAuth sign-in, callbacks, sesión y cierre de sesión). |
 

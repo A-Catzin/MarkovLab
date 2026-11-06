@@ -4,6 +4,14 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Agregado — 2026-11-05: Mis carteras y subida de CSV desde admin
+
+- `src/domain/saved_portfolios.jl`: `PortfolioDraft` (nombre, capital, moneda, pesos que suman 100 %, activos únicos), `SavedPortfolio` y el puerto `PortfolioRepository`.
+- `src/services/portfolios.jl`: `require_user` y los casos de uso de carteras, siempre limitados al usuario que navega.
+- `src/infrastructure/postgres_portfolios.jl`: `carteras` y `posiciones_cartera`; el alta es atómica y verifica los activos. `memory_portfolios.jl` para pruebas.
+- Rutas internas: `GET /api/internal/assets` y `GET`, `POST` (201), `DELETE /api/internal/portfolios[/{id}]`; `POST /api/internal/admin/prices/import` (CSV como texto, hasta 5 MB).
+- Documentación en [`CARTERAS.md`](../documentacion/tecnica/CARTERAS.md).
+
 ### Agregado — 2026-11-04: roles de usuario y admin
 
 - `AppUser.role` (`:user` o `:admin`); `find_user`, `list_users` y `set_user_role` en el puerto de usuarios (en memoria y PostgreSQL). Volver a entrar no cambia el rol.

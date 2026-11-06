@@ -30,6 +30,7 @@ usuarios ─┬─< carteras ─┬─< posiciones_cartera >── activos ─�
 |---|---|
 | `usuarios` | `backend/src/infrastructure/postgres_users.jl` |
 | `activos`, `precios_historicos`, `sincronizaciones` | `backend/src/infrastructure/postgres_prices.jl` |
+| `carteras`, `posiciones_cartera` | `backend/src/infrastructure/postgres_portfolios.jl` |
 
 Las dos comparten la conexión de `backend/src/infrastructure/postgres.jl` (candado, reconexión y transacciones).
 

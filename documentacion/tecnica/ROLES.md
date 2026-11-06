@@ -40,11 +40,11 @@ Así, aunque una cookie diga "admin" (por ejemplo, un token de hace segundos de 
 | Página | Qué muestra |
 |---|---|
 | `/app` | Saludo y módulos: Simulador (disponible), Mis carteras (en construcción), Optimización y Backtesting (próximamente). |
-| `/app/carteras` | Estado vacío: todavía no se pueden crear carteras; enlace al simulador. |
+| `/app/carteras` | Las carteras del usuario, y `/app/carteras/nueva` y `/app/carteras/{id}` para crearlas, verlas y borrarlas (ver [CARTERAS.md](CARTERAS.md)). |
 | `/app/simulador` | El simulador de la landing, con la cartera de ejemplo. |
 | `/admin` | Cantidad de usuarios y admins, activos, filas de precios y la última importación. |
 | `/admin/activos` | Catálogo: símbolo, nombre, mercado, categoría, moneda, cantidad de precios, periodo y última carga. |
-| `/admin/importaciones` | Las últimas 100 importaciones, con estado, filas guardadas y fallidas, y el detalle del error. |
+| `/admin/importaciones` | Subida de CSV y las últimas 100 importaciones, con estado, filas guardadas y fallidas, y el detalle del error. |
 | `/admin/usuarios` | Usuarios con su rol y un botón para cambiarlo. |
 
 Todas comparten el marco `components/app/AppShell.tsx`: logo, enlaces del laboratorio y, solo para admins, el grupo "Admin". En el teléfono, cada grupo de enlaces es una fila que se desliza de lado.

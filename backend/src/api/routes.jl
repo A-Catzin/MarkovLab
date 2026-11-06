@@ -39,6 +39,81 @@ get("/api/internal/users/{id}") do req, id
     end
 end
 
+# Rutas de usuario: además de la clave interna, `X-Actor-Id` debe ser un usuario de la base.
+# Cada uno ve y modifica solo sus propias carteras.
+get("/api/internal/assets") do req
+    handle(req) do req
+        require_internal_key(req)
+        require_user_actor(req, configured_users())
+        json(Dict("assets" => [asset_json(a) for a in list_assets(configured_prices())]))
+    end
+end
+
+get("/api/internal/portfolios") do req
+    handle(req) do req
+        require_internal_key(req)
+        users = configured_users()
+        actor = require_user_actor(req, users)
+        json(Dict("portfolios" => [portfolio_json(p) for p in list_user_portfolios(users, configured_portfolios(), actor.id)]))
+    end
+end
+
+post("/api/internal/portfolios") do req
+    handle(req) do req
+        require_internal_key(req)
+        users = configured_users()
+        actor = require_user_actor(req, users)
+        saved = create_user_portfolio(users, configured_portfolios(), actor.id, portfolio_draft(parse_body(req)))
+        json(portfolio_json(saved); status=201)
+    end
+end
+
+get("/api/internal/portfolios/{id}") do req, id
+    handle(req) do req
+        require_internal_key(req)
+        users = configured_users()
+        actor = require_user_actor(req, users)
+        saved = get_user_portfolio(users, configured_portfolios(), actor.id, id)
+        saved === nothing && throw(not_found("portfolio not found"))
+        json(portfolio_json(saved))
+    end
+end
+
+delete("/api/internal/portfolios/{id}") do req, id
+    handle(req) do req
+        require_internal_key(req)
+        users = configured_users()
+        actor = require_user_actor(req, users)
+        delete_user_portfolio(users, configured_portfolios(), actor.id, id) || throw(not_found("portfolio not found"))
+        json(Dict("deleted" => id))
+    end
+end
+
+# Subida de CSV desde /admin/importaciones: los mismos datos que backend/scripts/import_prices.jl.
+post("/api/internal/admin/prices/import") do req
+    handle(req) do req
+        require_internal_key(req)
+        require_admin_actor(req, configured_users())
+        body = parse_body(req)
+        csv = string_value(required_field(body, "csv"), "csv")
+        isempty(strip(csv)) && throw(invalid_input("the CSV file is empty"))
+        length(csv) > MAX_UPLOAD_CSV_LENGTH && throw(invalid_input("the CSV file is larger than 5 MB"))
+        details = AssetDetails(string_value(required_field(body, "name"), "name"),
+                               string_value(required_field(body, "market"), "market"),
+                               string_value(required_field(body, "category"), "category"),
+                               string_value(required_field(body, "currency"), "currency"))
+        symbol = optional_string(body, "symbol")
+        summary = import_prices(configured_prices(), IOBuffer(csv), details;
+                                symbol=symbol === nothing || isempty(strip(symbol)) ? nothing : symbol)
+        json(Dict("symbol" => summary.symbol, "asset_id" => summary.asset_id, "status" => String(summary.status),
+                  "valid_rows" => summary.valid_rows, "inserted" => summary.inserted,
+                  "already_stored" => summary.already_stored, "invalid_count" => length(summary.invalid),
+                  "invalid" => [Dict("line" => i.line, "message" => i.message)
+                                for i in Iterators.take(summary.invalid, MAX_REPORTED_ISSUES)],
+                  "file_duplicates_count" => length(summary.file_duplicates)))
+    end
+end
+
 # Rutas de admin: además de la clave interna, `X-Actor-Id` debe ser un admin según la base.
 get("/api/internal/admin/summary") do req
     handle(req) do req
@@ -60,10 +135,7 @@ get("/api/internal/admin/assets") do req
         require_internal_key(req)
         require_admin_actor(req, configured_users())
         # Las listas van dentro de un objeto: deja lugar para paginación sin romper el contrato.
-        json(Dict("assets" => [Dict("id" => a.id, "symbol" => a.symbol, "name" => a.name, "market" => a.market,
-                   "category" => a.category, "currency" => a.currency, "last_synced_at" => iso(a.last_synced_at),
-                   "price_rows" => a.price_rows, "first_date" => iso(a.first_date), "last_date" => iso(a.last_date))
-              for a in list_assets(configured_prices())]))
+        json(Dict("assets" => [asset_json(a) for a in list_assets(configured_prices())]))
     end
 end
 

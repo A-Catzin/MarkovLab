@@ -70,7 +70,9 @@ function number_value(value, name)
 end
 
 function integer_value(value, name)
-    (value isa Integer && !(value isa Bool)) || throw(invalid_input("\"$name\" must be an integer"))
+    # Un entero fuera de Int64 (por ejemplo 10²³) también es entrada inválida, no un error interno.
+    (value isa Integer && !(value isa Bool) && typemin(Int) <= value <= typemax(Int)) ||
+        throw(invalid_input("\"$name\" must be an integer"))
     return Int(value)
 end
 
@@ -116,6 +118,41 @@ function require_internal_key(req)
     secure_equals(expected, given) || throw(RequestError(401, "unauthorized", "missing or invalid internal key"))
     return nothing
 end
+
+function configured_portfolios()
+    portfolios = PORTFOLIOS[]
+    portfolios === nothing && throw(RequestError(503, "not_configured", "the database is not configured"))
+    return portfolios
+end
+
+"""Actor de las rutas de usuario: el id de `X-Actor-Id` debe existir en la base (403 si no)."""
+require_user_actor(req, users) = require_user(users, HTTP.header(req, "X-Actor-Id", nothing))
+
+asset_json(a) = Dict("id" => a.id, "symbol" => a.symbol, "name" => a.name, "market" => a.market,
+                     "category" => a.category, "currency" => a.currency, "last_synced_at" => iso(a.last_synced_at),
+                     "price_rows" => a.price_rows, "first_date" => iso(a.first_date), "last_date" => iso(a.last_date))
+
+portfolio_json(p::SavedPortfolio) = Dict(
+    "id" => p.id, "name" => p.name, "capital" => p.capital, "currency" => p.currency,
+    "start_date" => p.start_date, "status" => String(p.status), "created_at" => p.created_at,
+    "positions" => [Dict("asset_id" => x.asset_id, "symbol" => x.symbol, "market" => x.market,
+                         "name" => x.name, "weight" => x.weight) for x in p.positions])
+
+"""Lee el cuerpo de `POST /api/internal/portfolios` y lo valida como `PortfolioDraft`."""
+function portfolio_draft(body)
+    positions = required_field(body, "positions")
+    positions isa AbstractVector || throw(invalid_input("\"positions\" must be an array"))
+    drafts = [PositionDraft(integer_value(required_field(p, "asset_id"), "asset_id"),
+                            number_value(required_field(p, "weight"), "weight")) for p in positions]
+    return PortfolioDraft(string_value(required_field(body, "name"), "name"),
+                          number_value(required_field(body, "capital"), "capital"),
+                          string_value(required_field(body, "currency"), "currency"), drafts)
+end
+
+# Tope del CSV que se puede subir desde /admin (en caracteres): unos 20 años de datos diarios caben de sobra.
+const MAX_UPLOAD_CSV_LENGTH = 5_000_000
+# Cuántas filas inválidas se devuelven con detalle; el total va aparte.
+const MAX_REPORTED_ISSUES = 20
 
 function configured_prices()
     prices = PRICES[]

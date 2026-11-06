@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdminError } from "@/components/app/AdminError";
+import { ImportForm } from "@/components/app/ImportForm";
 import { IMPORT_STATUS_LABELS, formatDateTime, formatNumber, getAdminImports, loadAdmin } from "@/lib/admin";
 import { requireAdmin } from "@/lib/guards";
 
@@ -8,7 +9,10 @@ export const metadata: Metadata = {
   description: "Historial de cargas de precios.",
 };
 
-/** Historial de importaciones (tabla `sincronizaciones`), de la más nueva a la más vieja. */
+/**
+ * Subida de CSV (solo admins) e historial de importaciones (tabla `sincronizaciones`), de la
+ * más nueva a la más vieja.
+ */
 export default async function AdminImportsPage() {
   const admin = await requireAdmin();
   const result = await loadAdmin(() => getAdminImports(admin.id));
@@ -16,7 +20,9 @@ export default async function AdminImportsPage() {
   return (
     <>
       <h1>Importaciones</h1>
-      <p className="shell__lead">Las últimas 100 cargas de precios, con su resultado.</p>
+      <p className="shell__lead">Sube un CSV de precios y revisa las últimas 100 cargas, con su resultado.</p>
+      <ImportForm />
+      <h2 className="section-title">Historial</h2>
       {result.error !== null ? (
         <AdminError message={result.error} />
       ) : result.data.length === 0 ? (
