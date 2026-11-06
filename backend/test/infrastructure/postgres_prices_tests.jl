@@ -84,6 +84,23 @@ using MarkovLabBackend
             after_cut = import_prices(prices, IOBuffer(more), details)
             @test after_cut.inserted == 1
             conn = MarkovLabBackend.connection!(prices)
+
+            # Precios de una API: se guardan con origen 'api', junto a los del CSV del mismo día.
+            @test latest_price_date(prices, "ITST") === nothing
+            @test latest_price_date(prices, "ITST"; source=:csv) == Date(2024, 6, 13)
+            api_bars = [PriceBar("ITST", Date(2024, 6, 13), 195, 196, 194, 195.5, 1000, 195.5),
+                        PriceBar("ITST", Date(2024, 6, 14), 196, 197, 195, 196.5, 1000, 196.5)]
+            asset_id, inserted = save_price_import(prices, "ITST", details, api_bars, :success, 0, nothing; source=:api)
+            @test asset_id == first_run.asset_id && inserted == 2
+            origins = query("SELECT origen::text AS origen, count(*) AS n FROM precios_historicos WHERE activo_id = \$1 GROUP BY origen ORDER BY origen",
+                            [asset_id])
+            @test origins.origen == ["api", "csv"] && origins.n == [2, 3]
+            @test only(query("SELECT origen::text AS origen FROM sincronizaciones WHERE activo_id = \$1 ORDER BY id DESC LIMIT 1",
+                             [asset_id]).origen) == "api"
+            @test first(list_imports(prices; limit=1)).source == :api
+            @test latest_price_date(prices, "ITST") == Date(2024, 6, 14)
+            @test latest_price_date(prices, "itst") == Date(2024, 6, 14)
+            @test_throws ArgumentError save_price_import(prices, "ITST", details, api_bars, :success, 0, nothing; source=:ftp)
         finally
             conn = MarkovLabBackend.connection!(prices)
             LibPQ.execute(conn, "DELETE FROM sincronizaciones WHERE activo_id IN (SELECT id FROM activos WHERE mercado = 'TEST-MKT') OR (activo_id IS NULL AND mensaje_error LIKE 'no valid rows%')")

@@ -38,7 +38,7 @@ const UPDATE_ASSET_SQL = """
 const INSERT_BARS_SQL = """
     INSERT INTO precios_historicos
         (activo_id, fecha_operacion, origen, apertura, maximo, minimo, cierre, cierre_ajustado, volumen, importado_en)
-    SELECT \$1, t.fecha, 'csv'::origen_precio, t.apertura, t.maximo, t.minimo, t.cierre, t.cierre_ajustado, t.volumen, now()
+    SELECT \$1, t.fecha, \$9::origen_precio, t.apertura, t.maximo, t.minimo, t.cierre, t.cierre_ajustado, t.volumen, now()
     FROM unnest(\$2::date[], \$3::float8[], \$4::float8[], \$5::float8[], \$6::float8[], \$7::float8[], \$8::float8[])
         AS t(fecha, apertura, maximo, minimo, cierre, cierre_ajustado, volumen)
     ON CONFLICT (activo_id, fecha_operacion, origen) DO NOTHING
@@ -48,7 +48,15 @@ const INSERT_BARS_SQL = """
 const INSERT_SYNC_SQL = """
     INSERT INTO sincronizaciones
         (origen, activo_id, estado, registros_guardados, registros_fallidos, mensaje_error, iniciado_en, finalizado_en)
-    VALUES ('csv'::origen_precio, \$1, \$2::estado_sincronizacion, \$3, \$4, \$5, \$6, now())
+    VALUES (\$7::origen_precio, \$1, \$2::estado_sincronizacion, \$3, \$4, \$5, \$6, now())
+    """
+
+# Último precio de un símbolo (en cualquier mercado) con un origen dado.
+const LATEST_PRICE_DATE_SQL = """
+    SELECT max(p.fecha_operacion)::text AS hasta
+    FROM precios_historicos p
+    JOIN activos a ON a.id = p.activo_id
+    WHERE a.simbolo = \$1 AND p.origen = \$2::origen_precio
     """
 
 # Lecturas para las páginas de admin. Las fechas viajan como texto ISO (UTC) para no
@@ -136,11 +144,11 @@ function upsert_asset(conn, symbol::AbstractString, details::AssetDetails)
     return asset_id
 end
 
-function insert_bars(conn, asset_id::Integer, bars::AbstractVector{PriceBar})
+function insert_bars(conn, asset_id::Integer, bars::AbstractVector{PriceBar}, source::Symbol)
     params = [asset_id, pg_array(bar.date for bar in bars), pg_array(bar.open for bar in bars),
               pg_array(bar.high for bar in bars), pg_array(bar.low for bar in bars),
               pg_array(bar.close for bar in bars), pg_array(bar.adj_close for bar in bars),
-              pg_array(bar.volume for bar in bars)]
+              pg_array(bar.volume for bar in bars), string(source)]
     result = LibPQ.execute(conn, INSERT_BARS_SQL, params; throw_error=true)
     try
         return LibPQ.num_affected_rows(result)
@@ -149,22 +157,31 @@ function insert_bars(conn, asset_id::Integer, bars::AbstractVector{PriceBar})
     end
 end
 
-function save_price_import(prices::PostgresPriceRepository, symbol, details::AssetDetails,
+function save_price_import(prices::PostgresPriceRepository, symbol, details::Union{Nothing,AssetDetails},
                            bars::AbstractVector{PriceBar}, status::Symbol, failed_rows::Integer,
-                           message)
-    status_value = Base.get(SYNC_STATUS_VALUES, status, nothing)
-    status_value === nothing && throw(ArgumentError("unknown import status $status"))
+                           message; source::Symbol=:csv)
+    check_import(details, bars, status, source)
+    status_value = SYNC_STATUS_VALUES[status]
     started = Dates.now(Dates.UTC)
     # La transacción completa se puede repetir si la conexión se cortó: si falla, se revierte.
     return with_connection(prices.db) do conn
         in_transaction(conn) do
             asset_id = isempty(bars) ? nothing : upsert_asset(conn, symbol, details)
-            inserted = asset_id === nothing ? 0 : insert_bars(conn, asset_id, bars)
+            inserted = asset_id === nothing ? 0 : insert_bars(conn, asset_id, bars, source)
             LibPQ.execute(conn, INSERT_SYNC_SQL,
                           [something(asset_id, missing), status_value, inserted, Int(failed_rows),
-                           something(message, missing), string(started, "+00:00")];
+                           something(message, missing), string(started, "+00:00"), string(source)];
                           throw_error=true)
             (asset_id, inserted)
         end
     end
+end
+
+function latest_price_date(prices::PostgresPriceRepository, symbol::AbstractString; source::Symbol=:api)
+    source in PRICE_SOURCES || throw(ArgumentError("unknown price source $source"))
+    value = with_connection(prices.db) do conn
+        single_value(LibPQ.execute(conn, LATEST_PRICE_DATE_SQL, [uppercase(strip(symbol)), string(source)];
+                                   throw_error=true))
+    end
+    return ismissing(value) ? nothing : Date(value)
 end

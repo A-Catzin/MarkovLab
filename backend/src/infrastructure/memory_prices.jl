@@ -8,17 +8,17 @@ por activo, fecha y origen, y un registro por importación. Sirve para las prueb
 struct InMemoryPriceRepository <: PriceRepository
     assets::Dict{Tuple{String,String},@NamedTuple{id::Int, details::AssetDetails}}
     bars::Dict{Tuple{Int,Date,Symbol},PriceBar}
-    syncs::Vector{@NamedTuple{asset_id::Union{Nothing,Int}, status::Symbol, saved::Int, failed::Int,
+    syncs::Vector{@NamedTuple{asset_id::Union{Nothing,Int}, source::Symbol, status::Symbol, saved::Int, failed::Int,
                               message::Union{Nothing,String}}}
     lock::ReentrantLock
 end
 
 InMemoryPriceRepository() = InMemoryPriceRepository(Dict(), Dict(), [], ReentrantLock())
 
-function save_price_import(prices::InMemoryPriceRepository, symbol, details::AssetDetails,
+function save_price_import(prices::InMemoryPriceRepository, symbol, details::Union{Nothing,AssetDetails},
                            bars::AbstractVector{PriceBar}, status::Symbol, failed_rows::Integer,
-                           message)
-    status in IMPORT_STATUSES || throw(ArgumentError("unknown import status $status"))
+                           message; source::Symbol=:csv)
+    check_import(details, bars, status, source)
     lock(prices.lock) do
         asset_id = nothing
         inserted = 0
@@ -28,13 +28,13 @@ function save_price_import(prices::InMemoryPriceRepository, symbol, details::Ass
             asset_id = current === nothing ? length(prices.assets) + 1 : current.id
             prices.assets[key] = (id=asset_id, details=details)
             for bar in bars
-                bar_key = (asset_id, bar.date, :csv)
+                bar_key = (asset_id, bar.date, source)
                 haskey(prices.bars, bar_key) && continue
                 prices.bars[bar_key] = bar
                 inserted += 1
             end
         end
-        push!(prices.syncs, (asset_id=asset_id, status=status, saved=inserted, failed=Int(failed_rows),
+        push!(prices.syncs, (asset_id=asset_id, source=source, status=status, saved=inserted, failed=Int(failed_rows),
                              message=message))
         return (asset_id, inserted)
     end
@@ -58,9 +58,18 @@ function list_imports(prices::InMemoryPriceRepository; limit::Integer=50)
         symbols = Dict(asset.id => (symbol, market) for ((market, symbol), asset) in prices.assets)
         rows = map(enumerate(prices.syncs)) do (index, sync)
             symbol, market = sync.asset_id === nothing ? (nothing, nothing) : symbols[sync.asset_id]
-            (id=index, source=:csv, status=sync.status, asset_symbol=symbol, asset_market=market,
+            (id=index, source=sync.source, status=sync.status, asset_symbol=symbol, asset_market=market,
              saved=sync.saved, failed=sync.failed, message=sync.message, started_at=nothing, finished_at=nothing)
         end
         return first(reverse!(rows), limit)
+    end
+end
+
+function latest_price_date(prices::InMemoryPriceRepository, symbol::AbstractString; source::Symbol=:api)
+    wanted = uppercase(strip(symbol))
+    lock(prices.lock) do
+        ids = Set(asset.id for ((_, s), asset) in prices.assets if s == wanted)
+        dates = [date for (id, date, origin) in keys(prices.bars) if id in ids && origin == source]
+        return isempty(dates) ? nothing : maximum(dates)
     end
 end

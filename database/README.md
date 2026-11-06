@@ -14,7 +14,7 @@ PostgreSQL administrado por Supabase. Los nombres de tablas, columnas y tipos es
 | Tabla | La usa el backend | Para qué |
 |---|---|---|
 | `usuarios` | Sí: inicio de sesión con Google y roles | Ver [AUTENTICACION.md](../documentacion/tecnica/AUTENTICACION.md) y [ROLES.md](../documentacion/tecnica/ROLES.md). |
-| `activos`, `precios_historicos`, `sincronizaciones` | Sí: carga de precios desde CSV y páginas de admin | Ver [IMPORTACION_CSV.md](../documentacion/tecnica/IMPORTACION_CSV.md#cargar-un-csv-a-la-base). |
+| `activos`, `precios_historicos`, `sincronizaciones` | Sí: carga de precios desde CSV (origen `csv`) y desde Apify (origen `api`), y páginas de admin | Ver [IMPORTACION_CSV.md](../documentacion/tecnica/IMPORTACION_CSV.md#cargar-un-csv-a-la-base) y [PRECIOS_API.md](../documentacion/tecnica/PRECIOS_API.md). |
 | `carteras`, `posiciones_cartera` | Sí: "Mis carteras" | Ver [CARTERAS.md](../documentacion/tecnica/CARTERAS.md). |
 | `simulaciones` | Todavía no | Guardar simulaciones (RF-47). |
 | `lista_seguimiento` | Todavía no | Lista de seguimiento (RF-08). |

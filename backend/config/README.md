@@ -22,4 +22,4 @@ ALLOWED_ORIGINS="https://markovlab.vercel.app"
 
 Los secretos se guardan en `backend/.env`, que está en `.gitignore`, o en el entorno de despliegue. Ver [AUTENTICACION.md](../../documentacion/tecnica/AUTENTICACION.md).
 
-`MARKET_API_KEY` y `MARKET_API_BASE_URL` (SRS 6.5) se incorporarán con la API de mercado.
+La API de mercado (SRS 6.5) es Apify: `APIFY_TOKEN` (**secreto**) es el token de la cuenta, de [console.apify.com/settings/integrations](https://console.apify.com/settings/integrations). Solo lo usa `scripts/sync_prices.jl`; el servidor no lo necesita. Ver [PRECIOS_API.md](../../documentacion/tecnica/PRECIOS_API.md).

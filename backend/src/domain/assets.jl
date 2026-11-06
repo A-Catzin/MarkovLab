@@ -47,17 +47,34 @@ const IMPORT_STATUSES = (:success, :partial, :failed)
 """
 Puerto de persistencia de precios. Cada adaptador implementa
 
-    save_price_import(repository, symbol, details, bars, status, failed_rows, message)
+    save_price_import(repository, symbol, details, bars, status, failed_rows, message; source=:csv)
         -> (asset_id, inserted)
 
 que, en una sola operación, crea o actualiza el activo (`symbol` en `details.market`),
-guarda las barras que todavía no existen para ese activo, fecha y origen CSV (RF-05),
-y registra la importación (RF-06). Si `bars` está vacío no toca el activo y devuelve
-`(nothing, 0)`, pero igual registra la importación.
+guarda las barras que todavía no existen para ese activo, fecha y origen (RF-05),
+y registra la importación con ese origen (RF-06). `source` es uno de
+[`PRICE_SOURCES`](@ref). Si `bars` está vacío no toca el activo (`details` puede ser
+`nothing`) y devuelve `(nothing, 0)`, pero igual registra la importación.
+
+    latest_price_date(repository, symbol; source=:api) -> Union{Nothing,Date}
+
+devuelve la fecha del último precio guardado de `symbol` (en cualquier mercado) con ese
+origen, o `nothing` si no hay ninguno.
 """
 abstract type PriceRepository end
 
+"""Origen de un precio, como el enum `origen_precio` de la base: `:csv` o `:api`."""
+const PRICE_SOURCES = (:csv, :api)
+
 function save_price_import end
+function latest_price_date end
+
+function check_import(details, bars, status::Symbol, source::Symbol)
+    status in IMPORT_STATUSES || throw(ArgumentError("unknown import status $status"))
+    source in PRICE_SOURCES || throw(ArgumentError("unknown price source $source"))
+    isempty(bars) || details isa AssetDetails || throw(ArgumentError("prices need the asset details"))
+    return nothing
+end
 
 """
 Lecturas del catálogo para las páginas de admin, que también implementa cada adaptador

@@ -4,6 +4,16 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Agregado — 2026-11-06: precios desde Apify (Yahoo Finance)
+
+- `src/domain/market_data.jl`: `MarketSeries` y el puerto `MarketDataSource` (`fetch_daily_prices`).
+- `src/infrastructure/apify_market_data.jl`: `ApifyMarketData`. Corre el Actor `kaix/yahoo-finance-scraper` con `APIFY_TOKEN`, con fechas explícitas e intervalo diario, y descarta el día en curso.
+- `src/services/market_sync.jl`: `sync_market_prices`. Hace la carga histórica (`from`) o la actualización desde el último precio, y no consulta los símbolos que ya están al día.
+- `save_price_import(...; source=:csv)` acepta el origen `:api`, y el puerto suma `latest_price_date`.
+- `scripts/sync_prices.jl`: `SIMBOLO... [--desde] [--hasta]` o `--catalogo`.
+- `JSON` pasa a ser dependencia directa (ya estaba en el `Manifest`, misma versión).
+- Documentación en [`PRECIOS_API.md`](../documentacion/tecnica/PRECIOS_API.md).
+
 ### Agregado — 2026-11-05: Mis carteras y subida de CSV desde admin
 
 - `src/domain/saved_portfolios.jl`: `PortfolioDraft` (nombre, capital, moneda, pesos que suman 100 %, activos únicos), `SavedPortfolio` y el puerto `PortfolioRepository`.
