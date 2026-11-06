@@ -57,9 +57,32 @@ const RUN_AT = DateTime(2026, 11, 6, 17, 25)
                      "adjclose" => nothing, "volume" => nothing),
                 Dict("timestamp" => midnight + 86400, "open" => 1.0, "high" => 2.0, "low" => 0.5, "close" => 1.5,
                      "adjclose" => 1.5, "volume" => 10)]
+        # Una fila sin ningún precio (Yahoo la manda en días sin operaciones) se ignora.
+        push!(rows, Dict("timestamp" => midnight + 2 * 86400, "open" => nothing, "high" => nothing, "low" => nothing,
+                         "close" => nothing, "adjclose" => nothing, "volume" => nothing))
         series = only(MarkovLabBackend.parse_actor_items([actor_item(series=rows)]; now=RUN_AT))
         @test length(series.bars) == 1
         @test only(series.invalid).line == 1
+    end
+
+    @testset "a valid close with a broken open, high or low is kept as a flat day" begin
+        midnight = Int(datetime2unix(DateTime(2011, 12, 19)) + 21600)
+        # Forma real de WALMEX.MX el 2011-12-19: apertura, máximo y mínimo de 32 con cierre de 36.31.
+        rows = [Dict("timestamp" => midnight, "open" => 32.0, "high" => 32.0, "low" => 32.0, "close" => 36.31,
+                     "adjclose" => 30.1, "volume" => 500_388),
+                Dict("timestamp" => midnight + 86400, "open" => nothing, "high" => nothing, "low" => nothing,
+                     "close" => 36.89, "adjclose" => 30.5, "volume" => 100),
+                Dict("timestamp" => midnight + 2 * 86400, "open" => 36.0, "high" => 37.0, "low" => 35.0,
+                     "close" => 36.5, "adjclose" => 30.2, "volume" => 10)]
+        series = only(MarkovLabBackend.parse_actor_items([actor_item(series=rows)]; now=RUN_AT))
+        @test isempty(series.invalid)
+        @test [issue.line for issue in series.corrected] == [1, 2]
+        flat = first(series.bars)
+        @test (flat.open, flat.high, flat.low, flat.close) == (36.31, 36.31, 36.31, 36.31)
+        @test flat.adj_close == 30.1 && flat.volume == 500_388
+        @test series.bars[2].volume == 100
+        # Una fila correcta no se toca.
+        @test (series.bars[3].open, series.bars[3].high) == (36.0, 37.0)
     end
 
     @testset "markets and categories follow the catalog names" begin
@@ -99,6 +122,26 @@ const RUN_AT = DateTime(2026, 11, 6, 17, 25)
         @test !haskey(input, "chartRange")
         @test all(input[key] == false for key in ("includeQuote", "includeProfile", "includeFinancials", "includeNews",
                                                   "includeRecommendations", "includeInsights", "includeAnalyst"))
+    end
+
+    @testset "symbols run in batches and a failed batch does not stop the rest" begin
+        calls = Vector{Vector{String}}()
+        run = function (batch)
+            push!(calls, batch)
+            "B" in batch && throw(MarketDataError("Apify answered HTTP 400 (run-failed) for actor test"))
+            return [MarketSeries(s, nothing, PriceBar[], ImportIssue[], nothing) for s in batch]
+        end
+        series = MarkovLabBackend.fetch_in_batches(run, ["A", "B", "C", "D", "E"]; size=2)
+        @test calls == [["A", "B"], ["C", "D"], ["E"]]
+        @test [s.symbol for s in series] == ["A", "B", "C", "D", "E"]
+        @test [s.error !== nothing for s in series] == [true, true, false, false, false]
+        @test occursin("run-failed", series[1].error)
+    end
+
+    @testset "only the error type of an Apify answer is kept" begin
+        @test MarkovLabBackend.apify_error_type(Vector{UInt8}("""{"error":{"type":"run-failed","message":"x"}}""")) == " (run-failed)"
+        @test MarkovLabBackend.apify_error_type(Vector{UInt8}("not json")) == ""
+        @test MarkovLabBackend.apify_error_type(Vector{UInt8}("""{"error":{"type":"has spaces and more text"}}""")) == ""
     end
 
     @testset "the token is required and never shown" begin

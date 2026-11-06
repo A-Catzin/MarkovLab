@@ -60,6 +60,11 @@ y registra la importación con ese origen (RF-06). `source` es uno de
 
 devuelve la fecha del último precio guardado de `symbol` (en cualquier mercado) con ese
 origen, o `nothing` si no hay ninguno.
+
+    price_history(repository, asset_id) -> Vector{Tuple{Date,Float64}}
+
+devuelve un precio por día del activo, del más viejo al más nuevo: el cierre ajustado (o
+el cierre, si no lo hay), y si el mismo día tiene precio de la API y del CSV, el de la API.
 """
 abstract type PriceRepository end
 
@@ -68,6 +73,7 @@ const PRICE_SOURCES = (:csv, :api)
 
 function save_price_import end
 function latest_price_date end
+function price_history end
 
 function check_import(details, bars, status::Symbol, source::Symbol)
     status in IMPORT_STATUSES || throw(ArgumentError("unknown import status $status"))

@@ -8,7 +8,7 @@ Cada usuario crea, ve y borra sus propias carteras (RF-27 a RF-31). Una cartera 
 |---|---|
 | `/app/carteras` | Lista las carteras del usuario, de la más nueva a la más vieja. Sin carteras, explica qué es una y ofrece crear la primera. |
 | `/app/carteras/nueva` | Formulario: nombre, capital, moneda y una fila por activo con su porcentaje. Muestra la suma en vivo y no deja guardar hasta que dé 100 %. "Repartir en partes iguales" divide el 100 % entre las filas. |
-| `/app/carteras/{id}` | Detalle: capital, cantidad de activos, estado, barra de composición (RF-31) y tabla con peso y monto de cada activo. Botón "Borrar cartera". |
+| `/app/carteras/{id}` | Detalle: capital, cantidad de activos, estado, **valor histórico**, barra de composición (RF-31) y tabla con peso y monto de cada activo. Botón "Borrar cartera". |
 
 El formulario solo ofrece activos del catálogo, es decir, los que tienen precios cargados. Si no hay ninguno, lo dice y explica que un admin tiene que cargarlos.
 
@@ -22,6 +22,21 @@ Las valida el backend (`PortfolioDraft`, `backend/src/domain/saved_portfolios.jl
 - **Activos:** entre 1 y 50, sin repetir, y todos tienen que existir en el catálogo.
 - **Pesos:** cada uno entre 0 y 100 %, y en total **100 %** (RF-29). Se guardan como fracción con 8 decimales: 33.33 % se guarda como `0.3333` exacto.
 - Una cartera nueva queda en estado `borrador`.
+
+## Valor histórico
+
+La gráfica del detalle muestra cuánto habría valido la cartera día por día si se hubiera comprado con sus pesos y no se moviera (comprar y mantener, sin rebalanceo).
+
+- **El ancla es el día en que la creaste** (`start_date`). Ese día la cartera vale el capital, y la línea vertical punteada lo marca. Antes de esa línea es lo que habría valido; después, lo que vale desde que la creaste. Si se creó hoy, se ancla en el último día con precios.
+- **La línea horizontal es el capital**, la referencia contra la que se gana o se pierde.
+- **Ventana:** empieza el primer día en que todos los activos tienen precio. Si un activo no cotizó un día (otro mercado, feriado), se usa su último precio.
+- **Precio:** el cierre ajustado (o el cierre). Si un día tiene precio de la API y del CSV, se usa el de la API.
+- **Periodos:** 1, 5 y 10 años, o todo. El encabezado muestra el valor final y el cambio del periodo; al pasar el cursor (o con las flechas del teclado), el valor de cada día.
+- **Tabla:** "Ver los datos por mes" da el último valor de cada mes, para quien no puede ver la gráfica.
+- **Limitación:** no se convierte de moneda. Cada activo rinde en la suya, así que una cartera en MXN con MSFT usa el rendimiento de MSFT en dólares.
+- Si los activos no tienen al menos dos días de precios en común, en lugar de la gráfica aparece un aviso.
+
+El cálculo es `portfolio_value_history` (`backend/src/domain/portfolio_history.jl`), y lo usa `user_portfolio_history` con el mismo filtro por dueño que el resto de las carteras.
 
 ## Seguridad: cada uno ve solo lo suyo
 
@@ -42,12 +57,14 @@ Crear una cartera es **atómico**: si algún activo no existe, no se guarda nada
 | Servicio | `backend/src/services/portfolios.jl`: `require_user`, `create_user_portfolio`, `list_user_portfolios`, `get_user_portfolio` y `delete_user_portfolio`. |
 | Adaptadores | `backend/src/infrastructure/postgres_portfolios.jl` (tablas `carteras` y `posiciones_cartera`) y `memory_portfolios.jl` (pruebas). |
 | API | `GET /api/internal/assets` y `GET`, `POST`, `DELETE /api/internal/portfolios[/{id}]` (ver [API.md](API.md#rutas-internas-de-usuario)). |
-| Frontend | `lib/portfolios.ts`, `app/app/carteras/` (páginas y `actions.ts`) y `components/app/PortfolioForm.tsx`. |
+| Frontend | `lib/portfolios.ts`, `app/app/carteras/` (páginas y `actions.ts`), `components/app/PortfolioForm.tsx` y `components/app/PortfolioHistoryChart.tsx`. |
 
 ## Pruebas
 
 - `backend/test/services/portfolios_tests.jl`: cada regla de `PortfolioDraft`, alta, lista, detalle y borrado, que un usuario no vea ni borre carteras ajenas, y activos o usuarios inexistentes.
 - `backend/test/api/portfolios_api_tests.jl`: las rutas con dueño, los errores 400, 403 y 404, y el código 201 al crear.
+- `backend/test/domain/portfolio_history_tests.jl`: ancla, ventana común, días sin precio de un activo y falta de datos. La historia también se prueba en el servicio (solo para el dueño), en la API (200, 404, 403, 401 y 422) y contra PostgreSQL (`price_history`).
+- De punta a punta (2026-11-06): historia real de MSFT y WALMEX.MX al 50 % desde Supabase (6172 días, 2003 a 2026), dibujada en escritorio y en teléfono.
 - `backend/test/infrastructure/postgres_portfolios_tests.jl`: lo mismo contra PostgreSQL real, más la atomicidad (un activo inexistente no deja nada) y el borrado en cascada de las posiciones.
 - De punta a punta (manual, 2026-11-05): crear una cartera desde el formulario (suma en vivo, "repartir en partes iguales", guardar), verla, comprobar que otro usuario recibe 404, y borrarla.
 

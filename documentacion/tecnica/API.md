@@ -185,6 +185,7 @@ Exigen `X-Internal-Key` y `X-Actor-Id` con el id de un usuario que exista en la 
 | `GET /api/internal/portfolios` | `{ portfolios: [cartera, ...] }`, de la más nueva a la más vieja. |
 | `POST /api/internal/portfolios` | Cuerpo `{ name, capital, currency, positions: [{ asset_id, weight }] }`, con pesos como fracciones que suman 1. Responde **201** con la cartera. Errores: 400 `invalid_input` (nombre, capital, moneda, pesos, activos repetidos o inexistentes). |
 | `GET /api/internal/portfolios/{id}` | La cartera, o 404 si no existe o es de otro usuario. |
+| `GET /api/internal/portfolios/{id}/history` | `{ currency, capital, anchor_date, points: [[fecha, valor], …] }`: valor diario de comprar y mantener, anclado en el día de alta (ver [CARTERAS.md](CARTERAS.md#valor-histórico)). 404 en los mismos casos; 422 `insufficient_data` si los activos no tienen al menos dos días de precios en común. |
 | `DELETE /api/internal/portfolios/{id}` | `{ deleted: id }`, o 404 en los mismos casos. |
 
 Cada cartera tiene esta forma:

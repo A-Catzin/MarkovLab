@@ -12,8 +12,11 @@ Desde la raíz del repositorio, con Julia instalado:
 julia --project=backend -e 'using Pkg; Pkg.instantiate()'   # primera vez
 julia --project=backend -e 'using Pkg; Pkg.test()'          # pruebas del paquete
 julia --project=backend backend/test/runtests.jl            # ejecución directa de pruebas
+set -a; source backend/.env; set +a                          # carga los secretos (Julia no lee el .env solo)
 julia --project=backend backend/scripts/serve.jl            # API en http://localhost:8080
 ```
+
+Sin el `.env` cargado, el servidor arranca igual pero con `database = false` e `internal_routes = false`, y el frontend no puede iniciar sesión. Guía completa en [Correr en local](../README.md#correr-en-local).
 
 ## Interface
 

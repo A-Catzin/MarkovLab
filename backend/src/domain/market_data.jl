@@ -2,12 +2,13 @@
 # símbolo, los datos del activo y sus precios diarios ya validados como `PriceBar`.
 
 """
-    MarketSeries(symbol, details, bars, invalid, error)
+    MarketSeries(symbol, details, bars, invalid, error, corrected=ImportIssue[])
 
 Lo que una [`MarketDataSource`](@ref) devolvió para un símbolo: los datos del activo
 (`nothing` si no se pudieron leer), los precios válidos, las filas que no pasaron la
-validación (`ImportIssue`, con `line` contado desde 1 dentro de la serie) y, si la fuente
-no pudo entregar nada útil, el motivo en `error`.
+validación (`ImportIssue`, con `line` contado desde 1 dentro de la serie), si la fuente
+no pudo entregar nada útil el motivo en `error`, y las filas que se guardaron corregidas
+(`corrected`, también incluidas en `bars`).
 """
 struct MarketSeries
     symbol::String
@@ -15,7 +16,10 @@ struct MarketSeries
     bars::Vector{PriceBar}
     invalid::Vector{ImportIssue}
     error::Union{Nothing,String}
+    corrected::Vector{ImportIssue}
 end
+
+MarketSeries(symbol, details, bars, invalid, error) = MarketSeries(symbol, details, bars, invalid, error, ImportIssue[])
 
 """
 Puerto de una fuente de precios de mercado. Cada adaptador implementa

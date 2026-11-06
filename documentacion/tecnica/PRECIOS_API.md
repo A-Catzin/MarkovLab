@@ -33,17 +33,29 @@ WALMEX.MX    parcial   6024 nuevos, 0 ya guardados, 5 inválidos
 
 Cada símbolo queda en `/admin/importaciones` con origen `api`, y aparece en `/admin/activos` con su nombre, mercado, categoría y moneda tomados de Yahoo.
 
+## Catálogo cargado (2026-11-06)
+
+31 activos en Supabase, desde 2000 (o desde que cotizan):
+
+- **EE. UU.:** AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA, JPM, V, JNJ, KO, PG, XOM, WMT, DIS y NFLX.
+- **ETF:** SPY, QQQ, GLD y TLT.
+- **BMV:** WALMEX.MX, AMXB.MX, FEMSAUBD.MX, GFNORTEO.MX, CEMEXCPO.MX, GMEXICOB.MX, BIMBOA.MX, KOFUBL.MX, GAPB.MX, ASURB.MX y ORBIA.MX.
+
+Para agregar más: `sync_prices.jl SIMBOLO... --desde 2000-01-01`, con hasta 50 por corrida.
+
 ## Costo
 
 | | Precio |
 |---|---|
 | Por símbolo y corrida (con cualquier cantidad de días) | $0.0005 |
-| Inicio de corrida | $0.00005 |
+| Inicio de corrida | $0.00005 por GB (se pide 1 GB) |
 | Plan gratis de Apify | $5 al mes (lo que no se usa no se acumula) |
 
 Ejemplos: 100 activos cuestan **$0.05** en la carga histórica y unos **$1.10 al mes** con la actualización diaria (22 días hábiles). Hasta unos 200 activos entra todo en el plan gratis.
 
 Un símbolo que ya está al día **no se consulta**, así que volver a correr la actualización no gasta cuota.
+
+**Tandas de 5 símbolos con 1 GB.** Con el historial completo, el Actor tarda unos 11 s por símbolo y guarda todo en memoria. Con los 128 MB por defecto se cayó al símbolo 17 de 28: Apify respondió HTTP 400 y las 28 importaciones quedaron fallidas. Ahora cada corrida lleva hasta 5 símbolos con 1 GB, y si una tanda falla, solo sus símbolos quedan fallidos, con el tipo de error de Apify (por ejemplo `HTTP 400 (run-failed)`).
 
 ## Reglas
 
@@ -52,6 +64,8 @@ Un símbolo que ya está al día **no se consulta**, así que volver a correr la
 - **La fecha es la del mercado** (`timestamp + gmtoffset`), no la del servidor. Se redondea al día más cercano, porque `gmtoffset` es el de hoy y en fechas con horario de verano la hora queda corrida. Comprobado con datos reales de verano: el cierre de AAPL del 2024-07-15 (lunes) da 234.40, y no hay ningún precio en fin de semana.
 - **Cada símbolo guarda desde su propio inicio.** La actualización hace una sola consulta desde el inicio más antiguo, pero no rellena hacia atrás a los demás símbolos.
 - **Un activo cargado solo por CSV** no tiene precios de origen `api`: su primera sincronización trae el historial desde 2000.
+- **Un cierre válido con apertura, máximo o mínimo rotos se guarda como día plano al cierre.** En la BMV, Yahoo trae días como el 2011-12-19 de WALMEX.MX: apertura, máximo y mínimo de 32, con un cierre de 36.31 que sí coincide con los días vecinos (35.99 y 36.89). El análisis usa el cierre ajustado, así que el día se guarda con apertura = máximo = mínimo = cierre, y se cuenta como "corregido al cierre" (la importación sigue `exitosa`, con la nota en el mensaje). El 2026-11-06 esto recuperó 190 días en 9 emisoras de la BMV, 143 de ellos de AMXB.MX. Si falta el cierre, la fila sí es inválida.
+- **Las filas sin ningún precio** (Yahoo las manda en días sin operaciones) se ignoran.
 - **Las filas inválidas no detienen la carga.** Pasan por las mismas reglas que el CSV (`PriceBar`): precios positivos, el máximo arriba de la apertura, el mínimo y el cierre, etc. Las que fallan se cuentan y la importación queda `parcial`. Yahoo trae algunas así en la historia de la BMV.
 - **Sin duplicados.** Un precio se guarda una vez por activo, fecha y origen. Los precios de la API y los de un CSV del mismo día conviven, porque tienen distinto origen.
 - **Mercado y categoría:**

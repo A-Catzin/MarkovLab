@@ -44,3 +44,22 @@ Borra una cartera del actor; `false` si no existe o es de otro usuario.
 """
 delete_user_portfolio(users::UserRepository, portfolios::PortfolioRepository, actor_id, id) =
     delete_portfolio(portfolios, require_user(users, actor_id).id, id)
+
+"""
+    user_portfolio_history(users, portfolios, prices, actor_id, id)
+        -> Union{Nothing,NamedTuple}
+
+Valor diario de una cartera del actor según [`portfolio_value_history`](@ref), anclado en el
+día en que la creó (`start_date`): `(; portfolio, dates, values, anchor)`. `nothing` si la
+cartera no existe o es de otro usuario. Lanza `InsufficientDataError` si sus activos no
+tienen al menos dos días de precios en común.
+"""
+function user_portfolio_history(users::UserRepository, portfolios::PortfolioRepository, prices::PriceRepository,
+                                actor_id, id)
+    portfolio = get_user_portfolio(users, portfolios, actor_id, id)
+    portfolio === nothing && return nothing
+    series = [price_history(prices, position.asset_id) for position in portfolio.positions]
+    history = portfolio_value_history(series, [position.weight for position in portfolio.positions],
+                                      portfolio.capital, Date(portfolio.start_date))
+    return (; portfolio, history.dates, history.values, history.anchor)
+end

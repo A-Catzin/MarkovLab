@@ -56,6 +56,24 @@ using MarkovLabBackend.Api: configure!
             @test call("GET", "/api/internal/portfolios"; actor="00000000-0000-4000-8000-000000000000").status == 403
         end
 
+        @testset "history of a portfolio" begin
+            # Con un solo día de precios no hay historia que dibujar.
+            short = call("GET", "/api/internal/portfolios/$created_id/history")
+            @test short.status == 422 && response_json(short)["error"] == "insufficient_data"
+            more(symbol) = "Date,Open,High,Low,Close,Volume,Symbol\n2024-06-11,1,4,0.5,3,10,$symbol\n"
+            import_prices(prices, IOBuffer(more("AAPL")), AssetDetails("Apple", "NASDAQ", "Acción", "USD"))
+            import_prices(prices, IOBuffer(more("MSFT")), AssetDetails("Microsoft", "NASDAQ", "Acción", "USD"))
+            body = response_json(call("GET", "/api/internal/portfolios/$created_id/history"))
+            @test body["currency"] == "USD" && body["capital"] == 10000
+            @test body["anchor_date"] == "2024-06-11"
+            @test [p[1] for p in body["points"]] == ["2024-06-10", "2024-06-11"]
+            @test body["points"][2][2] == 10000
+            @test body["points"][1][2] ≈ 6000 * 1.5 / 3 + 4000 * 1.5 / 3
+            @test call("GET", "/api/internal/portfolios/$created_id/history"; actor=admin.id).status == 404
+            @test call("GET", "/api/internal/portfolios/$created_id/history"; actor=nothing).status == 403
+            @test call("GET", "/api/internal/portfolios/$created_id/history"; with_key=false).status == 401
+        end
+
         @testset "invalid portfolios are rejected" begin
             cases = [
                 """{"name": "A", "capital": 1, "currency": "USD", "positions": [{"asset_id": $aapl, "weight": 0.5}]}""",

@@ -1,4 +1,5 @@
 using Test
+using Dates
 using MarkovLabBackend
 
 # Dos activos cargados en memoria, para armar carteras con ids reales.
@@ -79,5 +80,22 @@ end
         @test err isa ArgumentError
         @test occursin("9999", err.msg)
         @test isempty(list_user_portfolios(f.users, f.portfolios, f.ana.id))
+    end
+
+    @testset "history of a portfolio, only for its owner" begin
+        f = portfolio_fixture()
+        more(symbol, rows) = import_prices(f.prices, IOBuffer("Date,Open,High,Low,Close,Adj Close,Volume,Symbol\n" * rows),
+                                           AssetDetails("x", "NASDAQ", "Acción", "USD"))
+        more("AAPL", "2024-06-11,1,4,0.5,3,3,10,AAPL\n")
+        more("MSFT", "2024-06-11,1,2,0.5,1.5,1.5,10,MSFT\n")
+        saved = create_user_portfolio(f.users, f.portfolios, f.ana.id,
+                                      PortfolioDraft("A", 1000, "USD", [PositionDraft(f.aapl, 0.5), PositionDraft(f.msft, 0.5)]))
+        history = user_portfolio_history(f.users, f.portfolios, f.prices, f.ana.id, saved.id)
+        @test history.dates == [Date(2024, 6, 10), Date(2024, 6, 11)]
+        # Creada hoy, después del último precio: vale el capital el 2024-06-11.
+        @test history.anchor == Date(2024, 6, 11)
+        @test history.values ≈ [500 * 1.5 / 3 + 500, 1000.0]
+        @test user_portfolio_history(f.users, f.portfolios, f.prices, f.beto.id, saved.id) === nothing
+        @test_throws ForbiddenError user_portfolio_history(f.users, f.portfolios, f.prices, nothing, saved.id)
     end
 end

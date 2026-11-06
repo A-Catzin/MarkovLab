@@ -17,6 +17,38 @@ Base de Datos (PostgreSQL en Supabase)
 
 La especificación funcional completa está en [`SRS.md`](./documentacion/contexto/SRS.md) y las decisiones arquitectónicas en [`ARCHITECTURE.md`](./documentacion/tecnica/ARCHITECTURE.md).
 
+## Correr en local
+
+Se necesitan dos terminales, las dos desde la raíz del repositorio. Los secretos van en `backend/.env` y `frontend/.env.local`, que están en `.gitignore`; ver [AUTENTICACION.md](./documentacion/tecnica/AUTENTICACION.md).
+
+**1. Backend** (API en http://localhost:8080):
+
+```bash
+set -a; source backend/.env; set +a                         # Julia no lee el .env solo
+julia --project=backend -e 'using Pkg; Pkg.instantiate()'   # solo la primera vez
+julia --project=backend backend/scripts/serve.jl
+```
+
+Al arrancar tiene que mostrar `database = true` e `internal_routes = true`. Si dice `false`, no se cargó el `.env`: el login, las carteras y el admin van a fallar. Con Ctrl+C se detiene; las líneas `signal 15` o `epoll_wait` que aparecen al salir no son un error.
+
+**2. Frontend** (http://localhost:3000):
+
+```bash
+cd frontend
+npm install    # solo la primera vez
+npm run dev
+```
+
+**Precios desde Apify** (opcional, con `APIFY_TOKEN` en `backend/.env`):
+
+```bash
+set -a; source backend/.env; set +a
+julia --project=backend backend/scripts/sync_prices.jl AAPL WALMEX.MX --desde 2000-01-01   # carga histórica
+julia --project=backend backend/scripts/sync_prices.jl --catalogo                          # actualización
+```
+
+Ver [PRECIOS_API.md](./documentacion/tecnica/PRECIOS_API.md).
+
 ## Subdirectories & System Boundaries
 
 - `backend`: [`./backend/README.md`](./backend/README.md) — Paquete Julia `MarkovLabBackend` que encapsula el dominio financiero puro, cálculo de métricas de rendimiento y riesgo (drawdowns, correlación, covarianza), simulación Monte Carlo determinista (`normal-rebalanced-v1`), importación de precios desde CSV, adaptadores de persistencia de usuarios Google y la API REST con Oxygen.jl.

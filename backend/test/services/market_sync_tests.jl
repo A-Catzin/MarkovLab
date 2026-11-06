@@ -106,6 +106,18 @@ const DAY1, DAY2, DAY3 = Date(2026, 11, 2), Date(2026, 11, 3), Date(2026, 11, 4)
         @test any(row -> occursin("no data for BAD", something(row.message, "")), failed)
     end
 
+    @testset "corrected rows keep the import successful and are reported" begin
+        prices = InMemoryPriceRepository()
+        s = series("AAPL", [DAY1, DAY2])
+        corrected = MarketSeries(s.symbol, s.details, s.bars, ImportIssue[], nothing,
+                                 [ImportIssue(2, "open, high or low were inconsistent")])
+        summary = only(sync_market_prices(prices, FakeMarket(corrected), ["AAPL"]; from=DAY1, to=DAY3).fetched)
+        result = sync_market_prices(InMemoryPriceRepository(), FakeMarket(corrected), ["AAPL"]; from=DAY1, to=DAY3)
+        @test result.corrected == Dict("AAPL" => 1)
+        @test summary.status == :success && summary.inserted == 2
+        @test occursin("1 rows kept with the close only", only(list_imports(prices)).message)
+    end
+
     @testset "invalid rows make the import partial" begin
         prices = InMemoryPriceRepository()
         market = FakeMarket(series("AAPL", [DAY1, DAY2]; invalid=[ImportIssue(3, "close must be a finite positive number")]))

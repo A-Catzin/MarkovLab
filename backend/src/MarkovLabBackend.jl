@@ -14,6 +14,7 @@ include("domain/simulation.jl")
 include("domain/users.jl")
 include("domain/assets.jl")
 include("domain/saved_portfolios.jl")
+include("domain/portfolio_history.jl")
 include("infrastructure/csv_prices.jl")
 # Después del CSV: `MarketSeries` reutiliza `ImportIssue`.
 include("domain/market_data.jl")
@@ -56,5 +57,6 @@ export InMemoryPortfolioRepository, PostgresPortfolioRepository, require_user
 export create_user_portfolio, list_user_portfolios, get_user_portfolio, delete_user_portfolio
 export PRICE_SOURCES, latest_price_date, MarketSeries, MarketDataSource, MarketDataError, fetch_daily_prices, ApifyMarketData
 export sync_market_prices, MARKET_HISTORY_START, MAX_SYNC_SYMBOLS
+export price_history, portfolio_value_history, user_portfolio_history
 
 end # módulo MarkovLabBackend

@@ -7,7 +7,7 @@ const MAX_SYNC_SYMBOLS = 50
 
 """
     sync_market_prices(prices, source, symbols; from=nothing, to=today() - Day(1))
-        -> (; fetched::Vector{PriceImportSummary}, up_to_date::Vector{String})
+        -> (; fetched::Vector{PriceImportSummary}, up_to_date::Vector{String}, corrected::Dict{String,Int})
 
 Trae de `source` los precios diarios de `symbols` y los guarda con origen `api`, cada
 símbolo en su propia importación (activo, precios y registro en `sincronizaciones`).
@@ -46,7 +46,9 @@ function sync_market_prices(prices::PriceRepository, source::MarketDataSource,
     pending = [symbol for symbol in requested if starts[symbol] <= to]
     up_to_date = [symbol for symbol in requested if starts[symbol] > to]
     fetched = PriceImportSummary[]
-    isempty(pending) && return (; fetched, up_to_date)
+    # Filas guardadas como día plano al cierre, por símbolo (ver `MarketSeries.corrected`).
+    corrected = Dict{String,Int}()
+    isempty(pending) && return (; fetched, up_to_date, corrected)
 
     response = try
         fetch_daily_prices(source, pending, minimum(starts[s] for s in pending), to)
@@ -57,7 +59,7 @@ function sync_market_prices(prices::PriceRepository, source::MarketDataSource,
             save_price_import(prices, symbol, nothing, PriceBar[], :failed, 0, err.message; source=:api)
             push!(fetched, PriceImportSummary(symbol, nothing, 0, 0, 0, ImportIssue[], ImportIssue[], :failed))
         end
-        return (; fetched, up_to_date)
+        return (; fetched, up_to_date, corrected)
     end
     received = Dict(series.symbol => series for series in response)
     for symbol in pending
@@ -76,14 +78,19 @@ function sync_market_prices(prices::PriceRepository, source::MarketDataSource,
             continue
         end
         status = isempty(bars) ? :failed : isempty(series.invalid) ? :success : :partial
-        message = isempty(series.invalid) ? nothing :
-                  "$(length(series.invalid)) invalid rows; first at row $(first(series.invalid).line): $(first(series.invalid).message)"
+        notes = String[]
+        isempty(series.invalid) ||
+            push!(notes, "$(length(series.invalid)) invalid rows; first at row $(first(series.invalid).line): $(first(series.invalid).message)")
+        isempty(series.corrected) ||
+            push!(notes, "$(length(series.corrected)) rows kept with the close only (inconsistent open, high or low)")
+        message = isempty(notes) ? nothing : join(notes, ". ")
+        isempty(series.corrected) || (corrected[symbol] = length(series.corrected))
         asset_id, inserted = save_price_import(prices, symbol, series.details, bars, status,
                                                length(series.invalid), message; source=:api)
         push!(fetched, PriceImportSummary(symbol, asset_id, length(bars), inserted, length(bars) - inserted,
                                           series.invalid, ImportIssue[], status))
     end
-    return (; fetched, up_to_date)
+    return (; fetched, up_to_date, corrected)
 end
 
 next_day(date::Date) = date + Day(1)

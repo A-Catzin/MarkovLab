@@ -8,6 +8,7 @@ using MarkovLabBackend
     include("domain/prices_tests.jl")
     include("domain/portfolio_tests.jl")
     include("domain/simulation_tests.jl")
+    include("domain/portfolio_history_tests.jl")
     include("services/services_tests.jl")
     include("services/users_tests.jl")
     include("services/prices_import_tests.jl")

@@ -79,6 +79,20 @@ get("/api/internal/portfolios/{id}") do req, id
     end
 end
 
+# Valor diario de la cartera (comprar y mantener), anclado en el día en que se creó.
+get("/api/internal/portfolios/{id}/history") do req, id
+    handle(req) do req
+        require_internal_key(req)
+        users = configured_users()
+        actor = require_user_actor(req, users)
+        result = user_portfolio_history(users, configured_portfolios(), configured_prices(), actor.id, id)
+        result === nothing && throw(not_found("portfolio not found"))
+        json(Dict("currency" => result.portfolio.currency, "capital" => result.portfolio.capital,
+                  "anchor_date" => string(result.anchor),
+                  "points" => [[string(d), round(v; digits=2)] for (d, v) in zip(result.dates, result.values)]))
+    end
+end
+
 delete("/api/internal/portfolios/{id}") do req, id
     handle(req) do req
         require_internal_key(req)

@@ -4,8 +4,13 @@
 
 const APIFY_ACTOR = "kaix~yahoo-finance-scraper"
 const APIFY_RUN_URL = "https://api.apify.com/v2/acts/%s/run-sync-get-dataset-items"
-# La corrida síncrona de Apify espera hasta 300 s; unas decenas de activos tardan pocos segundos.
+# La corrida síncrona de Apify espera hasta 300 s. Con el historial completo, el Actor tarda
+# unos 11 s por símbolo y acumula los datos en memoria (con los 128 MB por defecto se cayó al
+# símbolo 17, el 2026-11-06): por eso se corre en tandas y con 1 GB. Apify cobra el inicio de
+# la corrida por GB ($0.00005), no por tiempo.
 const APIFY_TIMEOUT_SECONDS = 300
+const APIFY_BATCH_SIZE = 5
+const APIFY_MEMORY_MB = 1024
 
 # Códigos de bolsa de Yahoo → nombre del mercado en el catálogo (siempre en mayúsculas).
 const YAHOO_MARKETS = Dict("NMS" => "NASDAQ", "NGM" => "NASDAQ", "NCM" => "NASDAQ", "NAS" => "NASDAQ",
@@ -58,7 +63,31 @@ function actor_input(symbols::AbstractVector{<:AbstractString}, from::Date, to::
 end
 
 function fetch_daily_prices(source::ApifyMarketData, symbols::AbstractVector{<:AbstractString}, from::Date, to::Date)
-    url = replace(APIFY_RUN_URL, "%s" => source.actor) * "?format=json&clean=true"
+    return fetch_in_batches(batch -> run_actor(source, batch, from, to), symbols)
+end
+
+"""
+    fetch_in_batches(run, symbols; size=APIFY_BATCH_SIZE) -> Vector{MarketSeries}
+
+Llama a `run` con tandas de hasta `size` símbolos y junta las series. Si una tanda falla
+([`MarketDataError`](@ref)), sus símbolos vuelven como series con ese error y las demás
+tandas siguen.
+"""
+function fetch_in_batches(run, symbols::AbstractVector{<:AbstractString}; size::Integer=APIFY_BATCH_SIZE)
+    series = MarketSeries[]
+    for batch in Iterators.partition(collect(String, symbols), size)
+        try
+            append!(series, run(batch))
+        catch err
+            err isa MarketDataError || rethrow()
+            append!(series, [MarketSeries(s, nothing, PriceBar[], ImportIssue[], err.message) for s in batch])
+        end
+    end
+    return series
+end
+
+function run_actor(source::ApifyMarketData, symbols::AbstractVector{<:AbstractString}, from::Date, to::Date)
+    url = replace(APIFY_RUN_URL, "%s" => source.actor) * "?format=json&clean=true&memory=$(APIFY_MEMORY_MB)"
     headers = ["Authorization" => "Bearer $(source.token)", "Content-Type" => "application/json"]
     # Los mensajes de error nunca incluyen la solicitud ni sus encabezados: llevan el token.
     response = try
@@ -69,7 +98,7 @@ function fetch_daily_prices(source::ApifyMarketData, symbols::AbstractVector{<:A
         throw(MarketDataError("could not reach Apify ($(nameof(typeof(err))))"))
     end
     200 <= response.status < 300 ||
-        throw(MarketDataError("Apify answered HTTP $(response.status) for actor $(source.actor)"))
+        throw(MarketDataError("Apify answered HTTP $(response.status)$(apify_error_type(response.body)) for actor $(source.actor)"))
     items = try
         JSON.parse(String(response.body))
     catch
@@ -78,6 +107,19 @@ function fetch_daily_prices(source::ApifyMarketData, symbols::AbstractVector{<:A
     items isa AbstractVector ||
         throw(MarketDataError("Apify returned an unexpected response for actor $(source.actor)"))
     return parse_actor_items(items)
+end
+
+# Tipo de error que Apify manda en el cuerpo (por ejemplo `run-failed`), sin el resto del
+# texto. El cuerpo de una respuesta de Apify no incluye el token.
+function apify_error_type(body)
+    parsed = try
+        JSON.parse(String(copy(body)))
+    catch
+        nothing
+    end
+    error_info = parsed isa AbstractDict ? get(parsed, "error", nothing) : nothing
+    kind = error_info isa AbstractDict ? get(error_info, "type", nothing) : nothing
+    return kind isa AbstractString && occursin(r"^[a-z0-9-]{1,60}$", kind) ? " ($kind)" : ""
 end
 
 """
@@ -90,7 +132,13 @@ Traduce los elementos del dataset del Actor (uno por símbolo) a `MarketSeries`:
   (verano) una marca a medianoche quedaría una hora antes, en el día anterior.
 - Se descartan los precios del día en curso del mercado según `now`: todavía cambian, y
   como un precio guardado no se vuelve a escribir, quedarían congelados a media sesión.
-- Las filas que no pasan las reglas de `PriceBar` (por ejemplo, un cierre nulo) se
+- Una fila con cierre válido pero apertura, máximo o mínimo faltantes o incoherentes (en
+  la BMV, Yahoo trae días como apertura = máximo = mínimo = 32 con cierre de 36.31, que
+  coincide con los días vecinos) se guarda como un día plano al cierre y se reporta en
+  `corrected`: el análisis usa el cierre ajustado, y así no se pierde el día. Sin volumen,
+  queda en 0.
+- Las filas sin ningún precio (días sin operaciones) se ignoran.
+- Las filas que ni así pasan las reglas de `PriceBar` (por ejemplo, un cierre nulo) se
   reportan en `invalid` y no detienen las demás.
 - Un elemento sin gráfico, con error o con barras que no son diarias se vuelve un
   `MarketSeries` con `error` y sin precios.
@@ -122,17 +170,23 @@ function parse_actor_item(item::AbstractDict, now::DateTime)
     today_local = Date(now + Second(offset))
     bars = PriceBar[]
     invalid = ImportIssue[]
+    corrected = ImportIssue[]
     for (index, row) in enumerate(rows)
+        # Yahoo manda filas sin ningún precio en días sin operaciones: no son errores.
+        row isa AbstractDict && all(get(row, key, nothing) === nothing for key in ("open", "high", "low", "close")) &&
+            continue
         try
-            bar = row_bar(symbol, row, offset)
-            bar.date < today_local && push!(bars, bar)
+            bar, problem = row_bar(symbol, row, offset)
+            bar.date < today_local || continue
+            push!(bars, bar)
+            problem === nothing || push!(corrected, ImportIssue(index, problem))
         catch err
             err isa ArgumentError || err isa MethodError || err isa InexactError || rethrow()
             push!(invalid, ImportIssue(index, err isa ArgumentError ? err.msg : "missing or invalid values"))
         end
     end
     sort!(bars; by=bar -> bar.date)
-    return MarketSeries(symbol, details, unique(bar -> bar.date, bars), invalid, nothing)
+    return MarketSeries(symbol, details, unique(bar -> bar.date, bars), invalid, nothing, corrected)
 end
 
 function asset_details(meta::AbstractDict, symbol::AbstractString)
@@ -152,6 +206,16 @@ function row_bar(symbol::AbstractString, row::AbstractDict, offset::Integer)
     timestamp isa Real || throw(ArgumentError("timestamp is missing"))
     date = Date(round(unix2datetime(timestamp + offset), Day))
     adj = get(row, "adjclose", nothing)
-    return PriceBar(symbol, date, number("open"), number("high"), number("low"), number("close"),
-                    number("volume"), adj isa Real ? adj : nothing)
+    adj = adj isa Real ? adj : nothing
+    try
+        return PriceBar(symbol, date, number("open"), number("high"), number("low"), number("close"),
+                        number("volume"), adj), nothing
+    catch err
+        err isa ArgumentError || rethrow()
+        # Sin un cierre válido no hay nada que rescatar: la fila es inválida.
+        close = number("close")
+        volume = get(row, "volume", nothing)
+        flat = PriceBar(symbol, date, close, close, close, close, volume isa Real ? volume : 0.0, adj)
+        return flat, "open, high or low were inconsistent ($(err.msg)); kept with the close only"
+    end
 end

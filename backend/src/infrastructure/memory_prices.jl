@@ -73,3 +73,17 @@ function latest_price_date(prices::InMemoryPriceRepository, symbol::AbstractStri
         return isempty(dates) ? nothing : maximum(dates)
     end
 end
+
+function price_history(prices::InMemoryPriceRepository, asset_id::Integer)
+    lock(prices.lock) do
+        by_date = Dict{Date,Tuple{Bool,Float64}}()
+        for ((id, date, source), bar) in prices.bars
+            id == asset_id || continue
+            from_api = source == :api
+            current = get(by_date, date, nothing)
+            current !== nothing && current[1] && !from_api && continue
+            by_date[date] = (from_api, something(bar.adj_close, bar.close))
+        end
+        return sort!([(date, price) for (date, (_, price)) in by_date])
+    end
+end

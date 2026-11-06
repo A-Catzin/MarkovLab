@@ -16,7 +16,7 @@ using ..MarkovLabBackend: MarkovLabBackend, InsufficientDataError, Portfolio, an
                           change_user_role, admin_summary, PortfolioRepository, PostgresPortfolioRepository,
                           PositionDraft, PortfolioDraft, SavedPortfolio, AssetDetails, import_prices,
                           create_user_portfolio, list_user_portfolios, get_user_portfolio, delete_user_portfolio,
-                          require_user
+                          require_user, user_portfolio_history
 
 const SERVICE_NAME = "markovlab-backend"
 const DEFAULT_ALLOWED_ORIGINS = "http://localhost:3000"

@@ -13,6 +13,8 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 - `scripts/sync_prices.jl`: `SIMBOLO... [--desde] [--hasta]` o `--catalogo`.
 - `JSON` pasa a ser dependencia directa (ya estaba en el `Manifest`, misma versión).
 - Documentación en [`PRECIOS_API.md`](../documentacion/tecnica/PRECIOS_API.md).
+- Corridas de Apify en tandas de 5 símbolos con 1 GB. Un cierre válido con apertura, máximo o mínimo rotos se guarda como día plano al cierre, y las filas sin precios se ignoran.
+- Valor histórico de una cartera: `portfolio_value_history` (dominio), `price_history` (puerto de precios), `user_portfolio_history` y `GET /api/internal/portfolios/{id}/history`.
 
 ### Agregado — 2026-11-05: Mis carteras y subida de CSV desde admin
 

@@ -90,7 +90,8 @@ function main(args)
     labels = Dict(:success => "completa", :partial => "parcial", :failed => "fallida")
     for summary in result.fetched
         println("$(rpad(something(summary.symbol, "?"), 12)) $(rpad(labels[summary.status], 9)) ",
-                "$(summary.inserted) nuevos, $(summary.already_stored) ya guardados, $(length(summary.invalid)) inválidos")
+                "$(summary.inserted) nuevos, $(summary.already_stored) ya guardados, $(length(summary.invalid)) inválidos",
+                get(result.corrected, summary.symbol, 0) > 0 ? ", $(result.corrected[summary.symbol]) corregidos al cierre" : "")
         for issue in Iterators.take(summary.invalid, 3)
             println("    fila $(issue.line): $(issue.message)")
         end

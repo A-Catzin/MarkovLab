@@ -101,6 +101,14 @@ using MarkovLabBackend
             @test latest_price_date(prices, "ITST") == Date(2024, 6, 14)
             @test latest_price_date(prices, "itst") == Date(2024, 6, 14)
             @test_throws ArgumentError save_price_import(prices, "ITST", details, api_bars, :success, 0, nothing; source=:ftp)
+
+            # Historia de precios: un precio por día, cierre ajustado, y el de la API si hay de los dos.
+            history = price_history(prices, asset_id)
+            @test [d for (d, _) in history] == [Date(2024, 6, 10), Date(2024, 6, 11), Date(2024, 6, 13), Date(2024, 6, 14)]
+            @test [p for (_, p) in history] == [193.75, 194.5, 195.5, 196.5]
+            save_price_import(prices, "ITST", details, [PriceBar("ITST", Date(2024, 6, 10), 1, 1, 1, 1, 1, 0.5)],
+                              :success, 0, nothing; source=:api)
+            @test first(price_history(prices, asset_id)) == (Date(2024, 6, 10), 0.5)
         finally
             conn = MarkovLabBackend.connection!(prices)
             LibPQ.execute(conn, "DELETE FROM sincronizaciones WHERE activo_id IN (SELECT id FROM activos WHERE mercado = 'TEST-MKT') OR (activo_id IS NULL AND mensaje_error LIKE 'no valid rows%')")

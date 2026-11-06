@@ -3,7 +3,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BackendError } from "@/lib/backend";
 import { requireUser } from "@/lib/guards";
-import { STATUS_LABELS, formatMoney, formatWeight, getPortfolio, type Portfolio } from "@/lib/portfolios";
+import { PortfolioHistoryChart } from "@/components/app/PortfolioHistoryChart";
+import {
+  STATUS_LABELS,
+  formatMoney,
+  formatWeight,
+  getPortfolio,
+  getPortfolioHistory,
+  type Portfolio,
+  type PortfolioHistory,
+} from "@/lib/portfolios";
 import { deletePortfolio } from "../actions";
 
 export const metadata: Metadata = {
@@ -11,9 +20,20 @@ export const metadata: Metadata = {
   description: "Composición de una cartera guardada.",
 };
 
+/** Historia de la cartera, o el motivo por el que no se puede dibujar. */
+async function loadHistory(actorId: string, id: string): Promise<PortfolioHistory | "insufficient" | "error"> {
+  try {
+    return await getPortfolioHistory(actorId, id);
+  } catch (error) {
+    if (error instanceof BackendError && error.status === 422) return "insufficient";
+    console.error("[carteras] no se pudo leer la historia:", error);
+    return "error";
+  }
+}
+
 /**
- * Detalle de una cartera del usuario: datos, composición (RF-31) y botón para borrarla.
- * Si la cartera no existe o es de otro usuario, responde 404.
+ * Detalle de una cartera del usuario: datos, valor histórico, composición (RF-31) y botón
+ * para borrarla. Si la cartera no existe o es de otro usuario, responde 404.
  */
 export default async function PortfolioPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -30,6 +50,8 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
       </p>
     );
   }
+
+  const history = await loadHistory(user.id, id);
 
   return (
     <>
@@ -52,6 +74,21 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
           <dd className="metrics__note">desde {portfolio.start_date}</dd>
         </div>
       </dl>
+
+      {typeof history === "object" ? (
+        <PortfolioHistoryChart
+          points={history.points}
+          anchorDate={history.anchor_date}
+          capital={history.capital}
+          currency={history.currency}
+        />
+      ) : (
+        <p className={`notice ${history === "error" ? "notice--error" : ""}`} role="status">
+          {history === "error"
+            ? "No pudimos leer el valor histórico. Inténtalo en unos minutos."
+            : "Todavía no hay precios suficientes de estos activos para dibujar su valor histórico."}
+        </p>
+      )}
 
       <section className="panel" aria-labelledby="composition">
         <h2 id="composition">Composición</h2>

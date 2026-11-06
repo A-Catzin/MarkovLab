@@ -51,6 +51,14 @@ const INSERT_SYNC_SQL = """
     VALUES (\$7::origen_precio, \$1, \$2::estado_sincronizacion, \$3, \$4, \$5, \$6, now())
     """
 
+# Un precio por día: el cierre ajustado (o el cierre), y el de la API si hay de los dos orígenes.
+const PRICE_HISTORY_SQL = """
+    SELECT DISTINCT ON (fecha_operacion) fecha_operacion::text AS fecha, coalesce(cierre_ajustado, cierre) AS precio
+    FROM precios_historicos
+    WHERE activo_id = \$1
+    ORDER BY fecha_operacion, (origen = 'api') DESC
+    """
+
 # Último precio de un símbolo (en cualquier mercado) con un origen dado.
 const LATEST_PRICE_DATE_SQL = """
     SELECT max(p.fecha_operacion)::text AS hasta
@@ -184,4 +192,10 @@ function latest_price_date(prices::PostgresPriceRepository, symbol::AbstractStri
                                    throw_error=true))
     end
     return ismissing(value) ? nothing : Date(value)
+end
+
+function price_history(prices::PostgresPriceRepository, asset_id::Integer)
+    rows = with_connection(conn -> rows_from(LibPQ.execute(conn, PRICE_HISTORY_SQL, [Int(asset_id)]; throw_error=true)),
+                           prices.db)
+    return [(Date(r.fecha), Float64(r.precio)) for r in rows]
 end

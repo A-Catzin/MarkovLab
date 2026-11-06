@@ -47,6 +47,18 @@ export const getPortfolios = async (actorId: string) =>
 export const getPortfolio = (actorId: string, id: string) =>
   backendFetch<Portfolio>(`/api/internal/portfolios/${encodeURIComponent(id)}`, { actorId });
 
+/** Valor diario de la cartera (comprar y mantener), anclado en el día en que se creó. */
+export interface PortfolioHistory {
+  currency: string;
+  capital: number;
+  anchor_date: string;
+  /** `[fecha ISO, valor]`, del día más viejo al más nuevo. */
+  points: [string, number][];
+}
+
+export const getPortfolioHistory = (actorId: string, id: string) =>
+  backendFetch<PortfolioHistory>(`/api/internal/portfolios/${encodeURIComponent(id)}/history`, { actorId });
+
 export const STATUS_LABELS: Record<Portfolio["status"], string> = {
   draft: "Borrador",
   active: "Activa",
