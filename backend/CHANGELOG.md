@@ -4,6 +4,18 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Corregido — 2026-11-12: el servidor se congelaba con una conexión muerta
+
+- Síntoma: después de un rato sin uso, el backend dejaba de responder, incluido `/health`, y el frontend marcaba `TimeoutError`. El hilo principal estaba en `PQexecParams → pqSocketPoll(end_time=-1)`, esperando para siempre la respuesta de una conexión que el pooler de Supabase había soltado sin avisar.
+- `connection_url` agrega keepalives TCP (5 s, cada 5 s, 3 intentos), `tcp_user_timeout=20000` y `connect_timeout=10` a cada conexión. Comprobado cortando la red de un PostgreSQL de prueba a mitad de una consulta: falla en unos 20 s con un error de conexión, y `with_connection` reconecta.
+
+### Agregado — 2026-11-11: simular carteras con precios reales
+
+- `src/domain/saved_simulations.jl`: `SavedSimulation`, `summary_dict` y el puerto `SimulationRepository`. Adaptadores en memoria y PostgreSQL (tabla `simulaciones`).
+- `aligned_prices`: solo los días en que todos los activos cotizaron, sin arrastrar precios.
+- `src/services/portfolio_simulations.jl`: `simulate_user_portfolio` (5 años de precios por defecto, mínimo 60 días) y `list_user_simulations`, siempre limitados al dueño.
+- Rutas internas: `POST` y `GET /api/internal/portfolios/{id}/simulations`.
+
 ### Agregado — 2026-11-06: precios desde Apify (Yahoo Finance)
 
 - `src/domain/market_data.jl`: `MarketSeries` y el puerto `MarketDataSource` (`fetch_daily_prices`).

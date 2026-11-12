@@ -93,6 +93,37 @@ get("/api/internal/portfolios/{id}/history") do req, id
     end
 end
 
+# Simulaciones de una cartera con los precios de la base (RF-41 a RF-44, RF-47).
+post("/api/internal/portfolios/{id}/simulations") do req, id
+    handle(req) do req
+        require_internal_key(req)
+        users = configured_users()
+        actor = require_user_actor(req, users)
+        body = parse_body(req)
+        saved = simulate_user_portfolio(users, configured_portfolios(), configured_prices(), configured_simulations(),
+                                        actor.id, id;
+                                        horizon=integer_value(required_field(body, "horizon"), "horizon"),
+                                        simulations=something(optional_integer(body, "simulations"), DEFAULT_SIMULATIONS),
+                                        confidence=something(optional_number(body, "confidence"), DEFAULT_CONFIDENCE),
+                                        lookback_years=something(optional_integer(body, "lookback_years"),
+                                                                 MarkovLabBackend.DEFAULT_LOOKBACK_YEARS),
+                                        seed=optional_integer(body, "seed"))
+        saved === nothing && throw(not_found("portfolio not found"))
+        json(simulation_json(saved); status=201)
+    end
+end
+
+get("/api/internal/portfolios/{id}/simulations") do req, id
+    handle(req) do req
+        require_internal_key(req)
+        users = configured_users()
+        actor = require_user_actor(req, users)
+        listed = list_user_simulations(users, configured_portfolios(), configured_simulations(), actor.id, id)
+        listed === nothing && throw(not_found("portfolio not found"))
+        json(Dict("simulations" => [simulation_json(s) for s in listed]))
+    end
+end
+
 delete("/api/internal/portfolios/{id}") do req, id
     handle(req) do req
         require_internal_key(req)

@@ -1,0 +1,7 @@
+.env
+.env.*
+.git
+.julia
+*.jl.cov
+*.jl.*.cov
+*.jl.mem

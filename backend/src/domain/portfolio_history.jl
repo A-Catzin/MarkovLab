@@ -38,3 +38,22 @@ function portfolio_value_history(prices::AbstractVector, weights::AbstractVector
     values = [sum(units[i] * filled[i][t] for i in eachindex(units)) for t in eachindex(dates)]
     return (; dates, values, anchor=dates[anchor_index])
 end
+
+"""
+    aligned_prices(prices; from::Date, min_days) -> (; dates, prices)
+
+Precios de varios activos alineados por fecha, para estimar rendimientos y covarianzas: solo
+los días desde `from` en que **todos** los activos tienen precio. A diferencia de
+[`portfolio_value_history`](@ref), no arrastra el último precio: un día inventado sería un
+rendimiento de cero que bajaría la volatilidad. `prices[i]` es la serie `(fecha, precio)`
+del activo `i`, de la más vieja a la más nueva.
+
+Lanza `InsufficientDataError` si quedan menos de `min_days` días.
+"""
+function aligned_prices(prices::AbstractVector; from::Date, min_days::Integer)
+    lookups = [Dict(series) for series in prices]
+    common = isempty(lookups) ? Date[] : reduce(intersect, [Set(keys(l)) for l in lookups])
+    dates = sort!([date for date in common if date >= from])
+    length(dates) < min_days && throw(InsufficientDataError(min_days, length(dates), "days with prices for every asset"))
+    return (; dates, prices=[[lookup[date] for date in dates] for lookup in lookups])
+end

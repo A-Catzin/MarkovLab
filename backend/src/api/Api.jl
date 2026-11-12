@@ -16,7 +16,9 @@ using ..MarkovLabBackend: MarkovLabBackend, InsufficientDataError, Portfolio, an
                           change_user_role, admin_summary, PortfolioRepository, PostgresPortfolioRepository,
                           PositionDraft, PortfolioDraft, SavedPortfolio, AssetDetails, import_prices,
                           create_user_portfolio, list_user_portfolios, get_user_portfolio, delete_user_portfolio,
-                          require_user, user_portfolio_history
+                          require_user, user_portfolio_history, SimulationRepository, SavedSimulation,
+                          PostgresSimulationRepository, simulate_user_portfolio, list_user_simulations,
+                          DEFAULT_SIMULATIONS
 
 const SERVICE_NAME = "markovlab-backend"
 const DEFAULT_ALLOWED_ORIGINS = "http://localhost:3000"
@@ -26,6 +28,7 @@ const MIN_INTERNAL_KEY_LENGTH = 32
 const USERS = Ref{Union{Nothing,UserRepository}}(nothing)
 const PRICES = Ref{Union{Nothing,PriceRepository}}(nothing)
 const PORTFOLIOS = Ref{Union{Nothing,PortfolioRepository}}(nothing)
+const SIMULATIONS = Ref{Union{Nothing,SimulationRepository}}(nothing)
 const INTERNAL_KEY = Ref{String}("")
 
 """
@@ -36,10 +39,12 @@ llamados internos del servidor de Next.js (`X-Internal-Key`). Con `internal_key`
 las rutas internas responden 503; sin un repositorio, también las rutas que lo usan.
 """
 function configure!(; users::Union{Nothing,UserRepository}, prices::Union{Nothing,PriceRepository}=nothing,
-                    portfolios::Union{Nothing,PortfolioRepository}=nothing, internal_key::AbstractString)
+                    portfolios::Union{Nothing,PortfolioRepository}=nothing,
+                    simulations::Union{Nothing,SimulationRepository}=nothing, internal_key::AbstractString)
     USERS[] = users
     PRICES[] = prices
     PORTFOLIOS[] = portfolios
+    SIMULATIONS[] = simulations
     INTERNAL_KEY[] = String(internal_key)
     return nothing
 end
@@ -73,18 +78,20 @@ function start(; host::AbstractString=Base.get(ENV, "HOST", "0.0.0.0"),
     users = nothing
     prices = nothing
     portfolios = nothing
+    simulations = nothing
     if !isempty(database_url)
         try
             users = PostgresUserRepository(database_url)
             prices = PostgresPriceRepository(database_url)
             portfolios = PostgresPortfolioRepository(database_url)
+            simulations = PostgresSimulationRepository(database_url)
         catch err
             err isa ArgumentError || rethrow()
             # Se registra solo el motivo: la URL lleva la contraseña.
             @warn "DATABASE_URL is invalid; user routes stay disabled" reason = err.msg
         end
     end
-    configure!(users=users, prices=prices, portfolios=portfolios, internal_key=internal_key)
+    configure!(users=users, prices=prices, portfolios=portfolios, simulations=simulations, internal_key=internal_key)
     # Abre la conexión en segundo plano al arrancar: así el primer inicio de sesión no paga
     # la conexión al pooler ni la compilación de LibPQ, y un problema de la base se ve enseguida.
     if users !== nothing

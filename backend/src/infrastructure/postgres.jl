@@ -27,6 +27,32 @@ mutable struct PostgresConnection
     end
 end
 
+# Parámetros de libpq para no esperar para siempre a un servidor que ya no está. El pooler de
+# Supabase suelta conexiones inactivas sin avisar; sin esto, una consulta sobre esa conexión
+# se queda esperando la respuesta (`PQexecParams` sin límite de tiempo) y, como la llamada
+# bloquea el hilo, congela todo el servidor, incluido `/health` (visto el 2026-11-12).
+# - keepalives: sondeo TCP tras 5 s sin tráfico, cada 5 s, 3 intentos: una conexión muerta
+#   se detecta en unos 20 s, y el sondeo mantiene viva la ruta mientras está inactiva.
+# - tcp_user_timeout: lo mismo cuando hay datos enviados sin confirmar (20 s).
+# - connect_timeout: abrir la conexión no tarda más de 10 s.
+# Al detectarse, la consulta falla con un error de conexión y `with_connection` reconecta.
+const CONNECTION_PARAMS = ("keepalives" => "1", "keepalives_idle" => "5", "keepalives_interval" => "5",
+                           "keepalives_count" => "3", "tcp_user_timeout" => "20000", "connect_timeout" => "10")
+
+"""
+    connection_url(url) -> String
+
+Agrega a `url` los parámetros de [`CONNECTION_PARAMS`](@ref) que no traiga ya; los que la
+URL define se respetan.
+"""
+function connection_url(url::AbstractString)
+    query = occursin('?', url) ? split(url, '?'; limit=2)[2] : ""
+    present = Set(first(split(pair, '=')) for pair in split(query, '&') if !isempty(pair))
+    missing_params = ["$k=$v" for (k, v) in CONNECTION_PARAMS if !(k in present)]
+    isempty(missing_params) && return String(url)
+    return string(url, occursin('?', url) ? "&" : "?", join(missing_params, '&'))
+end
+
 """
     connection!(db::PostgresConnection) -> LibPQ.Connection
 
@@ -37,7 +63,7 @@ function connection!(db::PostgresConnection)
         conn = db.conn
         if conn === nothing || LibPQ.status(conn) != LibPQ.libpq_c.CONNECTION_OK
             conn === nothing || close(conn)
-            db.conn = LibPQ.Connection(db.url; throw_error=true)
+            db.conn = LibPQ.Connection(connection_url(db.url); throw_error=true)
         end
         return db.conn
     end

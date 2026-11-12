@@ -189,3 +189,18 @@ optional_number(object, name) = (value = optional_field(object, name, nothing);
                                  value === nothing ? nothing : number_value(value, name))
 optional_integer(object, name) = (value = optional_field(object, name, nothing);
                                   value === nothing ? nothing : integer_value(value, name))
+
+function configured_simulations()
+    simulations = SIMULATIONS[]
+    simulations === nothing && throw(RequestError(503, "not_configured", "the database is not configured"))
+    return simulations
+end
+
+simulation_json(s::SavedSimulation) = Dict(
+    "id" => s.id, "portfolio_id" => s.portfolio_id, "model" => s.model, "simulations" => s.simulations,
+    "horizon" => s.horizon, "confidence" => s.confidence, "seed" => s.seed, "observations" => s.observations,
+    "symbols" => s.symbols, "weights" => s.weights,
+    "window" => Dict("from" => string(s.window[1]), "to" => string(s.window[2])),
+    "expected_return" => s.expected_return, "expected_volatility" => s.expected_volatility,
+    "value_at_risk" => s.value_at_risk, "conditional_value_at_risk" => s.conditional_value_at_risk,
+    "summary" => s.summary, "created_at" => s.created_at)

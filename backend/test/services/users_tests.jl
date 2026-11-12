@@ -73,6 +73,22 @@ using MarkovLabBackend
         @test !MarkovLabBackend.is_connection_error(ArgumentError("x"))
     end
 
+    @testset "connections detect a dead server instead of waiting forever" begin
+        # Sin estos parámetros, una consulta sobre una conexión que el pooler soltó sin avisar
+        # espera la respuesta para siempre y congela el servidor (visto el 2026-11-12).
+        url = MarkovLabBackend.connection_url("postgresql://u:p@host:5432/db")
+        @test startswith(url, "postgresql://u:p@host:5432/db?")
+        for param in ("keepalives=1", "keepalives_idle=5", "keepalives_interval=5", "keepalives_count=3",
+                      "tcp_user_timeout=20000", "connect_timeout=10")
+            @test occursin(param, url)
+        end
+        # Respeta los parámetros que ya trae la URL y no los repite.
+        url = MarkovLabBackend.connection_url("postgresql://u:p@host/db?sslmode=require&keepalives_idle=60")
+        @test startswith(url, "postgresql://u:p@host/db?sslmode=require&keepalives_idle=60&")
+        @test count("keepalives_idle=", url) == 1
+        @test occursin("keepalives_count=3", url)
+    end
+
     @testset "an email owned by another Google account is a conflict" begin
         users = InMemoryUserRepository()
         sync_google_user(users, GoogleProfile("sub-1", "ana@example.com", "Ana"))

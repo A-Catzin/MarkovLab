@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { BackendError, backendFetch } from "@/lib/backend";
 import { requireUser } from "@/lib/guards";
-import type { Portfolio } from "@/lib/portfolios";
+import type { Portfolio, Simulation } from "@/lib/portfolios";
 
 /** Estado del formulario de nueva cartera: el mensaje de error, si lo hubo. */
 export interface PortfolioFormState {
@@ -70,4 +70,47 @@ export async function deletePortfolio(formData: FormData) {
   }
   revalidatePath("/app/carteras");
   redirect(`/app/carteras?${outcome}`);
+}
+
+/** Estado del formulario "Simular": la simulación nueva o el mensaje de error. */
+export interface SimulationFormState {
+  simulation: Simulation | null;
+  error: string | null;
+}
+
+// Horizontes que ofrece la página, en días hábiles, y confianzas permitidas.
+const HORIZONS = new Set([21, 63, 252]);
+const CONFIDENCES = new Set([0.95, 0.99]);
+
+/**
+ * Simula una cartera del usuario con los precios de la base y guarda el resultado. El
+ * backend vuelve a validar los parámetros y que la cartera sea del usuario.
+ */
+export async function simulatePortfolio(_prev: SimulationFormState, formData: FormData): Promise<SimulationFormState> {
+  const user = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const horizon = Number(formData.get("horizon"));
+  const confidence = Number(formData.get("confidence"));
+  if (!HORIZONS.has(horizon) || !CONFIDENCES.has(confidence))
+    return { simulation: null, error: "Elige un plazo y un nivel de confianza." };
+
+  try {
+    const simulation = await backendFetch<Simulation>(`/api/internal/portfolios/${encodeURIComponent(id)}/simulations`, {
+      method: "POST",
+      actorId: user.id,
+      body: { horizon, confidence },
+    });
+    revalidatePath(`/app/carteras/${id}`);
+    return { simulation, error: null };
+  } catch (error) {
+    if (error instanceof BackendError && error.status === 422)
+      return {
+        simulation: null,
+        error: "Los activos de esta cartera todavía no tienen suficientes días de precios en común para simular.",
+      };
+    if (error instanceof BackendError && error.status === 404)
+      return { simulation: null, error: "Esta cartera ya no existe." };
+    console.error("[carteras] no se pudo simular:", error instanceof BackendError ? error.code : error);
+    return { simulation: null, error: "No pudimos simular la cartera porque el servidor no responde. Inténtalo en unos minutos." };
+  }
 }

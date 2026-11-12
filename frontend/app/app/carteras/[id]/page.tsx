@@ -4,14 +4,17 @@ import { notFound } from "next/navigation";
 import { BackendError } from "@/lib/backend";
 import { requireUser } from "@/lib/guards";
 import { PortfolioHistoryChart } from "@/components/app/PortfolioHistoryChart";
+import { PortfolioSimulation } from "@/components/app/PortfolioSimulation";
 import {
   STATUS_LABELS,
   formatMoney,
   formatWeight,
   getPortfolio,
   getPortfolioHistory,
+  getSimulations,
   type Portfolio,
   type PortfolioHistory,
+  type Simulation,
 } from "@/lib/portfolios";
 import { deletePortfolio } from "../actions";
 
@@ -31,8 +34,18 @@ async function loadHistory(actorId: string, id: string): Promise<PortfolioHistor
   }
 }
 
+/** Simulaciones guardadas; si no se pueden leer, la página sigue y el panel arranca vacío. */
+async function loadSimulations(actorId: string, id: string): Promise<Simulation[]> {
+  try {
+    return await getSimulations(actorId, id);
+  } catch (error) {
+    console.error("[carteras] no se pudieron leer las simulaciones:", error);
+    return [];
+  }
+}
+
 /**
- * Detalle de una cartera del usuario: datos, valor histórico, composición (RF-31) y botón
+ * Detalle de una cartera del usuario: datos, valor histórico, simulación, composición (RF-31) y botón
  * para borrarla. Si la cartera no existe o es de otro usuario, responde 404.
  */
 export default async function PortfolioPage({ params }: { params: Promise<{ id: string }> }) {
@@ -51,7 +64,7 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
     );
   }
 
-  const history = await loadHistory(user.id, id);
+  const [history, simulations] = await Promise.all([loadHistory(user.id, id), loadSimulations(user.id, id)]);
 
   return (
     <>
@@ -89,6 +102,13 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
             : "Todavía no hay precios suficientes de estos activos para dibujar su valor histórico."}
         </p>
       )}
+
+      <PortfolioSimulation
+        portfolioId={portfolio.id}
+        capital={portfolio.capital}
+        currency={portfolio.currency}
+        previous={simulations}
+      />
 
       <section className="panel" aria-labelledby="composition">
         <h2 id="composition">Composición</h2>

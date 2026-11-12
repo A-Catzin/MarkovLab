@@ -45,3 +45,16 @@ using MarkovLabBackend
         @test_throws ArgumentError portfolio_value_history([[(d1, 1.0), (d2, 1.0)]], [0.5, 0.5], 1.0, d2)
     end
 end
+
+@testset "Prices aligned for a simulation" begin
+    d(i) = Date(2024, 1, 1) + Day(i)
+    a = [(d(i), 10.0 + i) for i in 0:9]
+    # B no cotizó los días 3 y 4: esos días no entran (no se inventan rendimientos de cero).
+    b = [(d(i), 20.0 + i) for i in 0:9 if !(i in (3, 4))]
+    aligned = aligned_prices([a, b]; from=d(1), min_days=3)
+    @test aligned.dates == [d(i) for i in 1:9 if !(i in (3, 4))]
+    @test aligned.prices[1] == [10.0 + i for i in 1:9 if !(i in (3, 4))]
+    @test aligned.prices[2] == [20.0 + i for i in 1:9 if !(i in (3, 4))]
+    @test_throws InsufficientDataError aligned_prices([a, b]; from=d(8), min_days=3)
+    @test_throws InsufficientDataError aligned_prices([a, Tuple{Date,Float64}[]]; from=d(0), min_days=3)
+end

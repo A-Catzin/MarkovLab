@@ -59,6 +59,48 @@ export interface PortfolioHistory {
 export const getPortfolioHistory = (actorId: string, id: string) =>
   backendFetch<PortfolioHistory>(`/api/internal/portfolios/${encodeURIComponent(id)}/history`, { actorId });
 
+/**
+ * Una simulación Monte Carlo guardada de la cartera. Los rendimientos, el VaR y el CVaR son
+ * fracciones del capital en el horizonte (0.05 = 5 %); el VaR y el CVaR, pérdidas positivas.
+ */
+export interface Simulation {
+  id: string;
+  portfolio_id: string | null;
+  model: string;
+  simulations: number;
+  /** Días hábiles (21 ≈ un mes). */
+  horizon: number;
+  confidence: number;
+  seed: number;
+  observations: number;
+  symbols: string[];
+  weights: number[];
+  /** Días de precios con que se estimó. */
+  window: { from: string; to: string };
+  /** Rendimiento y volatilidad esperados por día. */
+  expected_return: number;
+  expected_volatility: number;
+  value_at_risk: number;
+  conditional_value_at_risk: number;
+  summary: {
+    scenarios: number;
+    mean: number;
+    worst: number;
+    best: number;
+    confidence: number;
+    percentiles: Record<string, number>;
+  };
+  created_at: string | null;
+}
+
+export const getSimulations = async (actorId: string, id: string) =>
+  (
+    await backendFetch<{ simulations: Simulation[] }>(
+      `/api/internal/portfolios/${encodeURIComponent(id)}/simulations`,
+      { actorId },
+    )
+  ).simulations;
+
 export const STATUS_LABELS: Record<Portfolio["status"], string> = {
   draft: "Borrador",
   active: "Activa",

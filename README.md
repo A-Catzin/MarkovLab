@@ -49,6 +49,10 @@ julia --project=backend backend/scripts/sync_prices.jl --catalogo               
 
 Ver [PRECIOS_API.md](./documentacion/tecnica/PRECIOS_API.md).
 
+## Despliegue
+
+Para publicar el frontend en Vercel, la API en Railway y usar PostgreSQL en Supabase, consulta la [guía de despliegue](./documentacion/tecnica/DESPLIEGUE.md).
+
 ## Subdirectories & System Boundaries
 
 - `backend`: [`./backend/README.md`](./backend/README.md) — Paquete Julia `MarkovLabBackend` que encapsula el dominio financiero puro, cálculo de métricas de rendimiento y riesgo (drawdowns, correlación, covarianza), simulación Monte Carlo determinista (`normal-rebalanced-v1`), importación de precios desde CSV, adaptadores de persistencia de usuarios Google y la API REST con Oxygen.jl.
