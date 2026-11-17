@@ -52,3 +52,10 @@ mis-docs/
 Drifts/
 
 .claude/
+# Videos de presentación (locales, no se versionan)
+videos/
+
+.impeccable/
+
+DESIGN.md
+PRODUCT.md

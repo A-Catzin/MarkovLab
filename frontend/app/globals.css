@@ -2538,7 +2538,8 @@ img {
   }
 
   .mosaic {
-    grid-template-columns: 1fr 1fr;
+    /* minmax(0, …): con 1fr el contenido estiraba las columnas y la página se desbordaba. */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-auto-rows: auto;
     gap: 6px;
   }

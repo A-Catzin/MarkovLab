@@ -84,22 +84,21 @@ export function Hero() {
           </Link>
         </nav>
         <div className="hero__headline">
-        <h1 className="lines" aria-label="Simula tu cartera">
+        <h1 className="lines" aria-label="Explora lo posible.">
           <span className="line" aria-hidden="true">
             <span data-line style={{ ["--i" as string]: 0 }}>
-              Simula tu
+              Explora lo
             </span>
           </span>
           <span className="line" aria-hidden="true">
             <span data-line style={{ ["--i" as string]: 1 }}>
-              cartera
+              posible.
             </span>
           </span>
         </h1>
-        <div className="accent-block" data-load style={{ ["--i" as string]: 2 }}>
-          <strong>3 ms</strong>
-          <p>10,000 escenarios a 21 días, de la solicitud a la respuesta, medidos en el motor Julia.</p>
-        </div>
+        <p className="hero__subtitle" data-load style={{ ["--i" as string]: 2 }}>
+          Una cartera. Miles de caminos. Una forma más clara de entender el riesgo.
+        </p>
         </div>
       </div>
 

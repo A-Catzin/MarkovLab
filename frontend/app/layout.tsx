@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Source_Serif_4, Young_Serif } from "next/font/google";
 import "./globals.css";
+import "./experience.css";
 
 const display = Young_Serif({
   subsets: ["latin"],
