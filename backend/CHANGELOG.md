@@ -4,6 +4,12 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Corregido — 2026-11-19: el contenedor recompilaba todo al arrancar en Railway
+
+- Síntoma: Railway respondía 502 en 6 a 60 ms (no había nada escuchando) y los Deploy Logs mostraban `Precompiling packages...` en lugar de `Starting markovlab-backend`.
+- Causa: Julia precompila para el procesador de la máquina que construye la imagen. Railway corre la imagen en otra, Julia descartaba el caché y recompilaba todo al arrancar.
+- `backend/Dockerfile` fija `JULIA_CPU_TARGET` (el valor de los binarios oficiales de Julia). Comprobado cargando el paquete con otro procesador (`-C sandybridge`): la imagen anterior recompilaba (24 líneas de `Precompiling`/`✓`), la nueva no (0). El contenedor responde `/health` en unos 5 s. La imagen tarda 2 min 20 s en construirse (antes 1 min 38 s).
+
 ### Agregado — 2026-11-19: arranque en frío más rápido para el despliegue
 
 - `src/precompile.jl`: al precompilar el paquete (al construir la imagen de Docker) recorre las rutas principales con repositorios en memoria, incluida la conversión de moneda, y deja la API sin configurar al terminar. Si falla, solo avisa: la imagen se construye igual.

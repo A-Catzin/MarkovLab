@@ -14,6 +14,7 @@ Guarda la cadena de conexión de PostgreSQL como `DATABASE_URL` en Railway. Seg�
 
 1. Crea un proyecto y un servicio desde el repositorio. Selecciona la rama y configura **Root Directory** como `/backend`.
 2. Railway debe detectar `backend/Dockerfile`. El contenedor instala las dependencias, precompila el paquete y arranca `scripts/serve.jl`. La imagen pesa unos 2 GB y se construyó en 1 min 38 s en local (2026-11-19).
+   - **Procesador:** el Dockerfile fija `JULIA_CPU_TARGET` para que el código precompilado sirva en cualquier procesador x86-64. Railway construye la imagen en una máquina y la corre en otra; sin esto, Julia descartaba el caché y recompilaba todo al arrancar (`Precompiling packages...` en los Deploy Logs), el servidor no llegaba a escuchar y Railway respondía **502 en milisegundos** (2026-11-19). Si vuelve a aparecer `Precompiling packages...` al arrancar, el caché no se está usando.
    - **Arranque en frío:** al precompilar, `src/precompile.jl` recorre una vez las rutas principales con datos en memoria, y el código compilado queda en la imagen. Al arrancar, después de conectarse a la base, el servidor corre una vez las lecturas de PostgreSQL (`warm_database`). Medido en local con Supabase, la primera petición tras arrancar bajó de 2.7 s a 1.2 s en la historia y de 2.4 s a 1.3 s al simular; el frontend corta a los 10 s.
 3. Agrega estas variables al servicio:
 
