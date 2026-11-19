@@ -1,44 +1,39 @@
 # Utilidades del frontend (`frontend/lib`)
 
 ## Overview
-Lógica compartida que da soporte a la interfaz (`frontend/lib`). Incluye la versión para el navegador del modelo Monte Carlo del backend (`normal-rebalanced-v1`), la ejecución de la cartera de demostración tanto en el primer render del servidor como en el simulador interactivo, los textos y mediciones de referencia de la página de inicio, y la configuración de autenticación con Google mediante Auth.js (`next-auth` v4) sincronizada con el backend Julia.
+Lógica compartida que da soporte a la interfaz (`frontend/lib`). Incluye el cliente HTTP del servidor hacia la API Julia (`backend.ts`), la configuración de Auth.js con actualización periódica de rol (`auth.ts`), guardas de navegación (`guards.ts`), clientes tipados para carteras y administración (`portfolios.ts`, `admin.ts`), la réplica en navegador del modelo Monte Carlo (`simulation.ts`, `demo.ts`) y los datos estáticos de la portada (`landing-data.ts`).
 
-Ver [`LANDING.md`](../../documentacion/tecnica/LANDING.md). El único llamado a la API Julia por ahora es el de `auth.ts`; el contrato está en [`API.md`](../../documentacion/tecnica/API.md).
+Ver [`LANDING.md`](../../documentacion/tecnica/LANDING.md), [`AUTENTICACION.md`](../../documentacion/tecnica/AUTENTICACION.md), [`ROLES.md`](../../documentacion/tecnica/ROLES.md), [`CARTERAS.md`](../../documentacion/tecnica/CARTERAS.md) y [`API.md`](../../documentacion/tecnica/API.md).
 
 ## Interface
-- `[auth.ts:authOptions]`: Configuración `NextAuthOptions` con `GoogleProvider`, estrategia de sesión `"jwt"`, páginas `/login` y callbacks `signIn`, `jwt` y `session`.
-- `[auth.ts:getSession]`: Helper de servidor que devuelve `getServerSession(authOptions)`.
-- `[demo.ts:DemoResult]`: Tipo que combina el resultado de `runSimulation` con `request: SimulationRequest` y `elapsedMs: number | null`.
-- `[demo.ts:runDemo]`: Ejecuta la cartera de demostración (`SAMPLE_ASSETS`, `SAMPLE_CORRELATION`) para el primer render en servidor y bajo demanda en el navegador.
-- `[landing-data.ts:SAMPLE_ASSETS]`: Activos ilustrativos de la cartera de demostración (`AAPL`, `MSFT`, `JPM`, `XOM`).
-- `[landing-data.ts:SAMPLE_CORRELATION]`: Matriz de correlación 4×4 definida positiva de la cartera de ejemplo.
-- `[landing-data.ts:DEFAULT_REQUEST]`: Parámetros por defecto del simulador (`weights: [32, 28, 22, 18]`, `horizon: 21`, `simulations: 10_000`, `seed: 42`, `confidence: 0.95`).
-- `[landing-data.ts:DEFAULT_CAPITAL]`: Monto base de ejemplo (`10_000` MXN) para traducir porcentajes a dinero.
-- `[landing-data.ts:HORIZON_OPTIONS]`: Opciones de horizonte temporal (`1`, `5`, `21`, `63` y `252` días).
-- `[landing-data.ts:NAV_LINKS]`, `[landing-data.ts:FACTS]`, `[landing-data.ts:REQUEST_STAGES]`, `[landing-data.ts:IMPLEMENTED_METRICS]`, `[landing-data.ts:QUESTIONS]`, `[landing-data.ts:REPOSITORY_URL]`: Datos editoriales, enlaces, preguntas frecuentes y tiempos medidos en el motor Julia para la portada.
-- `[simulation.ts:TRADING_DAYS]`: Constante de días hábiles anuales (`252`).
-- `[simulation.ts:SUMMARY_PERCENTILES]`: Percentiles calculados en el resumen (`[1, 5, 25, 50, 75, 95, 99]`).
-- `[simulation.ts:SampleAsset]`, `[simulation.ts:SimulationSummary]`, `[simulation.ts:SimulationRequest]`: Tipos de entrada y salida del simulador Monte Carlo.
-- `[simulation.ts:mulberry32]`, `[simulation.ts:normalGenerator]`: Generadores pseudoaleatorios deterministas con semilla (`mulberry32` + transformación de Box-Muller).
-- `[simulation.ts:portfolioMoments]`: Calcula la media (`mu`) y volatilidad (`sigma`) diarias de la cartera a partir de cifras anuales y matriz de correlación.
-- `[simulation.ts:simulateOutcomes]`: Simula escenarios de rendimiento acumulado capitalizando `horizon` períodos (`normal-rebalanced-v1`).
-- `[simulation.ts:quantileSorted]`: Calcula cuantiles por interpolación lineal (tipo 7 de Hyndman y Fan) sobre un `Float64Array` ordenado.
-- `[simulation.ts:summarize]`: Resume los escenarios simulados con media, extremos, percentiles, `valueAtRisk`, `conditionalValueAtRisk` y `probabilityOfGain`.\n- `[simulation.ts:histogram]`: Agrupa los escenarios ordenados en intervalos uniformes (`{ low, high, width, counts }`).
-- `[simulation.ts:runSimulation]`: Ejecuta el flujo completo de simulación en navegador con histograma de 36 barras.
-- `[simulation.ts:samplePaths]`: Genera trayectorias de valor (iniciando en `1`) para el gráfico de la portada.
+- **Cliente HTTP del backend (`backend.ts`)**:
+  - `Role` (`"user" | "admin"`), `BackendUser`, `BackendError`, `BACKEND_TIMEOUT_MS` (`10_000`), `backendFetch<T>(path, { method, body, actorId })` (`[backend.ts:BackendError]`, `[backend.ts:backendFetch]`).
+- **Autenticación y sesión (`auth.ts`, `guards.ts`)**:
+  - `[auth.ts:authOptions]`, `[auth.ts:ROLE_REFRESH_MS]` (`60_000`), `[auth.ts:syncUser]`, `[auth.ts:currentRole]`, `[auth.ts:getSession]` (envuelto en `React.cache`).
+  - `[guards.ts:requireUser]`: Exige sesión activa (`getSession()`) o redirige a `/login`.
+  - `[guards.ts:requireAdmin]`: Exige `user.role === "admin"` o redirige a `/app`.
+- **Carteras y simulaciones (`portfolios.ts`)**:
+  - Tipos: `CatalogAsset`, `PortfolioPosition`, `Portfolio`, `PortfolioHistory`, `Simulation`, `STATUS_LABELS`.
+  - Consultas y formato: `getCatalogAssets`, `getPortfolios`, `getPortfolio`, `getPortfolioHistory`, `getSimulations`, `currencyNote`, `formatMoney`, `formatWeight` (`[portfolios.ts:getPortfolios]`, `[portfolios.ts:getPortfolioHistory]`, `[portfolios.ts:getSimulations]`, `[portfolios.ts:currencyNote]`).
+- **Administración (`admin.ts`)**:
+  - Tipos: `ImportStatus`, `AdminSummary`, `AdminAsset`, `AdminImport`, `IMPORT_STATUS_LABELS`.
+  - Consultas y formato: `getAdminSummary`, `getAdminAssets`, `getAdminImports`, `getAdminUsers`, `loadAdmin`, `formatDateTime`, `formatDate`, `formatNumber` (`[admin.ts:getAdminSummary]`, `[admin.ts:loadAdmin]`).
+- **Simulador de portada y demo (`simulation.ts`, `demo.ts`, `landing-data.ts`)**:
+  - `[demo.ts:DemoResult]`, `[demo.ts:runDemo]`.
+  - `[landing-data.ts:SAMPLE_ASSETS]`, `[landing-data.ts:SAMPLE_CORRELATION]`, `[landing-data.ts:DEFAULT_REQUEST]`, `[landing-data.ts:DEFAULT_CAPITAL]`, `[landing-data.ts:HORIZON_OPTIONS]`, `[landing-data.ts:NAV_LINKS]`, `[landing-data.ts:FACTS]`, `[landing-data.ts:REQUEST_STAGES]`, `[landing-data.ts:IMPLEMENTED_METRICS]`, `[landing-data.ts:QUESTIONS]`, `[landing-data.ts:REPOSITORY_URL]`.
+  - `[simulation.ts:TRADING_DAYS]` (`252`), `[simulation.ts:SUMMARY_PERCENTILES]`, `SampleAsset`, `SimulationSummary`, `SimulationRequest`, `mulberry32`, `normalGenerator`, `portfolioMoments`, `simulateOutcomes`, `quantileSorted`, `summarize`, `histogram`, `runSimulation`, `samplePaths` (`[simulation.ts:runSimulation]`, `[simulation.ts:samplePaths]`).
 
 ## Invariants
-- `[auth.ts:server-only]`: `auth.ts` importa `"server-only"` y solo puede importarse desde componentes o rutas de servidor.
-- `[auth.ts:signIn]`: Solo se inicia sesión si `account?.provider === "google"`, el perfil de Google incluye `sub`, `email` y `email_verified === true`, y `syncUser` confirma el guardado en el backend (`saved !== null`), evitando sesiones de usuarios inexistentes en PostgreSQL.
-- `[auth.ts:BACKEND_TIMEOUT_MS]`: El llamado interno al backend tiene un tiempo límite estricto de `5_000` ms (`AbortSignal.timeout(BACKEND_TIMEOUT_MS)`).
-- `[simulation.ts:portfolioMoments]`: Escala rendimientos anuales con `TRADING_DAYS = 252` y volatilidades con `Math.sqrt(252)`, acotando la varianza con `Math.max(variance, 0)`.
-- `[simulation.ts:quantileSorted]`: Requiere que el arreglo `sorted` esté ordenado de menor a mayor; utiliza interpolación lineal tipo 7 de Hyndman y Fan.
-- `[simulation.ts:summarize]`: `valueAtRisk` (`-threshold`) y `conditionalValueAtRisk` (`-(tailSum / tailCount)`) se expresan como pérdidas positivas para el nivel `1 - confidence`.
-- `[simulation.ts:runSimulation]`: Espera `request.weights` en puntos porcentuales (`0..100`), los normaliza dividiendo entre `100` y construye siempre un histograma de `36` intervalos.
+- `[backend.ts:server-only]`, `[auth.ts:server-only]`, `[guards.ts:server-only]`, `[admin.ts:server-only]`, `[portfolios.ts:server-only]`: Importan `"server-only"` y no pueden importarse desde Client Components.
+- `[backend.ts:BACKEND_TIMEOUT_MS]`: Cada llamada a la API Julia fija `AbortSignal.timeout(10_000)` y desactiva caché (`cache: "no-store"`), enviando `X-Internal-Key` y opcionalmente `X-Actor-Id`.
+- `[auth.ts:signIn]`: Solo abre sesión cuando `account?.provider === "google"`, el correo está verificado (`email_verified === true`) y `syncUser` confirma el guardado en PostgreSQL (`POST /api/internal/users/google`).
+- `[auth.ts:jwt]`: Tras `ROLE_REFRESH_MS` (`60_000` ms), consulta `GET /api/internal/users/{id}` (`currentRole`); si el backend devuelve `404`, elimina `token.userId` y `token.role` para invalidar la sesión.
+- `[simulation.ts:portfolioMoments]`, `[simulation.ts:quantileSorted]`, `[simulation.ts:summarize]`, `[simulation.ts:runSimulation]`: Replican en navegador el modelo `normal-rebalanced-v1` (252 días hábiles, cuantiles tipo 7 de Hyndman-Fan, VaR/CVaR positivos y 36 intervalos de histograma).
 
 ## Side Effects
-- `[auth.ts:syncUser]`: Lee `process.env.BACKEND_URL` y `process.env.INTERNAL_API_KEY`, realiza una solicitud `POST ${BACKEND_URL}/api/internal/users/google` sin caché (`cache: "no-store"`) con el encabezado `X-Internal-Key` y registra fallos con `console.error`.
-- `[auth.ts:authOptions]`: Lee `process.env.GOOGLE_CLIENT_ID` y `process.env.GOOGLE_CLIENT_SECRET`, y muta `user`, `token.userId` y `session.user.id` durante el ciclo de callbacks de Auth.js.
+- `[backend.ts:backendFetch]`: Lee `process.env.BACKEND_URL` e `process.env.INTERNAL_API_KEY` y realiza solicitudes HTTP sin caché al backend Julia.
+- `[auth.ts:authOptions]`: Lee `process.env.GOOGLE_CLIENT_ID` y `process.env.GOOGLE_CLIENT_SECRET`, sincroniza usuarios en el backend y muta `user`, `token` y `session` en callbacks de Auth.js.
+- `[guards.ts:requireUser]` / `[guards.ts:requireAdmin]`: Emite redirecciones Next.js (`redirect("/login")` o `redirect("/app")`) cuando falta sesión o permisos.
 
 ## Verification
 - Run: `npm run typecheck && npm run build`

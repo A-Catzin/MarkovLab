@@ -1,19 +1,21 @@
-# Application Home (`/app`)
+# Espacio autenticado (`/app`)
 
 ## Overview
-Authenticated main workspace page (`page.tsx`) for MarkovLab. Displays the user's session identity, sign-out control, and the catalog of application modules according to the SRS.
+Área de trabajo autenticada de MarkovLab. `layout.tsx` valida la sesión en el servidor y envuelve todas las vistas hijas con `AppShell`, agrupando la portada del laboratorio (`/app`), el simulador de ejemplo (`/app/simulador`) y la gestión completa de carteras (`/app/carteras/*`).
 
 ## Interface
-- `[page.tsx:metadata]`: Next.js `Metadata` configuration (`title: "Inicio · MarkovLab"`).
-- `[page.tsx:AppHomePage]`: Default exported async Server Component rendering the authenticated dashboard.
+- `[layout.tsx:AppLayout]`: Layout servidor que exige usuario autenticado vía `requireUser()` (`@/lib/guards`) y renderiza `<AppShell user={user}>`.
+- `[page.tsx:metadata]`: Configuración `Metadata` para `/app` (`title: "Inicio · MarkovLab"`).
+- `[page.tsx:AppHomePage]`: Server Component de bienvenida que saluda por nombre y muestra el catálogo de módulos (`MODULES`).
+- `carteras`: [`./carteras/README.md`](./carteras/README.md) — Listado, creación, historial diario y simulaciones persistidas de carteras.
+- `simulador`: [`./simulador/README.md`](./simulador/README.md) — Simulador Monte Carlo con la cartera de ejemplo dentro del marco autenticado.
 
 ## Invariants
-- `[page.tsx:AppHomePage]`: Enforces authentication; if `await getSession()` returns `null`, execution immediately halts via `redirect("/login")`.
-- `[page.tsx:MODULES]`: Defines the four SRS modules; only `"Simulador de riesgo"` has `status: "Disponible"` and a navigable `href: "/#simulador"`, while `"Mis carteras"`, `"Optimización"`, and `"Backtesting"` are marked `"Próximamente"` with `aria-disabled="true"`.
+- `[layout.tsx:AppLayout]`: Toda ruta bajo `/app/*` exige una sesión válida vía `requireUser()`; sin sesión, redirige a `/login`.
+- `[page.tsx:MODULES]`: Define los cuatro módulos del SRS: `"Simulador de riesgo"` (`status: "Disponible"`, `href: "/app/simulador"`), `"Mis carteras"` (`status: "En construcción"`, `href: "/app/carteras"`), y `"Optimización"` y `"Backtesting"` (`status: "Próximamente"`, renderizados con `aria-disabled="true"`).
 
 ## Side Effects
-- `[page.tsx:getSession]`: Reads the current server-side session via `@/lib/auth`.
-- `[page.tsx:redirect]`: Triggers an HTTP redirect to `/login` when the request is unauthenticated.
+- `[layout.tsx:requireUser]` / `[page.tsx:requireUser]`: Leen la sesión del servidor (`getSession`) y ejecutan `redirect("/login")` cuando no hay sesión activa.
 
 ## Verification
 - Run: `npm run typecheck && npm run build`

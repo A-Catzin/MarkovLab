@@ -1,33 +1,35 @@
 # Aplicación (`frontend/app`)
 
 ## Overview
-Páginas, navegación y estructura de la aplicación frontend (Next.js App Router). Define el layout raíz (`layout.tsx`), la página pública de inicio (`page.tsx`), los estilos globales (`globals.css`) y las rutas de autenticación y laboratorio.
+Páginas, navegación y estructura de la aplicación frontend (Next.js App Router). Define el layout raíz (`layout.tsx`), la página pública de inicio (`page.tsx`), los estilos base y de tema (`globals.css`, `experience.css`), las rutas de autenticación y el área de laboratorio y administración.
 
 ### Notas de diseño y arquitectura
-- `layout.tsx`: idioma, tipografías (`Young Serif` y `Source Serif 4` con `next/font`) y la clase `js` que activa las animaciones.
-- `page.tsx`: página de inicio; compone las secciones de [`components/landing/`](../components/landing/).
-- `login/page.tsx`: inicio de sesión con Google; muestra los errores de `?error=...`.
-- `app/page.tsx`: página principal de la aplicación; exige sesión (`getSession` de `lib/auth.ts`).
+- `layout.tsx`: idioma (`es`), tipografías (`Young_Serif` y `Source_Serif_4` con `next/font/google`), carga de `globals.css` + `experience.css` y el script que agrega la clase `js` para animaciones de entrada.
+- `page.tsx`: página de inicio pública; compone las secciones de [`components/landing/`](../components/landing/).
+- `login/page.tsx`: inicio de sesión con Google; muestra errores de `?error=...`.
+- `app/`: espacio autenticado bajo `app/layout.tsx` (`requireUser` de `lib/guards.ts`), que incluye inicio (`/app`), simulador (`/app/simulador`) y gestión de carteras (`/app/carteras`, `/app/carteras/nueva`, `/app/carteras/[id]`).
+- `admin/`: panel administrativo bajo `admin/layout.tsx` (`requireAdmin` de `lib/guards.ts`) con resumen, activos, importaciones CSV y gestión de roles.
 - `api/auth/[...nextauth]/route.ts`: rutas de Auth.js. Ver [`AUTENTICACION.md`](../../documentacion/tecnica/AUTENTICACION.md).
-- `globals.css`: tokens de color, tipo y espacio, estilos de cada sección y movimiento con alternativa para `prefers-reduced-motion`.
+- `globals.css` y `experience.css`: tokens base, paleta azul marino profundo con oro, estilos de la portada, acceso y área de trabajo (`AppShell`), y soporte para `prefers-reduced-motion`.
 
 Diseño documentado en [`LANDING.md`](../../documentacion/tecnica/LANDING.md). Los cálculos financieros y la persistencia pertenecen al backend Julia.
 
 ## Interface
-- `[layout.tsx:metadata]`: Next.js `Metadata` configuration (`title: "MarkovLab · Simulación y riesgo de carteras"`).
-- `[layout.tsx:RootLayout]`: Root layout Server Component wrapping `children` with `<html lang="es">` and typography CSS variables.
-- `[page.tsx:LandingPage]`: Default exported Server Component rendering the landing page sections (`Hero`, `Intro`, `Simulator`, `Modules`, `Pipeline`, `Questions`, `SiteFooter`, and `RevealOnScroll`).
-- `api`: [`./api/README.md`](./api/README.md) - Next.js App Router API routes subtree (`./api/auth/[...nextauth]`).
-- `app`: [`./app/README.md`](./app/README.md) - Authenticated user dashboard page (`/app`).
-- `login`: [`./login/README.md`](./login/README.md) - Google OAuth sign-in page (`/login`).
+- `[layout.tsx:metadata]`: Configuración `Metadata` raíz (`title: "MarkovLab · Simulación y riesgo de carteras"`).
+- `[layout.tsx:RootLayout]`: Layout raíz que envuelve `children` con `<html lang="es">`, variables CSS de tipografía y hojas `globals.css` y `experience.css`.
+- `[page.tsx:LandingPage]`: Server Component de la portada pública (`Hero`, `Intro`, `Simulator`, `Modules`, `Pipeline`, `Questions`, `SiteFooter`, `RevealOnScroll`).
+- `admin`: [`./admin/README.md`](./admin/README.md) — Panel de administración protegido por `requireAdmin`.
+- `api`: [`./api/README.md`](./api/README.md) — Rutas HTTP de Next.js App Router (`./api/auth/[...nextauth]`).
+- `app`: [`./app/README.md`](./app/README.md) — Espacio autenticado del usuario (`/app`, `/app/simulador`, `/app/carteras/*`).
+- `login`: [`./login/README.md`](./login/README.md) — Página pública de inicio de sesión con Google (`/login`).
 
 ## Invariants
-- `[layout.tsx:RootLayout]`: Binds `--font-display` (`Young_Serif`) and `--font-text` (`Source_Serif_4`) CSS variables on `<html lang="es">` with `suppressHydrationWarning`. Content remains visible if scripts are disabled.
-- `[page.tsx:LandingPage]`: Computes initial Monte Carlo demo output synchronously via `runDemo(DEFAULT_REQUEST)` from `@/lib/demo` and `@/lib/landing-data` to hydrate `<Simulator initial={initial} />`.
+- `[layout.tsx:RootLayout]`: Define `--font-display` (`Young_Serif`) y `--font-text` (`Source_Serif_4`) en `<html lang="es">` con `suppressHydrationWarning`. Todo el contenido permanece legible si JavaScript está deshabilitado.
+- `[page.tsx:LandingPage]`: Calcula el resultado inicial de la demostración Monte Carlo de forma síncrona mediante `runDemo(DEFAULT_REQUEST)` para hidratar `<Simulator initial={initial} />`.
 
 ## Side Effects
-- `[layout.tsx:RootLayout]`: Injects an inline `<script>` (`document.documentElement.classList.add('js')`) in `<head>` to enable progressive-enhancement entry animations on the client.
-- `[layout.tsx:Young_Serif]`: Loads Google Fonts (`Young_Serif` and `Source_Serif_4`) via `next/font/google`.
+- `[layout.tsx:RootLayout]`: Inserta `<script>` en `<head>` para añadir la clase `js` en `document.documentElement` y habilitar animaciones progresivas en el cliente.
+- `[layout.tsx:Young_Serif]`: Carga fuentes de Google (`Young_Serif` y `Source_Serif_4`) vía `next/font/google`.
 
 ## Verification
 - Run: `npm run typecheck && npm run build`

@@ -11,8 +11,9 @@ Contenido permitido: ejemplos de parámetros sin valores privados y sus descripc
 | `HOST` | `0.0.0.0` | Interfaz donde escucha el servidor HTTP. |
 | `PORT` | `8080` | Puerto del servidor; Railway lo asigna automáticamente. |
 | `ALLOWED_ORIGINS` | `http://localhost:3000` | Orígenes del frontend permitidos por CORS, separados por comas. `*` permite cualquiera y solo debe usarse en desarrollo. |
-| `DATABASE_URL` | vacío | **Secreto.** PostgreSQL (Supabase) con el usuario dueño de las tablas. Sin ella, las rutas de usuarios responden 503. |
+| `DATABASE_URL` | vacío | **Secreto.** PostgreSQL (Supabase) con el usuario dueño de las tablas. Sin ella, las rutas internas que leen o escriben datos y los scripts CLI responden 503 o fallan al iniciar. |
 | `INTERNAL_API_KEY` | vacío | **Secreto.** Clave compartida con el servidor de Next.js, de al menos 32 caracteres. Sin ella, las rutas internas responden 503. |
+| `TEST_DATABASE_URL` | vacío | **Solo pruebas.** PostgreSQL temporal local con el esquema y las migraciones aplicadas para ejecutar las pruebas de integración (`backend/test/README.md`). Nunca apuntar a la base real. |
 
 Ejemplo para producción (sin secretos):
 

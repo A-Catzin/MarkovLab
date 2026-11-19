@@ -19,6 +19,7 @@ usuarios ─┬─< carteras ─┬─< posiciones_cartera >── activos ─�
 | `carteras` | `id` (uuid) | Carteras de cada usuario. | Capital positivo; estado `borrador`, `activa` o `archivada`; `derivada_de_id` para versiones. |
 | `posiciones_cartera` | `(cartera_id, activo_id)` | Peso de cada activo en una cartera. | Peso entre 0 y 1; la suma = 1 la valida el backend. |
 | `simulaciones` | `id` (uuid) | Corridas Monte Carlo guardadas. | Mismos límites que el backend (1 a 100,000 escenarios, horizonte de 1 a 2,520). |
+| `tipos_cambio` | `(moneda, fecha, origen)` | Tipos de cambio diarios contra 1 USD (`MXN`, `EUR`; migración `0004`). | Moneda ISO distinta de `USD`; valor finito y positivo. |
 
 **Tipos enumerados:** `origen_precio` (`csv`, `api`, `manual`), `estado_cartera`, `estado_sincronizacion` y `rol_usuario` (`usuario`, `admin`; migración 0003).
 
@@ -29,10 +30,11 @@ usuarios ─┬─< carteras ─┬─< posiciones_cartera >── activos ─�
 | Tabla | Código |
 |---|---|
 | `usuarios` | `backend/src/infrastructure/postgres_users.jl` |
-| `activos`, `precios_historicos`, `sincronizaciones` | `backend/src/infrastructure/postgres_prices.jl` |
+| `activos`, `precios_historicos`, `sincronizaciones`, `tipos_cambio` | `backend/src/infrastructure/postgres_prices.jl` |
 | `carteras`, `posiciones_cartera` | `backend/src/infrastructure/postgres_portfolios.jl` |
+| `simulaciones` | `backend/src/infrastructure/postgres_simulations.jl` |
 
-Las dos comparten la conexión de `backend/src/infrastructure/postgres.jl` (candado, reconexión y transacciones).
+Los cuatro adaptadores comparten la conexión de `backend/src/infrastructure/postgres.jl` (candado, reconexión y transacciones).
 
 ## Comprobar que el repositorio y la base coinciden
 

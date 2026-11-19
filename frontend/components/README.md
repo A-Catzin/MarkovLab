@@ -10,6 +10,7 @@ Elementos de interfaz de MarkovLab. Las rutas y la composición de páginas pert
 - `auth/AuthButtons.tsx` tiene los botones de cliente "Continuar con Google" (`signIn`, con la "G" de Google) y "Salir" (`signOut`) de Auth.js. `auth/AuthBackdrop.tsx` dibuja en el servidor el abanico de trayectorias Monte Carlo del fondo de `/login`; sus líneas se trazan al entrar (`[data-draw]` en `globals.css`) y luego un pulso de luz las recorre de una en una, en ciclo de 6 líneas (`.trace-pulse`, compartida con el gráfico de la portada); todo queda quieto con `prefers-reduced-motion`. Ver [`AUTENTICACION.md`](../../documentacion/tecnica/AUTENTICACION.md).
 
 ## Subdirectories & Boundaries
+- `app`: [`./app/README.md`](./app/README.md) — Componentes del espacio autenticado y panel de administración (`AppShell`, `NavLinks`, `AdminError`, `ImportForm`, `PortfolioForm`, `PortfolioHistoryChart`, `PortfolioSimulation`).
 - `auth`: [`./auth/README.md`](./auth/README.md) — Client-side NextAuth (`next-auth/react`) sign-in (`GoogleSignInButton`) and sign-out (`SignOutButton`) buttons.
 - `brand`: [`./brand/README.md`](./brand/README.md) — Brand identity components (`LogoMark`, `Wordmark`, and the client-side Three.js 3D `Coin`).
 - `landing`: [`./landing/README.md`](./landing/README.md) — Public landing page sections (`Hero`, `Intro`, `Modules`, `Pipeline`, `Questions`, `SiteFooter`), scroll reveal observer (`RevealOnScroll`), and interactive browser Monte Carlo demo (`Simulator`).

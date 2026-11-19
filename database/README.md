@@ -4,7 +4,7 @@ PostgreSQL administrado por Supabase. Los nombres de tablas, columnas y tipos es
 
 ## Navegación
 
-- [`migrations/`](./migrations/README.md): el esquema y sus cambios versionados. `esquema.sql` es idéntico a la base en Supabase.
+- [`migrations/`](./migrations/README.md): el esquema base (`esquema.sql`) y las migraciones versionadas (`0002` a `0004`) aplicadas en Supabase.
 - [`docs/`](./docs/README.md): el modelo de datos, tabla por tabla, y qué parte del backend usa cada una.
 - [`seeds/`](./seeds/README.md): datos de ejemplo reproducibles, cuando se definan.
 - [`SRS.md`](../documentacion/contexto/SRS.md): requisitos y arquitectura del proyecto.
@@ -15,6 +15,7 @@ PostgreSQL administrado por Supabase. Los nombres de tablas, columnas y tipos es
 |---|---|---|
 | `usuarios` | Sí: inicio de sesión con Google y roles | Ver [AUTENTICACION.md](../documentacion/tecnica/AUTENTICACION.md) y [ROLES.md](../documentacion/tecnica/ROLES.md). |
 | `activos`, `precios_historicos`, `sincronizaciones` | Sí: carga de precios desde CSV (origen `csv`) y desde Apify (origen `api`), y páginas de admin | Ver [IMPORTACION_CSV.md](../documentacion/tecnica/IMPORTACION_CSV.md#cargar-un-csv-a-la-base) y [PRECIOS_API.md](../documentacion/tecnica/PRECIOS_API.md). |
+| `tipos_cambio` | Sí: conversión de moneda en historia y simulaciones de carteras | Migración [`0004_tipos_cambio.sql`](./migrations/0004_tipos_cambio.sql); ver [PRECIOS_API.md](../documentacion/tecnica/PRECIOS_API.md#tipos-de-cambio) y [CARTERAS.md](../documentacion/tecnica/CARTERAS.md#moneda). |
 | `carteras`, `posiciones_cartera` | Sí: "Mis carteras" | Ver [CARTERAS.md](../documentacion/tecnica/CARTERAS.md). |
 | `simulaciones` | Sí: el panel "Simular" de cada cartera | Ver [CARTERAS.md](../documentacion/tecnica/CARTERAS.md#simular). |
 | `lista_seguimiento` | Todavía no | Lista de seguimiento (RF-08). |

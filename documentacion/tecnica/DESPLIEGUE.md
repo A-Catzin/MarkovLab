@@ -1,5 +1,7 @@
 # Desplegar MarkovLab en Vercel y Railway
 
+Las variables de cada servicio tienen plantilla en `despliegue/railway.env.plantilla` y `despliegue/vercel.env.plantilla`: cópialas como `railway.env` y `vercel.env` en la misma carpeta (git las ignora), llénalas y pégalas en cada panel.
+
 El frontend Next.js corre en Vercel, la API Julia en Railway y PostgreSQL en Supabase. Antes de publicar, sube los cambios deseados a una rama del repositorio y revisa que no incluya secretos. Este procedimiento no crea recursos ni despliega automáticamente.
 
 ## 1. Preparar PostgreSQL

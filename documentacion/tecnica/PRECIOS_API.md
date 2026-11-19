@@ -72,7 +72,7 @@ Un símbolo que ya está al día **no se consulta**, así que volver a correr la
 - **Las filas inválidas no detienen la carga.** Pasan por las mismas reglas que el CSV (`PriceBar`): precios positivos, el máximo arriba de la apertura, el mínimo y el cierre, etc. Las que fallan se cuentan y la importación queda `parcial`. Yahoo trae algunas así en la historia de la BMV.
 - **Sin duplicados.** Un precio se guarda una vez por activo, fecha y origen. Los precios de la API y los de un CSV del mismo día conviven, porque tienen distinto origen.
 - **Mercado y categoría:**
-  - Mercado, según la bolsa de Yahoo: `NMS`/`NGM`/`NCM` → `NASDAQ`, `NYQ` → `NYSE`, `PCX` → `NYSEARCA`, `MEX` → `BMV`. Otra bolsa conserva su nombre de Yahoo, en mayúsculas.
+  - Mercado, según la bolsa de Yahoo: `NMS`/`NGM`/`NCM`/`NAS` → `NASDAQ`, `NYQ` → `NYSE`, `PCX` → `NYSEARCA`, `ASE` → `NYSEAMERICAN`, `BTS` → `CBOE`, `MEX` → `BMV`. Otra bolsa conserva su nombre de Yahoo, en mayúsculas.
   - Categoría: `EQUITY` → `Acción`, `ETF` → `ETF`, etc.
   - El símbolo se guarda tal como lo usa Yahoo (`WALMEX.MX`), para poder pedirlo de nuevo.
 - **Un símbolo que Yahoo no conoce, o uno nuevo que no trajo precios,** queda como importación `fallida`, sin activo, con el motivo.

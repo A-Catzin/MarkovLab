@@ -2,42 +2,41 @@
 
 ## Overview
 
-Responsabilidad: adaptar archivos CSV, almacenamiento en memoria y PostgreSQL a las necesidades de los servicios y puertos del dominio.
+Responsabilidad: adaptar archivos CSV, la API externa de mercado (Apify), almacenamiento en memoria y PostgreSQL a las necesidades de los servicios y puertos del dominio.
 
-Contenido permitido: conectores, repositorios y traducciones de datos externos. Límite: no exponer HTTP ni decidir reglas financieras; tampoco guardar credenciales en código. Ver [`IMPORTACION_CSV.md`](../../../documentacion/tecnica/IMPORTACION_CSV.md).
+Contenido permitido: conectores, repositorios y traducciones de datos externos. Límite: no exponer HTTP ni decidir reglas financieras; tampoco guardar credenciales en código. Ver [`IMPORTACION_CSV.md`](../../../documentacion/tecnica/IMPORTACION_CSV.md) y [`PRECIOS_API.md`](../../../documentacion/tecnica/PRECIOS_API.md).
 
 ## Interface
 
 - **Importación CSV de precios (`csv_prices.jl`)**:
-  - `ImportIssue(line, message)` (`[csv_prices.jl:ImportIssue]`), `PriceImportResult(bars, errors, duplicates)` (`[csv_prices.jl:PriceImportResult]`).
-  - `parse_prices_csv(io; columns=Dict(), symbol=nothing) -> PriceImportResult` (`[csv_prices.jl:parse_prices_csv]`).
-  - `read_prices_csv(path; kwargs...) -> PriceImportResult` (`[csv_prices.jl:read_prices_csv]`).
-  - Constantes: `PRICE_COLUMNS` (`("symbol", "date", "open", "high", "low", "close", "volume")`), `PRICE_DATE_FORMAT` (`dateformat"yyyy-mm-dd"`) (`[csv_prices.jl:PRICE_COLUMNS]`, `[csv_prices.jl:PRICE_DATE_FORMAT]`).
-- **Repositorio de usuarios en memoria (`memory_users.jl`)**:
-  - `InMemoryUserRepository()` (`[memory_users.jl:InMemoryUserRepository]`), `save_google_user(users::InMemoryUserRepository, profile::GoogleProfile) -> AppUser` (`[memory_users.jl:save_google_user]`).
+  - `ImportIssue(line, message)`, `PriceImportResult(bars, errors, duplicates)`, `parse_prices_csv(io; columns=Dict(), symbol=nothing)`, `read_prices_csv(path; kwargs...)`, `PRICE_COLUMNS`, `PRICE_DATE_FORMAT` (`[csv_prices.jl:parse_prices_csv]`, `[csv_prices.jl:read_prices_csv]`).
+- **Fuente externa Apify (`apify_market_data.jl`)**:
+  - `ApifyMarketData(token; actor=APIFY_ACTOR, timeout=APIFY_TIMEOUT_SECONDS)`, `fetch_daily_prices(source::ApifyMarketData, symbols, from::Date, to::Date) -> Vector{MarketSeries}`, `APIFY_ACTOR` (`"kaix~yahoo-finance-scraper"`), `APIFY_BATCH_SIZE` (`5`), `APIFY_MEMORY_MB` (`1024`), `YAHOO_MARKETS`, `YAHOO_CATEGORIES` (`[apify_market_data.jl:ApifyMarketData]`, `[apify_market_data.jl:fetch_daily_prices]`).
 - **Conexión PostgreSQL compartida (`postgres.jl`)**:
-  - `PostgresConnection(url)`, `connection!(db)`, `Base.close(db)`, `with_connection(f, db)` (reintenta una vez ante conexión perdida), `in_transaction(f, conn)` (`BEGIN`/`COMMIT`/`ROLLBACK`), `is_connection_error(err)` y `DATABASE_URL_PATTERN` (`[postgres.jl:PostgresConnection]`, `[postgres.jl:with_connection]`, `[postgres.jl:in_transaction]`).
-- **Repositorio de precios en memoria (`memory_prices.jl`)**:
-  - `InMemoryPriceRepository()` y `save_price_import(prices, symbol, details, bars, status, failed_rows, message) -> (asset_id, inserted)` (`[memory_prices.jl:save_price_import]`).
-- **Repositorio de precios en PostgreSQL (`postgres_prices.jl`)**:
-  - `PostgresPriceRepository(url)`, `save_price_import(...)` sobre `activos`, `precios_historicos` y `sincronizaciones` en una transacción (`[postgres_prices.jl:save_price_import]`).
-- **Repositorio de usuarios en PostgreSQL (`postgres_users.jl`)**:
-  - `PostgresUserRepository(url)` (`[postgres_users.jl:PostgresUserRepository]`), `connection!(users::PostgresUserRepository)` (`[postgres_users.jl:connection!]`), `Base.close(users::PostgresUserRepository)` (`[postgres_users.jl:close]`), `save_google_user(users::PostgresUserRepository, profile::GoogleProfile) -> AppUser` (`[postgres_users.jl:save_google_user]`), `UPSERT_GOOGLE_USER_SQL` (`[postgres_users.jl:UPSERT_GOOGLE_USER_SQL]`).
+  - `PostgresConnection(url)`, `connection!(db)`, `Base.close(db)`, `with_connection(f, db)`, `in_transaction(f, conn)`, `run_query(conn, sql, params=())`, `set_user_timeout!`, `is_connection_error`, `DATABASE_URL_PATTERN`, `CONNECTION_PARAMS` (`[postgres.jl:PostgresConnection]`, `[postgres.jl:with_connection]`, `[postgres.jl:run_query]`, `[postgres.jl:in_transaction]`).
+- **Repositorios de usuarios (`memory_users.jl`, `postgres_users.jl`)**:
+  - `InMemoryUserRepository()`, `PostgresUserRepository(url)`, `save_google_user`, `find_user`, `list_users`, `set_user_role`, `UPSERT_GOOGLE_USER_SQL`, `LOCK_ADMINS_SQL`, `SET_ROLE_SQL` (`[memory_users.jl:InMemoryUserRepository]`, `[postgres_users.jl:PostgresUserRepository]`, `[postgres_users.jl:set_user_role]`).
+- **Repositorios de precios y divisas (`memory_prices.jl`, `postgres_prices.jl`)**:
+  - `InMemoryPriceRepository()`, `PostgresPriceRepository(url)`, `save_price_import(..., source=:csv)`, `list_assets`, `list_imports(prices; limit=50)`, `latest_price_date(prices, symbol; source=:api)`, `price_history(prices, asset_id)`, `save_exchange_rates`, `exchange_rates`, `latest_exchange_rate_date` (`[memory_prices.jl:save_price_import]`, `[postgres_prices.jl:save_price_import]`, `[postgres_prices.jl:exchange_rates]`).
+- **Repositorios de carteras (`memory_portfolios.jl`, `postgres_portfolios.jl`)**:
+  - `InMemoryPortfolioRepository(prices)`, `PostgresPortfolioRepository(url)`, `create_portfolio`, `list_portfolios`, `get_portfolio`, `delete_portfolio` (`[memory_portfolios.jl:InMemoryPortfolioRepository]`, `[postgres_portfolios.jl:PostgresPortfolioRepository]`).
+- **Repositorios de simulaciones (`memory_simulations.jl`, `postgres_simulations.jl`)**:
+  - `InMemorySimulationRepository()`, `PostgresSimulationRepository(url)`, `save_simulation`, `list_simulations(simulations, user_id, portfolio_id; limit=20)` (`[memory_simulations.jl:InMemorySimulationRepository]`, `[postgres_simulations.jl:PostgresSimulationRepository]`).
 
 ## Invariants
 
-- `parse_prices_csv` exige un flujo CSV no vacío con las columnas obligatorias `PRICE_COLUMNS` (o `symbol` provisto por argumento), interpreta fechas con `PRICE_DATE_FORMAT` (`yyyy-mm-dd`), registra filas inválidas en `errors` y filas con `(symbol, date)` repetido en `duplicates` conservando la primera aparición, y devuelve `bars` ordenado por `(symbol, date)` (`[csv_prices.jl:PRICE_COLUMNS]`, `[csv_prices.jl:PRICE_DATE_FORMAT]`, `[csv_prices.jl:parse_prices_csv]`).
-- `InMemoryUserRepository` y `PostgresUserRepository` garantizan un único `AppUser` por `google_sub` (`profile.subject`) y correo electrónico único entre cuentas distintas, lanzando `EmailConflictError` ante colisión de correo (`[memory_users.jl:save_google_user]`, `[postgres_users.jl:UPSERT_GOOGLE_USER_SQL]`, `[postgres_users.jl:save_google_user]`).
-- `PostgresConnection` (que usan `PostgresUserRepository` y `PostgresPriceRepository`) rechaza con `ArgumentError` una `url` que no tenga la forma `postgresql://...`, sin repetirla en el mensaje; serializa el acceso a la conexión `LibPQ.Connection` con `ReentrantLock`, y reconecta reintentando una vez solo cuando la conexión se perdió (`is_connection_error`), no ante errores de SQL (`[postgres.jl:PostgresConnection]`, `[postgres.jl:with_connection]`). Al abrir la conexión agrega a la URL los parámetros de libpq de `CONNECTION_PARAMS` (keepalives a los 5 s, `tcp_user_timeout` de 20 s y `connect_timeout` de 10 s), salvo los que la URL ya trae (`[postgres.jl:connection_url]`). Como la libpq de LibPQ.jl no aplica `tcp_user_timeout` al socket, `set_user_timeout!` lo pone con `setsockopt` (solo en Linux), y `connect_timeout` también se pasa como argumento a `LibPQ.Connection`. Así, una conexión que el pooler de Supabase soltó sin avisar falla en unos 20 s y se reconecta, en vez de esperar para siempre.
-- Todas las consultas pasan por `run_query` (`[postgres.jl:run_query]`), que usa `LibPQ.async_execute`: la espera de la respuesta cede el hilo, así que una consulta lenta o colgada no deja al servidor sin atender otras peticiones, ni `/health`. Los errores salen sin el envoltorio de la tarea (`unwrap_task_error`), para que `is_connection_error` los reconozca. No uses `LibPQ.execute` en un adaptador nuevo: vuelve a bloquear el hilo.
-- `PostgresPriceRepository` guarda el activo, los precios y el registro de la importación en una sola transacción; omite los precios ya existentes por `(activo_id, fecha_operacion, origen)` y no crea el activo si no hay barras (`[postgres_prices.jl:save_price_import]`).
+- `parse_prices_csv` exige columnas `PRICE_COLUMNS` (o `symbol`), registra inválidas en `errors` y duplicados `(symbol, date)` en `duplicates` conservando la primera aparición, y ordena `bars` por `(symbol, date)` (`[csv_prices.jl:parse_prices_csv]`).
+- `ApifyMarketData` oculta `token` en `Base.show` (`token=<oculto>`), solicita barras diarias en tandas de `APIFY_BATCH_SIZE` (`5`) símbolos con `1024 MB`, descarta la barra del día en curso del mercado y convierte días con `open`/`high`/`low` inválidos pero `close` válido en barras planas registradas en `MarketSeries.corrected` (`[apify_market_data.jl:ApifyMarketData]`, `[apify_market_data.jl:fetch_daily_prices]`, `[apify_market_data.jl:parse_actor_item]`).
+- Todos los adaptadores de usuario garantizan un único `AppUser` por `google_sub`, correo único (`EmailConflictError`) y al menos un administrador (`LastAdminError` usando `FOR UPDATE` sobre administradores en `PostgresUserRepository`) (`[memory_users.jl:set_user_role]`, `[postgres_users.jl:LOCK_ADMINS_SQL]`).
+- `PostgresConnection` (usada por `PostgresUserRepository`, `PostgresPriceRepository`, `PostgresPortfolioRepository` y `PostgresSimulationRepository`) valida `postgresql://...`, serializa operaciones con `ReentrantLock`, ejecuta todas las consultas vía `run_query` (`LibPQ.async_execute`) sin bloquear el hilo de Julia, aplica `CONNECTION_PARAMS` + `set_user_timeout!` y reintenta una vez solo en errores de conexión (`is_connection_error`) (`[postgres.jl:PostgresConnection]`, `[postgres.jl:run_query]`, `[postgres.jl:with_connection]`).
+- `PostgresPriceRepository` y `PostgresPortfolioRepository` ejecutan altas de importaciones/carteras de forma transaccional atómica (`in_transaction`), respetando unicidad de precios y tipos de cambio por `(clave, fecha, origen)` y pertenencia estricta por `usuario_id` (`[postgres_prices.jl:save_price_import]`, `[postgres_portfolios.jl:create_portfolio]`).
 
 ## Side Effects
 
-- `read_prices_csv` abre y lee archivos CSV del sistema de archivos local (`[csv_prices.jl:read_prices_csv]`).
-- `InMemoryUserRepository` toma un `ReentrantLock`, genera UUID v4 aleatorios (`rand(UInt128)`) y modifica el diccionario en memoria `by_subject` (`[memory_users.jl:random_uuid]`, `[memory_users.jl:save_google_user]`).
-- `PostgresPriceRepository` inserta y actualiza filas en `activos`, inserta en `precios_historicos` y `sincronizaciones` (`[postgres_prices.jl:save_price_import]`).
-- `PostgresUserRepository` toma un `ReentrantLock`, abre y cierra conexiones TCP hacia PostgreSQL mediante `LibPQ.Connection` y ejecuta `INSERT INTO usuarios ... ON CONFLICT (google_sub) DO UPDATE` (`[postgres_users.jl:connection!]`, `[postgres_users.jl:close]`, `[postgres_users.jl:UPSERT_GOOGLE_USER_SQL]`, `[postgres_users.jl:save_google_user]`).
+- `read_prices_csv` lee archivos CSV locales (`[csv_prices.jl:read_prices_csv]`).
+- `ApifyMarketData` realiza solicitudes HTTPS `POST` a `api.apify.com` enviando `Authorization: Bearer <token>` (`[apify_market_data.jl:run_actor]`).
+- `InMemoryUserRepository` usa `Random.RandomDevice()` (entropía del SO) para generar UUID v4 en entornos concurrentes (`[memory_users.jl:random_uuid]`); los repositorios en memoria mutan sus estructuras internas protegidos por `ReentrantLock`.
+- Los cuatro repositorios PostgreSQL abren y mantienen conexiones TLS/TCP vía `LibPQ` y leen/escriben sobre las tablas `usuarios`, `activos`, `precios_historicos`, `sincronizaciones`, `tipos_cambio`, `carteras`, `posiciones_cartera` y `simulaciones` (`[postgres_users.jl:save_google_user]`, `[postgres_prices.jl:save_price_import]`, `[postgres_portfolios.jl:create_portfolio]`, `[postgres_simulations.jl:save_simulation]`).
 
 ## Verification
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Este directorio contiene el paquete `MarkovLabBackend`: cálculos financieros, simulación Monte Carlo de riesgo de carteras, importación de datos CSV, persistencia de usuarios Google y una API HTTP con Oxygen.jl. La organización y las conexiones previstas están en [`ARCHITECTURE.md`](../documentacion/tecnica/ARCHITECTURE.md) y el historial de cambios en [`CHANGELOG.md`](./CHANGELOG.md).
+Este directorio contiene el paquete `MarkovLabBackend`: cálculos financieros puros, simulación Monte Carlo de riesgo de carteras, conversión de divisas, importación CSV y sincronización con Apify, gestión de usuarios y roles, carteras con historial y simulaciones guardadas, precompilación (`src/precompile.jl`), `Dockerfile` y API HTTP con Oxygen.jl. La organización y las conexiones están en [`ARCHITECTURE.md`](../documentacion/tecnica/ARCHITECTURE.md) y el historial de cambios en [`CHANGELOG.md`](./CHANGELOG.md).
 
 ### Inicio rápido
 
@@ -21,11 +21,13 @@ Sin el `.env` cargado, el servidor arranca igual pero con `database = false` e `
 ## Interface
 
 - **Manifiesto del paquete (`Project.toml`)**:
-  - Paquete `MarkovLabBackend` (`uuid = "a52f9f0b-3d56-471b-a712-a3e35b4c8cf2"`, `version = "0.1.0"`) con dependencias `Dates`, `HTTP`, `LibPQ`, `Oxygen` y `Random` (`[Project.toml:name]`, `[Project.toml:deps]`).
+  - Paquete `MarkovLabBackend` (`uuid = "a52f9f0b-3d56-471b-a712-a3e35b4c8cf2"`, `version = "0.1.0"`) con dependencias `Dates`, `HTTP`, `JSON`, `LibPQ`, `Oxygen` y `Random` (`[Project.toml:name]`, `[Project.toml:deps]`).
+- **Contenedor (`Dockerfile`)**:
+  - Imagen basada en `julia:1.12.7` que instala dependencias, ejecuta la precompilación (`src/precompile.jl`) e inicia `scripts/serve.jl`.
 - **Subdirectorios y contratos**:
-  - [`src`](./src/README.md): Módulo `MarkovLabBackend.jl` y sus capas [`src/domain`](./src/domain/README.md) ([`METRICAS_DOMINIO.md`](../documentacion/tecnica/METRICAS_DOMINIO.md), [`CARTERAS_DOMINIO.md`](../documentacion/tecnica/CARTERAS_DOMINIO.md), [`SIMULACION_RIESGO.md`](../documentacion/tecnica/SIMULACION_RIESGO.md)), [`src/infrastructure`](./src/infrastructure/README.md) ([`IMPORTACION_CSV.md`](../documentacion/tecnica/IMPORTACION_CSV.md)), [`src/services`](./src/services/README.md) y [`src/api`](./src/api/README.md) ([`API.md`](../documentacion/tecnica/API.md)).
-  - [`scripts`](./scripts/README.md): Tareas locales reproducibles (`serve.jl`).
-  - [`config`](./config/README.md): Documentación de variables de entorno (`HOST`, `PORT`, `ALLOWED_ORIGINS`, `DATABASE_URL`, `INTERNAL_API_KEY`).
+  - [`src`](./src/README.md): Módulo `MarkovLabBackend.jl` (`precompile.jl` incluido al final) y sus capas [`src/domain`](./src/domain/README.md) ([`METRICAS_DOMINIO.md`](../documentacion/tecnica/METRICAS_DOMINIO.md), [`CARTERAS_DOMINIO.md`](../documentacion/tecnica/CARTERAS_DOMINIO.md), [`SIMULACION_RIESGO.md`](../documentacion/tecnica/SIMULACION_RIESGO.md)), [`src/infrastructure`](./src/infrastructure/README.md) ([`IMPORTACION_CSV.md`](../documentacion/tecnica/IMPORTACION_CSV.md), [`PRECIOS_API.md`](../documentacion/tecnica/PRECIOS_API.md)), [`src/services`](./src/services/README.md) y [`src/api`](./src/api/README.md) ([`API.md`](../documentacion/tecnica/API.md)).
+  - [`scripts`](./scripts/README.md): Tareas locales reproducibles (`serve.jl`, `import_prices.jl`, `sync_prices.jl`).
+  - [`config`](./config/README.md): Documentación de variables de entorno (`HOST`, `PORT`, `ALLOWED_ORIGINS`, `DATABASE_URL`, `INTERNAL_API_KEY`, `APIFY_TOKEN`, `TEST_DATABASE_URL`).
   - [`test`](./test/README.md): Suite determinista de pruebas por capa (`runtests.jl`).
 
 ## Invariants
@@ -35,8 +37,8 @@ Sin el `.env` cargado, el servidor arranca igual pero con `database = false` e `
 
 ## Side Effects
 
-- Iniciar el servidor mediante `scripts/serve.jl` o `MarkovLabBackend.Api.start()` lee variables de entorno (`ENV`), abre un socket HTTP con Oxygen/HTTP.jl y, cuando `DATABASE_URL` está configurada, abre conexiones `LibPQ` hacia PostgreSQL para sincronizar registros en `usuarios` y, con `scripts/import_prices.jl`, en `activos`, `precios_historicos` y `sincronizaciones`.
-- La importación de archivos mediante `read_prices_csv` lee archivos CSV del sistema de archivos local.
+- Iniciar el servidor mediante `scripts/serve.jl` o `MarkovLabBackend.Api.start()` lee variables de entorno (`ENV`), abre un socket HTTP con Oxygen/HTTP.jl y, cuando `DATABASE_URL` está configurada, abre conexiones `LibPQ` hacia PostgreSQL, ejecuta `Api.warm_database` (solo lectura) y atiende lecturas/escrituras sobre `usuarios`, `activos`, `precios_historicos`, `sincronizaciones`, `carteras`, `posiciones_cartera`, `simulaciones` y `tipos_cambio`.
+- La importación de archivos mediante `read_prices_csv` e `import_prices.jl` lee archivos CSV locales; `sync_prices.jl` consulta la API de Apify para precios y divisas.
 
 ## Verification
 

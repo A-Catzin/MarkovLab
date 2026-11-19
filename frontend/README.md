@@ -15,7 +15,7 @@ El diseño y componentes están documentados en [`LANDING.md`](../documentacion/
 | `/app` | `app/app/page.tsx` | Inicio con sesión (cualquier rol): saludo y módulos. El layout `app/app/layout.tsx` exige sesión y pone la navegación. |
 | `/app/carteras` | `app/app/carteras/page.tsx` | Mis carteras: lista de las carteras del usuario. |
 | `/app/carteras/nueva` | `app/app/carteras/nueva/page.tsx` | Formulario de nueva cartera (`components/app/PortfolioForm.tsx`, acción en `actions.ts`). |
-| `/app/carteras/{id}` | `app/app/carteras/[id]/page.tsx` | Detalle de una cartera, con su composición y el botón para borrarla. Ver [`CARTERAS.md`](../documentacion/tecnica/CARTERAS.md). |
+| `/app/carteras/{id}` | `app/app/carteras/[id]/page.tsx` | Detalle de una cartera: valor histórico diario, simulación Monte Carlo persistida, composición y borrado. Ver [`CARTERAS.md`](../documentacion/tecnica/CARTERAS.md). |
 | `/app/simulador` | `app/app/simulador/page.tsx` | Simulador con la cartera de ejemplo. |
 | `/admin` | `app/admin/page.tsx` | Solo admins (`app/admin/layout.tsx`): resumen de usuarios, activos, precios y última importación. |
 | `/admin/activos` | `app/admin/activos/page.tsx` | Catálogo de activos con precios cargados. |
@@ -25,10 +25,10 @@ El diseño y componentes están documentados en [`LANDING.md`](../documentacion/
 
 ## Subdirectories & Boundaries
 
-- `app`: [`./app/README.md`](./app/README.md) — Árbol de rutas Next.js App Router, layout raíz con fuentes tipográficas y páginas `/`, `/login`, `/app` y `/api/auth`.
-- `components`: [`./components/README.md`](./components/README.md) — Elementos reutilizables de UI divididos en autenticación (`auth`), identidad y moneda 3D (`brand`) y secciones de portada (`landing`).
-- `lib`: [`./lib/README.md`](./lib/README.md) — Motor Monte Carlo en navegador (`simulation.ts`), ejecutor de demo (`demo.ts`), datos estáticos (`landing-data.ts`) y configuración Auth.js (`auth.ts`).
-- `types`: [`./types/README.md`](./types/README.md) — Aumentos de tipos TypeScript (`next-auth.d.ts`) para propagar el `userId` de PostgreSQL en sesiones de Auth.js.
+- `app`: [`./app/README.md`](./app/README.md) — Árbol de rutas Next.js App Router, layout raíz con fuentes tipográficas y estilos (`globals.css`, `experience.css`), y rutas `/`, `/login`, `/app/*`, `/admin/*` y `/api/auth`.
+- `components`: [`./components/README.md`](./components/README.md) — Elementos reutilizables de UI divididos en autenticación (`auth`), identidad y moneda 3D (`brand`), portada pública (`landing`) y espacio autenticado / admin (`app`).
+- `lib`: [`./lib/README.md`](./lib/README.md) — Cliente del backend (`backend.ts`), guardas de sesión (`guards.ts`), Auth.js (`auth.ts`), clientes de carteras y administración (`portfolios.ts`, `admin.ts`), simulador en navegador (`simulation.ts`, `demo.ts`) y datos editoriales (`landing-data.ts`).
+- `types`: [`./types/README.md`](./types/README.md) — Aumentos de tipos TypeScript (`next-auth.d.ts`) para propagar `userId`, `role` y `roleCheckedAt` en sesiones y JWT de Auth.js.
 
 ## Verification
 

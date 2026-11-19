@@ -15,13 +15,13 @@ El 2026-11-04 se leyó el catálogo de la base de Supabase y se reescribió `esq
 
 Después de aplicar `0002` se repitió la comparación entre `esquema.sql` + `0002` y la base: las seis huellas volvieron a coincidir (67 columnas, 43 restricciones). Lo mismo después de `0003` (68 columnas, 12 valores de enums).
 
-`esquema.sql` se aplicó a mano antes de que existiera este registro, así que en el historial de migraciones de Supabase (`supabase_migrations`) solo aparece `0002_cierre_ajustado`. La fuente de verdad del orden es la tabla de arriba.
+`esquema.sql` y las primeras migraciones se aplicaron en parte fuera de un registro automático único en Supabase (`supabase_migrations`); la fuente de verdad del orden aplicado en la base es la tabla de arriba (`esquema.sql` + `0002` + `0003` + `0004`).
 
 Para repetir la comprobación después de un cambio, la consulta de huellas está en [`../docs/README.md`](../docs/README.md#comprobar-que-el-repositorio-y-la-base-coinciden).
 
 ## Cómo aplicar una migración nueva
 
-1. Crear el archivo con el siguiente número, por ejemplo `0002_cierre_ajustado.sql`, dentro de una transacción (`BEGIN; … COMMIT;`).
+1. Crear el archivo con el siguiente número, por ejemplo `0005_nombre_migracion.sql`, dentro de una transacción (`BEGIN; … COMMIT;`).
 2. Probarlo en un PostgreSQL local con Docker, sobre `esquema.sql` y las migraciones anteriores, y correr las pruebas de integración del backend (ver [`backend/test/README.md`](../../backend/test/README.md)).
 3. Aplicarlo en Supabase (SQL Editor o MCP de Supabase) y marcarlo como aplicado en la tabla de arriba.
 

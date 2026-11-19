@@ -4,7 +4,7 @@
 Section and interaction components composing the MarkovLab public landing page: hero fan chart and navigation (`Hero`), historical context (`Intro`), capability mosaic (`Modules`), latency breakdown (`Pipeline`), FAQ (`Questions`), scroll-triggered reveal observer (`RevealOnScroll`), interactive browser Monte Carlo simulator (`Simulator`), and site footer (`SiteFooter`).
 
 ## Interface
-- `Hero()` — Landing header rendering top navigation, headline, `Coin`, and a deterministic 252-day SVG fan chart (`60` displayed paths and `2000` percentile band paths for p5, p50, p95) (`[Hero.tsx:Hero]`).
+- `Hero()` — Landing header rendering top navigation (`Entrar` → `/login`), headline (`"Explora lo posible."`), subtitle, CTA (`#simulador`), `Coin` over the navy radial field, and a deterministic 252-day SVG fan chart (`60` displayed paths and `2000` percentile band paths for p5, p50, p95) (`[Hero.tsx:Hero]`).
 - `Intro()` — Historical background section (`#historia`) presenting `FACTS` and archival plates (`[Intro.tsx:Intro]`).
 - `Modules()` — Architectural and feature mosaic section (`#modulos`) listing `IMPLEMENTED_METRICS` and domain constraints (`[Modules.tsx:Modules]`).
 - `Pipeline()` — Request stage latency breakdown section (`#como-funciona`) aggregating `REQUEST_STAGES` durations (`[Pipeline.tsx:Pipeline]`).
