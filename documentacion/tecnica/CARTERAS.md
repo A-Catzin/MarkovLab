@@ -94,9 +94,9 @@ Crear una cartera es **atómico**: si algún activo no existe, no se guarda nada
 | Capa | Archivos |
 |---|---|
 | Dominio | `backend/src/domain/saved_portfolios.jl`: `PositionDraft`, `PortfolioDraft`, `SavedPosition`, `SavedPortfolio` y el puerto `PortfolioRepository`. |
-| Servicio | `backend/src/services/portfolios.jl`: `require_user`, `create_user_portfolio`, `list_user_portfolios`, `get_user_portfolio` y `delete_user_portfolio`. |
+| Servicio | `backend/src/services/portfolios.jl`: `require_user`, `create_user_portfolio`, `list_user_portfolios`, `get_user_portfolio`, `delete_user_portfolio`, `portfolio_price_series` y `user_portfolio_history`. |
 | Adaptadores | `backend/src/infrastructure/postgres_portfolios.jl` (tablas `carteras` y `posiciones_cartera`) y `memory_portfolios.jl` (pruebas). |
-| API | `GET /api/internal/assets` y `GET`, `POST`, `DELETE /api/internal/portfolios[/{id}]` (ver [API.md](API.md#rutas-internas-de-usuario)). |
+| API | `GET /api/internal/assets`, `GET`/`POST`/`DELETE /api/internal/portfolios[/{id}]`, `GET /api/internal/portfolios/{id}/history` y `GET`/`POST /api/internal/portfolios/{id}/simulations` (ver [API.md](API.md#rutas-internas-de-usuario)). |
 | Simulación | `backend/src/domain/saved_simulations.jl` (`SavedSimulation` y el puerto `SimulationRepository`), `domain/portfolio_history.jl` (`aligned_prices`), `services/portfolio_simulations.jl` (`simulate_user_portfolio`, `list_user_simulations`) y `infrastructure/{memory,postgres}_simulations.jl` (tabla `simulaciones`). |
 | Moneda | `backend/src/domain/exchange_rates.jl` (`convert_series`, `MissingExchangeRateError` y el puerto de tipos de cambio), `services/portfolios.jl` (`portfolio_price_series`) y la tabla `tipos_cambio` (migración `0004`). |
 | Frontend | `lib/portfolios.ts` (con `currencyNote`), `app/app/carteras/` (páginas y `actions.ts`, con `simulatePortfolio`), `components/app/PortfolioForm.tsx`, `PortfolioHistoryChart.tsx` y `PortfolioSimulation.tsx`. |
@@ -117,4 +117,4 @@ Crear una cartera es **atómico**: si algún activo no existe, no se guarda nada
 
 ## Siguiente paso
 
-Simular una cartera guardada con los precios históricos de la base y guardar el resultado en `simulaciones` (RF-47).
+Incorporar edición de carteras existentes, optimización de carteras con restricciones (`JuMP`/`HiGHS`) y backtesting con comparación contra un índice de referencia.

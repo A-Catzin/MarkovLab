@@ -19,7 +19,7 @@ Navegador            Next.js (Auth.js)                  Google            Julia 
 
 1. En `/login`, el botón llama a `signIn("google")`. Auth.js redirige a Google con `state` y PKCE, que protegen contra CSRF y contra el robo del código.
 2. Google vuelve a `/api/auth/callback/google`. Auth.js cambia el código por los tokens y valida el token de identidad.
-3. El callback `signIn` (`frontend/lib/auth.ts`) exige `email_verified` y llama al backend. Si el backend no responde, responde con error o tarda más de 5 s, **no se abre sesión** y `/login` muestra el error.
+3. El callback `signIn` (`frontend/lib/auth.ts`) exige `email_verified` y llama al backend (`frontend/lib/backend.ts`). Si el backend no responde, responde con error o tarda más de 10 s (`BACKEND_TIMEOUT_MS`), **no se abre sesión** y `/login` muestra el error.
 4. El backend guarda o actualiza al usuario por `google_sub` y devuelve su `id`.
 5. Auth.js guarda ese `id` y el rol (`user` o `admin`) en una cookie de sesión cifrada (JWT, 30 días por defecto). Pasado el primer minuto, el rol se vuelve a leer de la base en cada carga de página (`GET /api/internal/users/{id}`, una vez por solicitud), porque sin `SessionProvider` el token renovado no se reescribe en la cookie. Las páginas lo leen con `getSession()`; los roles y las páginas de cada uno están en [ROLES.md](ROLES.md).
 
@@ -28,7 +28,10 @@ Navegador            Next.js (Auth.js)                  Google            Julia 
 | Ruta | Comportamiento |
 |---|---|
 | `/login` | Con sesión, redirige a `/app`. Con `?error=...`, muestra un mensaje en español. |
-| `/app` | Sin sesión, redirige a `/login`. Muestra el nombre y el correo, y el botón "Salir". |
+| `/app` | Exige sesión (`requireUser` en `app/app/layout.tsx`). El marco `AppShell` muestra navegación, identidad y el botón "Salir". |
+| `/app/simulador` | Simulador Monte Carlo con cartera de ejemplo dentro del área autenticada. |
+| `/app/carteras`, `/app/carteras/nueva`, `/app/carteras/[id]` | Listado, creación, historial y simulaciones de las carteras del usuario. |
+| `/admin`, `/admin/activos`, `/admin/importaciones`, `/admin/usuarios` | Exige rol `admin` (`requireAdmin` en `app/admin/layout.tsx`) y validación en base por `X-Actor-Id`. |
 | `/api/auth/*` | Rutas de Auth.js: `signin`, `callback/google`, `session`, `csrf`, `signout`, `providers`. |
 
 "Salir" llama a `signOut()`, que borra la cookie y vuelve a la portada.
@@ -43,7 +46,7 @@ Navegador            Next.js (Auth.js)                  Google            Julia 
 
 ## Datos guardados
 
-Tabla `usuarios` (esquema con nombres en español): `id`, `correo`, `nombre_visible`, `google_sub`, `creado_en` y `actualizado_en`. El backend envía el `id` y las fechas explícitamente, así que no depende de los valores por defecto ni de triggers de la tabla. La API mantiene los nombres en inglés (`email`, `display_name`).
+Tabla `usuarios` (esquema con nombres en español): `id`, `correo`, `nombre_visible`, `google_sub`, `rol` (`0003_roles.sql`), `creado_en` y `actualizado_en`. El backend envía el `id` y las fechas explícitamente, así que no depende de los valores por defecto ni de triggers de la tabla. La API mantiene los nombres en inglés (`email`, `display_name`, `role`).
 
 - El usuario se identifica por `google_sub`, que Google mantiene aunque cambie el correo.
 - En cada inicio de sesión se actualizan el correo y el nombre.
@@ -76,6 +79,7 @@ INTERNAL_API_KEY=         # openssl rand -hex 32, el mismo valor que en el backe
 DATABASE_URL=             # usuario dueño de las tablas, por RLS sin políticas
 INTERNAL_API_KEY=
 ALLOWED_ORIGINS=http://localhost:3000
+APIFY_TOKEN=              # opcional: solo para scripts/sync_prices.jl
 ```
 
 En Google Cloud, el cliente OAuth necesita la URI de redirección `http://localhost:3000/api/auth/callback/google`, y la de producción cuando se despliegue.

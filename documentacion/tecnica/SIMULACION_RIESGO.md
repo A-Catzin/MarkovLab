@@ -106,7 +106,7 @@ Devuelve un `NamedTuple` con:
 - La normalidad subestima eventos extremos (colas pesadas); los escenarios de estrés (RF-46) servirán para complementar.
 - Rendimientos independientes entre períodos y parámetros constantes durante el horizonte.
 - Con volatilidades muy altas, un rendimiento normal puede ser menor que -100 %; con datos diarios o mensuales realistas es despreciable.
-- No se guardan parámetros ni resultados (RF-47) ni se informa el progreso (RNF-02); corresponde a las capas de servicios y persistencia.
+- Las funciones del dominio y el endpoint sin estado `POST /api/risk/monte-carlo` no guardan parámetros ni resultados ni informan progreso (RNF-02). La ejecución con precios guardados y persistencia en la tabla `simulaciones` (RF-47) está implementada en `services/portfolio_simulations.jl` y documentada en [`CARTERAS.md`](CARTERAS.md#simular).
 
 ## Pruebas
 

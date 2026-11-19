@@ -10,7 +10,7 @@ Arquitectura general del sistema:
 ```text
 Frontend (Next.js 15 + TypeScript)
         ↓ HTTP / JSON (CORS + X-Internal-Key)
-Backend API (Julia 1.10+ con Oxygen.jl)
+Backend API (Julia 1.12.7 con Oxygen.jl)
         ↓ LibPQ.jl
 Base de Datos (PostgreSQL en Supabase)
 ```
@@ -39,12 +39,13 @@ npm install    # solo la primera vez
 npm run dev
 ```
 
-**Precios desde Apify** (opcional, con `APIFY_TOKEN` en `backend/.env`):
+**Precios y divisas desde Apify** (opcional, con `APIFY_TOKEN` en `backend/.env`):
 
 ```bash
 set -a; source backend/.env; set +a
-julia --project=backend backend/scripts/sync_prices.jl AAPL WALMEX.MX --desde 2000-01-01   # carga histórica
-julia --project=backend backend/scripts/sync_prices.jl --catalogo                          # actualización
+julia --project=backend backend/scripts/sync_prices.jl AAPL WALMEX.MX --desde 2000-01-01   # carga histórica de activos
+julia --project=backend backend/scripts/sync_prices.jl --divisas --desde 2000-01-01        # tipos de cambio diarios (MXN, EUR)
+julia --project=backend backend/scripts/sync_prices.jl --catalogo                          # actualización de activos y divisas
 ```
 
 Ver [PRECIOS_API.md](./documentacion/tecnica/PRECIOS_API.md).
@@ -55,24 +56,25 @@ Para publicar el frontend en Vercel, la API en Railway y usar PostgreSQL en Supa
 
 ## Subdirectories & System Boundaries
 
-- `backend`: [`./backend/README.md`](./backend/README.md) — Paquete Julia `MarkovLabBackend` que encapsula el dominio financiero puro, cálculo de métricas de rendimiento y riesgo (drawdowns, correlación, covarianza), simulación Monte Carlo determinista (`normal-rebalanced-v1`), importación de precios desde CSV, adaptadores de persistencia de usuarios Google y la API REST con Oxygen.jl.
-- `frontend`: [`./frontend/README.md`](./frontend/README.md) — Aplicación web Next.js (App Router) con TypeScript y Tailwind CSS, incluyendo la landing page científica, un simulador de carteras en navegador con el mismo modelo Monte Carlo, autenticación OAuth mediante Auth.js y el dashboard del analista (`/app`).
-- `database`: [`./database/README.md`](./database/README.md) — Estructura documental para el esquema relacional, migraciones y datos iniciales de PostgreSQL.
-- `documentacion`: [`./documentacion/README.md`](./documentacion/README.md) — Documentación de requisitos (`contexto/SRS.md`), contratos técnicos (`tecnica/API.md`, `tecnica/ARCHITECTURE.md`, `tecnica/AUTENTICACION.md`, `tecnica/METRICAS_DOMINIO.md`, `tecnica/SIMULACION_RIESGO.md`) y datos (`datos/diccionario-datos.md`).
+- `backend`: [`./backend/README.md`](./backend/README.md) — Paquete Julia `MarkovLabBackend` que encapsula el dominio financiero puro, métricas de rendimiento y riesgo (drawdowns, correlación, covarianza), simulación Monte Carlo determinista (`normal-rebalanced-v1`), conversión de divisas (`tipos_cambio`), importación CSV y sincronización con Apify, roles y administración, carteras guardadas con historia y simulaciones persistidas, precompilación (`src/precompile.jl` y `Api.warm_database`), `Dockerfile` y API REST con Oxygen.jl.
+- `frontend`: [`./frontend/README.md`](./frontend/README.md) — Aplicación web Next.js (App Router) con TypeScript, Auth.js (Google OAuth) y diseño marino profundo con oro (`experience.css`), que incluye la portada pública con simulador en navegador, inicio de sesión (`/login`), área autenticada (`/app`, `/app/simulador`, `/app/carteras/*`) y panel administrativo (`/admin/*`).
+- `database`: [`./database/README.md`](./database/README.md) — Esquema PostgreSQL y migraciones versionadas (`esquema.sql`, `0002_cierre_ajustado.sql`, `0003_roles.sql`, `0004_tipos_cambio.sql`; 9 tablas con RLS activado).
+- `documentacion`: [`./documentacion/README.md`](./documentacion/README.md) — Especificación de requisitos ([`SRS.md`](./documentacion/contexto/SRS.md)), índice de las 12 guías técnicas ([`tecnica/README.md`](./documentacion/tecnica/README.md)) y diccionario de datos ([`datos/diccionario-datos.md`](./documentacion/datos/diccionario-datos.md)).
 
 ## Global Invariants
 
 - **Separación de responsabilidades**: El frontend nunca consulta directamente la base de datos PostgreSQL ni almacena credenciales de mercado; todo el acceso a datos y cálculos pesados se coordina a través de la API en Julia.
 - **Reproducibilidad numérica**: Los cálculos de métricas y simulaciones Monte Carlo emplean fórmulas auditadas y soportan semillas fijas (`Random.Xoshiro` en Julia, `mulberry32` en el navegador) para garantizar que los resultados sean reproducibles bajo las mismas condiciones.
 - **Tolerancia y validación de carteras**: Las carteras financieras exigen que la suma de sus pesos sea estrictamente igual a `1.0` dentro de una tolerancia de `1e-6` (`PORTFOLIO_WEIGHT_TOLERANCE`), sin posiciones cortas salvo indicación explícita.
-- **Seguridad de endpoints internos**: Las rutas privadas de sincronización entre Next.js y Julia (`POST /api/internal/users/google`) exigen el encabezado `X-Internal-Key` validado en tiempo constante contra `INTERNAL_API_KEY` (mínimo 32 caracteres).
-- **Aislamiento de credenciales**: Variables de entorno (`DATABASE_URL`, `INTERNAL_API_KEY`, `GOOGLE_CLIENT_SECRET`) se configuran únicamente a través de archivos locales `.env` o variables del servidor, estando excluidas en `.gitignore`.
+- **Seguridad de endpoints internos**: Las 14 rutas internas entre Next.js y Julia (`/api/internal/*`) exigen el encabezado `X-Internal-Key` validado en tiempo constante contra `INTERNAL_API_KEY` (mínimo 32 caracteres); además, las rutas de usuario y administración validan `X-Actor-Id` y su rol contra PostgreSQL.
+- **Aislamiento de credenciales**: Variables de entorno (`DATABASE_URL`, `INTERNAL_API_KEY`, `GOOGLE_CLIENT_SECRET`, `APIFY_TOKEN`) se configuran únicamente a través de archivos locales `.env` o variables del servidor, estando excluidas en `.gitignore`.
 
 ## Global Side Effects
 
-- **Persistencia relacional**: Sincronización de perfiles Google en la tabla `app_users` mediante `LibPQ.jl`.
+- **Persistencia relacional**: Lectura y escritura sobre PostgreSQL en las tablas `usuarios`, `activos`, `precios_historicos`, `sincronizaciones`, `carteras`, `posiciones_cartera`, `simulaciones` y `tipos_cambio` mediante `LibPQ.jl`.
+- **Integración externa**: Consulta de series OHLCV y tipos de cambio hacia Apify (Yahoo Finance) cuando se ejecutan las tareas de sincronización (`sync_prices.jl`).
 - **Servicio HTTP**: Binding de red del servidor Oxygen.jl en `HOST:PORT` (`http://localhost:8080` por defecto) y servidor Next.js en puerto `3000`.
-- **Sistema de archivos**: Lectura y validación de series históricas de precios a partir de archivos CSV locales mediante `read_prices_csv`.
+- **Sistema de archivos**: Lectura y validación de series históricas de precios a partir de archivos CSV locales mediante `read_prices_csv` e `import_prices.jl`.
 
 ## System Verification
 

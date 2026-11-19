@@ -64,5 +64,5 @@ Todas comparten el marco `components/app/AppShell.tsx`: logo, enlaces del labora
 
 - `backend/test/services/roles_tests.jl`: rol por defecto, volver a entrar no cambia el rol, solo un admin cambia roles, regla del último admin y lecturas del catálogo.
 - `backend/test/api/admin_api_tests.jl`: cada ruta de admin sin clave (401), sin actor, con un usuario normal o con un id inválido (403), con un admin (200), y el cambio de rol (409, 400 y 404).
-- `backend/test/infrastructure/postgres_*_tests.jl`: lo mismo contra PostgreSQL real, con `esquema.sql` + `0002` + `0003`.
+- `backend/test/infrastructure/postgres_*_tests.jl`: lo mismo contra PostgreSQL real, con `esquema.sql` + `0002` + `0003` + `0004`.
 - De punta a punta (manual, 2026-11-04): la matriz de redirecciones de arriba con sesiones de prueba, un token "admin" de un usuario normal (sin datos y con el mensaje de permisos) y el cambio de rol desde la página (bloqueo del último admin y ascenso).

@@ -138,7 +138,7 @@ Los números de línea cuentan desde 1 e incluyen el encabezado y las líneas va
 
 | Tipo | Campos |
 |---|---|
-| `PriceBar` | `symbol::String`, `date::Date`, `open`, `high`, `low`, `close`, `volume` (`Float64`) |
+| `PriceBar` | `symbol::String`, `date::Date`, `open`, `high`, `low`, `close`, `volume` (`Float64`), `adj_close::Union{Nothing,Float64}` |
 | `ImportIssue` | `line::Int`, `message::String` |
 | `PriceImportResult` | `bars`, `errors`, `duplicates` |
 
@@ -160,7 +160,7 @@ Los números de línea cuentan desde 1 e incluyen el encabezado y las líneas va
 - `backend/test/infrastructure/csv_prices_tests.jl`: formato, errores por línea, duplicados, mapeo de columnas, comillas, CRLF y BOM.
 - `backend/test/fixtures/prices_sample.csv`: archivo de ejemplo con un duplicado (línea 5) y una fila inválida (línea 6).
 - `backend/test/services/prices_import_tests.jl`: `AssetDetails`, estados completa, parcial y fallida, reimportación sin duplicados y un activo por archivo, con el adaptador en memoria.
-- `backend/test/infrastructure/postgres_prices_tests.jl`: integración con PostgreSQL real. Corre solo con `TEST_DATABASE_URL`, sobre el esquema oficial `database/migrations/esquema.sql`.
+- `backend/test/infrastructure/postgres_prices_tests.jl`: integración con PostgreSQL real. Corre solo con `TEST_DATABASE_URL`, sobre el esquema oficial `database/migrations/esquema.sql` y las migraciones `0002`–`0004`.
 
 ```bash
 julia --project=backend backend/test/runtests.jl

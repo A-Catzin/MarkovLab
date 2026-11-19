@@ -15,7 +15,7 @@ PORT=8080 ALLOWED_ORIGINS="http://localhost:3000" julia --project=backend backen
 | `HOST` | `0.0.0.0` | Interfaz de escucha. |
 | `PORT` | `8080` | Puerto; Railway lo define automáticamente. |
 | `ALLOWED_ORIGINS` | `http://localhost:3000` | Orígenes del frontend separados por comas; `*` permite cualquiera (solo desarrollo). |
-| `DATABASE_URL` | vacío | PostgreSQL para las rutas de usuarios. Sin ella, esas rutas responden 503. |
+| `DATABASE_URL` | vacío | PostgreSQL para las rutas internas que leen o escriben datos (usuarios, catálogo, importaciones, carteras, simulaciones y tipos de cambio). Sin ella, esas rutas responden 503. |
 | `INTERNAL_API_KEY` | vacío | Clave de las rutas internas (al menos 32 caracteres). Sin ella, esas rutas responden 503. |
 
 Oxygen publica además documentación interactiva generada automáticamente en `/docs`.
@@ -40,8 +40,8 @@ Todos los errores devuelven el mismo formato:
 | 400 | `invalid_json` | El cuerpo no es JSON válido. |
 | 400 | `invalid_input` | Falta un campo, tiene otro tipo o viola una regla (pesos, precios, límites). |
 | 401 | `unauthorized` | Ruta interna sin `X-Internal-Key` o con una clave incorrecta. |
-| 403 | `forbidden` | Ruta de admin sin `X-Actor-Id` o con un actor que no es admin según la base. |
-| 404 | `not_found` | El usuario pedido no existe. |
+| 403 | `forbidden` | Ruta de usuario o de admin sin `X-Actor-Id`, con un actor inexistente o que no es admin según la base. |
+| 404 | `not_found` | El usuario o la cartera pedida no existe (o pertenece a otro usuario). |
 | 409 | `email_conflict` | El correo ya pertenece a otra cuenta de Google. |
 | 409 | `last_admin` | Se intentó quitar el rol al último admin. |
 | 422 | `insufficient_data` | No hay observaciones suficientes para el cálculo (RF-20). |
@@ -227,16 +227,19 @@ El middleware de `backend/src/api/cors.jl` solo devuelve `Access-Control-Allow-O
 
 ## Límites actuales
 
-- Los endpoints de cálculo no exigen sesión; los usuarios por ahora solo se guardan al iniciar sesión.
-- Sin persistencia: los resultados no se guardan (RF-47 queda para la base de datos).
-- Sin carga de CSV por HTTP ni consulta de activos; el importador existe en `infrastructure/` y se expondrá en un próximo paso.
+- Los endpoints públicos de cálculo (`/api/analysis/metrics` y `/api/risk/monte-carlo`) no exigen sesión ni persisten resultados; las simulaciones persistidas asociadas a una cartera guardada (RF-47) se ejecutan a través de `POST /api/internal/portfolios/{id}/simulations`.
+- Todavía no hay endpoints para editar carteras existentes, optimización matemática (`JuMP`/`HiGHS`), modelos predictivos, backtesting ni escenarios de estrés.
 - Sin progreso de simulaciones largas (RNF-02); con los límites actuales una solicitud tarda milisegundos.
 
 ## Pruebas
 
-- `backend/test/services/services_tests.jl`: casos de uso y validación de límites.
-- `backend/test/api/api_tests.jl`: cada endpoint, cada código de error y CORS, mediante `internalrequest` (sin abrir puertos).
-- `backend/test/api/users_api_tests.jl`: la ruta interna de usuarios (clave, configuración, alta, actualización y errores).
+- `backend/test/services/services_tests.jl`: casos de uso de análisis y Monte Carlo, y validación de límites.
+- `backend/test/api/api_tests.jl`: endpoints públicos, códigos de error y CORS mediante `internalrequest` (sin abrir puertos).
+- `backend/test/api/users_api_tests.jl`: rutas internas de usuarios (`/api/internal/users/google` y `/api/internal/users/{id}`).
+- `backend/test/api/admin_api_tests.jl`: rutas internas de administración, control de rol y subida de CSV.
+- `backend/test/api/portfolios_api_tests.jl`: rutas internas de carteras, catálogo de activos, historial de valor y conversión de moneda.
+- `backend/test/api/simulations_api_tests.jl`: ejecución y listado de simulaciones persistidas por cartera.
+- `backend/test/runtests.jl`: además de las suites por capa, verifica que `precompile_workload` ejercite todas las rutas principales sin dejar estado residual.
 
 ```bash
 julia --project=backend backend/test/runtests.jl

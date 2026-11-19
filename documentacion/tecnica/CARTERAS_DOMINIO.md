@@ -52,7 +52,7 @@ Los errores se lanzan como `ArgumentError` con un mensaje que indica el valor in
 
 La tolerancia absorbe errores de redondeo, como tres pesos de `1/3`. Equivale a 0,0001 %.
 
-Nombre, capital inicial, moneda y fecha (RF-27) son datos de persistencia y se agregarán con la base de datos; `Portfolio` solo modela la composición. La composición porcentual (RF-31) se obtiene directamente de `symbols` y `weights`.
+Nombre, capital inicial, moneda y fecha (RF-27) pertenecen al modelo persistido en `backend/src/domain/saved_portfolios.jl` (`PortfolioDraft`, `SavedPortfolio`; ver [`CARTERAS.md`](CARTERAS.md)); `Portfolio` solo modela la composición y pesos. La composición porcentual (RF-31) se obtiene directamente de `symbols` y `weights`.
 
 ## Funciones
 
@@ -102,7 +102,7 @@ Exige una matriz cuadrada y simétrica del mismo tamaño que los pesos. Coincide
 
 - Solo posiciones largas (pesos entre 0 y 1), como establece el SRS salvo que un modelo permita cortos.
 - Rebalanceo en cada período en `portfolio_returns`; una cartera de compra y mantenimiento requerirá otra función en backtesting.
-- La alineación de fechas entre activos es responsabilidad del llamador (futura capa de servicios).
+- La alineación de fechas entre activos la realiza el llamador mediante funciones de servicios y dominio como `aligned_prices` (`backend/src/domain/portfolio_history.jl`) y `portfolio_price_series` (`backend/src/services/portfolios.jl`).
 - El rendimiento esperado basado en medias históricas no es una predicción garantizada (RF-25).
 
 ## Pruebas

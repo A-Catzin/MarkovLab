@@ -13,9 +13,9 @@ Este documento describe el significado de cada columna que deben tener los archi
 | `High`        | Número decimal   | Sí          | Precio máximo alcanzado durante el día.                                     | `180.20`         |
 | `Low`         | Número decimal   | Sí          | Precio mínimo alcanzado durante el día.                                     | `177.80`         |
 | `Close`       | Número decimal   | Sí          | Precio de cierre del día.                                                   | `179.10`         |
-| `Adj Close`   | Número decimal   | Recomendado | Precio de cierre ajustado por dividendos y splits.                          | `179.10`         |
+| `Adj Close`   | Número decimal   | Recomendado | Precio de cierre ajustado por dividendos y splits. Se guarda en `precios_historicos.cierre_ajustado` (`0002_cierre_ajustado.sql`). | `179.10`         |
 | `Volume`      | Número entero    | Sí          | Cantidad de acciones negociadas durante el día.                             | `52430000`       |
-| `Symbol`      | Texto            | Sí          | Símbolo o ticker del activo (ejemplo: AAPL, MSFT, BTC-USD).                 | `AAPL`           |
+| `Symbol`      | Texto            | Condicional | Símbolo o ticker del activo (`AAPL`, `MSFT`). Puede omitirse en el CSV si se indica `--simbolo` en CLI o el campo `symbol` al importar por HTTP. | `AAPL`           |
 
 ## Columnas opcionales (futuras)
 

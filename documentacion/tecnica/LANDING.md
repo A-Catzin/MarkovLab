@@ -12,34 +12,32 @@ Lo interactivo es el simulador: el visitante cambia pesos, horizonte, confianza 
 
 | Elemento | Valor |
 |---|---|
-| Fondo (negro azulado) | `--bg: #0a0d14`; superficies `--surface: #131824` y `--surface-2: #1c2333` |
-| Campos azules | `--field: #16223a`, `--field-strong: #22365c`, `--field-accent: #2b4c88`, para bloques del mosaico, etapas y el dato de 3 ms |
-| Texto | `--ink: #e9edf3` (blanco plateado); secundario `--muted: #8891a1` |
-| Acento (aciano) | `--accent: #5a9bfc`, hover `--accent-hover: #82b4fd`, texto sobre acento `--accent-ink: #0a0d14` |
-| Títulos | Young Serif 400, interletra -0.02em a -0.04em |
+| Fondo (azul marino profundo) | `--bg: #080d19`; superficies `--surface: #111a2d` y `--surface-2: #1c2943` (`.hero` y `.auth` usan `#0a1122` con resplandor radial azul) |
+| Campos azules | `--field: #14223f`, `--field-strong: #203763`, `--field-accent: #2d4f8c`, para bloques del mosaico y barras |
+| Texto | `--ink: #edf1f7` (blanco cálido); secundario `--muted: #9da8bd` |
+| Acento (oro) | `--accent: #e2b04a`, hover `--accent-hover: #efc56f`, texto sobre acento `--accent-ink: #0b1220` |
+| Títulos | Young Serif 400, interletra -0.02em a -0.04em (`letter-spacing: -.035em` en títulos de sección) |
 | Texto | Source Serif 4, 400 y 600, interlineado 1.55 |
-| Tamaños | Cinco pasos y ninguno más: `--step-small` 15 px, `--step-body` 18 px, `--step-lead` 24 px, `--step-head` 56 px y `--step-display` hasta 144 px (valores en escritorio; se reducen con `clamp`). El título de portada supera a propósito el límite de 6rem que sugiere impeccable, a pedido del equipo. |
-| Espaciado | Escala `--space-1` a `--space-6`: 8, 16, 24, 40, 64 y 96 px. Separación entre secciones `--section-gap`: 160 px en escritorio, 96 px en teléfono. Los valores sueltos solo aparecen dentro de fragmentos `data-ui`. |
-| Márgenes y ejes | 32 px en escritorio, 20 px en teléfono, también en pantallas anchas (la página ocupa todo el ancho); grilla de 12 columnas. El texto se alinea a tres ejes: columna 1, columna 5 (eje de la portada, del simulador y del hallazgo de etapas) y columna 8 (nota de la historia, imágenes y respuestas). |
-| Botón | Bloque aciano de esquinas rectas con texto oscuro |
+| Tamaños | Cinco pasos base: `--step-small` 15 px, `--step-body` 18 px, `--step-lead` 24 px, `--step-head` 56 px y `--step-display` hasta 144 px (en escritorio; el `h1` de `.hero` usa `clamp(4.2rem, 9.5vw, 9.5rem)` con `line-height: .92`). |
+| Espaciado | Escala `--space-1` a `--space-6`: 8, 16, 24, 40, 64 y 96 px. Separación entre secciones `--section-gap`: 160 px en escritorio, 96 px en teléfono. |
+| Márgenes y ejes | 32 px en escritorio, 20 px en teléfono (`experience.css` ajusta padding lateral de `.hero` y `.auth` con `clamp(20px, 4.4vw, 72px)`); grilla de 12 columnas alineada a tres ejes. |
+| Botón y paneles | Botones en píldora (`border-radius: 999px`) con relleno oro (`--accent`) y texto oscuro; `--radius: 4px`, `.fan` y `.ui-panel` con `border-radius: 12px`, `.auth__panel` con `18px` y sombra. |
 
-Los números grandes (cifras del simulador, años, "3 ms", etapas y fichas del mosaico) usan Source Serif 4 en seminegrita con `lining-nums tabular-nums`: los números de Young Serif son de estilo antiguo (el 1 parece una I y el 3 baja de la línea) y se veían desprolijos. Young Serif queda para títulos y para el logo.
+Los números grandes (cifras del simulador, años, etapas y fichas del mosaico) usan Source Serif 4 en seminegrita con `lining-nums tabular-nums`. Young Serif queda para títulos y para el logo.
 
-Las superficies del navegador también siguen la paleta: `color-scheme: dark`, barra de scroll (`scrollbar-color`), cursor de texto (`caret-color`), controles nativos (`accent-color`) y selección.
+Las superficies del navegador también siguen la paleta: `color-scheme: dark`, barra de scroll (`scrollbar-color: #2d4f8c #080d19`), cursor de texto (`caret-color`), controles nativos (`accent-color`) y selección oro (`#e2b04a`).
 
-Reglas que se mantienen en toda la página: títulos de dos líneas como máximo, sin etiquetas pequeñas sobre los títulos, sin gradientes, sombras, monoespaciadas, numeración decorativa ni líneas divisorias. Las líneas solo aparecen dentro de fragmentos de interfaz marcados con `data-ui` (tablas, controles, gráfico).
+En las secciones de contenido se mantienen títulos breves y sin líneas divisorias decorativas; las líneas aparecen dentro de fragmentos de interfaz marcados con `data-ui` (tablas, controles, gráfico). La portada `.hero` y el acceso `.auth` utilizan un resplandor radial azul detrás de la composición principal, mientras que las secciones editoriales mantienen fondo uniforme y el pie usa `--surface`.
 
-Paleta de la biblioteca de la skill: "Night and cornflower". El aciano se reserva para el botón, la etiqueta "Resuelta", los controles del simulador, las bandas de percentiles del gráfico y las barras por debajo del VaR. Ninguna sección cambia el color de fondo; el pie usa `--surface`.
+Los tokens base viven en `frontend/app/globals.css` y la capa visual actual **"Azul marino profundo con oro"** se aplica encima desde `frontend/app/experience.css` (cargado en `frontend/app/layout.tsx`).
 
-Los tokens viven en `frontend/app/globals.css`; los componentes no usan colores sueltos.
-
-**Historial:** la primera versión usaba cobalto sobre arena (`#062b8a` sobre `#e6dbc7`). Se reemplazó el 2026-10-21 por una paleta oscura menos brillante, a pedido del equipo.
+**Historial:** la primera versión usaba cobalto sobre arena (`#062b8a` sobre `#e6dbc7`), reemplazada el 2026-10-21 por la paleta oscura "Night and cornflower" (`#0a0d14` / `#5a9bfc`), y rediseñada posteriormente con el tema marino profundo y oro (`#080d19` / `#e2b04a`, esquinas redondeadas, botones píldora y animación `coin-drift`).
 
 ## Secciones
 
 | Sección | Componente | Contenido |
 |---|---|---|
-| Portada | `Hero.tsx` | Nombre, frase de qué es, botón al simulador, titular "Simula tu cartera", dato de 3 ms, moneda 3D de la marca (`brand/Coin.tsx`) y gráfico de trayectorias con percentiles 5, 50 y 95. |
+| Portada | `Hero.tsx` | Logo y barra de navegación con "Entrar", titular "Explora lo posible.", subtítulo "Una cartera. Miles de caminos. Una forma más clara de entender el riesgo.", botón al simulador, moneda 3D de la marca (`brand/Coin.tsx`) flotando sobre el campo marino y gráfico de 60 de 10,000 trayectorias a 252 días con percentiles 5, 50 y 95. |
 | Historia | `Intro.tsx` | Por qué Márkov: cronología 1900, 1913, 1948 y 10,000; relato de Eugenio Oneguin; retrato de Márkov y portada de 1825. |
 | Simulador | `Simulator.tsx` | "Prueba una cartera" en tres estados: la cartera, tus ajustes (interactivo) y el resultado, explicado en lenguaje común y en pesos. |
 | Módulos | `Modules.tsx` | Mosaico: qué calcula el motor, lo implementado, lo próximo y fotografías de archivo. |
@@ -83,7 +81,7 @@ El simulador está escrito para alguien sin formación financiera. Cada término
 - El resultado se divide en dos grupos, "Lo que podrías ganar" y "Lo que podrías perder".
 - El VaR se presenta como un **límite** ("pierdes menos de"), no como pérdida máxima: el CVaR promedia los futuros que superan ese límite y por eso siempre es mayor. Decir "podrías perder hasta" para el VaR contradecía al CVaR y se corrigió.
 - Si incluso el peor caso termina en ganancia (VaR negativo), los textos cambian a "Ganas al menos $X".
-- El histograma explica qué representa cada barra y cuáles son los peores casos (en azul claro).
+- El histograma explica qué representa cada barra y cuáles son los peores casos, coloreados con el color de acento (`--accent`, oro `#e2b04a`).
 - El servidor calcula el primer resultado (`lib/demo.ts`), así que la sección muestra datos reales aunque el navegador no ejecute JavaScript.
 
 ### Datos de ejemplo

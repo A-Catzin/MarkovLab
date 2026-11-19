@@ -107,7 +107,7 @@ Recibe una matriz donde cada fila es una fecha y cada columna un activo. Devuelv
 | `InsufficientDataError` | Hay menos observaciones que el mínimo de la función (RF-20). | `required`, `available`, `context` |
 | `ArgumentError` | Precio no positivo o no finito, valor no finito, longitudes distintas, varianza cero, `periods_per_year ≤ 0` o menos de 2 activos. | Mensaje descriptivo |
 
-La futura capa `api/` deberá traducir `InsufficientDataError` en una respuesta que indique al usuario que el período no tiene datos suficientes.
+La capa `api/` (`backend/src/api/errors.jl`) traduce `InsufficientDataError` a una respuesta HTTP `422` (`insufficient_data`) que indica al usuario que el período no tiene datos suficientes.
 
 ## Supuestos y límites
 
