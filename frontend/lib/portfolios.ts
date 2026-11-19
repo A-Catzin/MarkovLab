@@ -25,6 +25,18 @@ export interface PortfolioPosition {
   name: string;
   /** Fracción entre 0 y 1 (0.4 = 40 %). */
   weight: number;
+  /** Moneda en que cotiza el activo; la historia y la simulación la convierten a la de la cartera. */
+  currency: string;
+}
+
+/**
+ * Aclaración sobre la moneda de una cartera: si algún activo cotiza en otra, sus precios se
+ * convierten con el tipo de cambio diario.
+ */
+export function currencyNote(portfolio: Portfolio) {
+  const others = [...new Set(portfolio.positions.map((p) => p.currency).filter((c) => c !== portfolio.currency))];
+  if (others.length === 0) return `Todos los activos cotizan en ${portfolio.currency}.`;
+  return `Precios en ${others.join(" y ")} convertidos a ${portfolio.currency} con el tipo de cambio de cada día.`;
 }
 
 export interface Portfolio {

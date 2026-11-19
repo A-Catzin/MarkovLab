@@ -10,10 +10,12 @@ struct InMemoryPriceRepository <: PriceRepository
     bars::Dict{Tuple{Int,Date,Symbol},PriceBar}
     syncs::Vector{@NamedTuple{asset_id::Union{Nothing,Int}, source::Symbol, status::Symbol, saved::Int, failed::Int,
                               message::Union{Nothing,String}}}
+    # Tipos de cambio por moneda, fecha y origen, como la tabla `tipos_cambio`.
+    rates::Dict{Tuple{String,Date,Symbol},Float64}
     lock::ReentrantLock
 end
 
-InMemoryPriceRepository() = InMemoryPriceRepository(Dict(), Dict(), [], ReentrantLock())
+InMemoryPriceRepository() = InMemoryPriceRepository(Dict(), Dict(), [], Dict(), ReentrantLock())
 
 function save_price_import(prices::InMemoryPriceRepository, symbol, details::Union{Nothing,AssetDetails},
                            bars::AbstractVector{PriceBar}, status::Symbol, failed_rows::Integer,
@@ -70,6 +72,44 @@ function latest_price_date(prices::InMemoryPriceRepository, symbol::AbstractStri
     lock(prices.lock) do
         ids = Set(asset.id for ((_, s), asset) in prices.assets if s == wanted)
         dates = [date for (id, date, origin) in keys(prices.bars) if id in ids && origin == source]
+        return isempty(dates) ? nothing : maximum(dates)
+    end
+end
+
+function save_exchange_rates(prices::InMemoryPriceRepository, currency::AbstractString, rates::AbstractVector;
+                             source::Symbol=:api)
+    code = check_exchange_rates(currency, rates, source)
+    lock(prices.lock) do
+        inserted = 0
+        for (date, value) in rates
+            key = (code, Date(date), source)
+            haskey(prices.rates, key) && continue
+            prices.rates[key] = Float64(value)
+            inserted += 1
+        end
+        return inserted
+    end
+end
+
+function exchange_rates(prices::InMemoryPriceRepository, currency::AbstractString)
+    code = uppercase(strip(currency))
+    lock(prices.lock) do
+        by_date = Dict{Date,Tuple{Bool,Float64}}()
+        for ((c, date, source), value) in prices.rates
+            c == code || continue
+            from_api = source == :api
+            current = get(by_date, date, nothing)
+            current !== nothing && current[1] && !from_api && continue
+            by_date[date] = (from_api, value)
+        end
+        return sort!([(date, value) for (date, (_, value)) in by_date])
+    end
+end
+
+function latest_exchange_rate_date(prices::InMemoryPriceRepository, currency::AbstractString; source::Symbol=:api)
+    code = uppercase(strip(currency))
+    lock(prices.lock) do
+        dates = [date for (c, date, s) in keys(prices.rates) if c == code && s == source]
         return isempty(dates) ? nothing : maximum(dates)
     end
 end

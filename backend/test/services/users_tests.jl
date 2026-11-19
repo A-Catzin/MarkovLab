@@ -73,6 +73,20 @@ using MarkovLabBackend
         @test !MarkovLabBackend.is_connection_error(ArgumentError("x"))
     end
 
+    @testset "task wrappers are removed so the LibPQ error can be recognized" begin
+        errors = MarkovLabBackend.LibPQ.Errors
+        lost = errors.AdminShutdown("closed", "closed")
+        failed(e) = TaskFailedException(let t = @task(throw(e)); schedule(t); try wait(t) catch end; t end)
+        @test MarkovLabBackend.unwrap_task_error(failed(lost)) === lost
+        @test MarkovLabBackend.unwrap_task_error(CompositeException([lost])) === lost
+        @test MarkovLabBackend.unwrap_task_error(CompositeException([failed(lost)])) === lost
+        @test MarkovLabBackend.unwrap_task_error(failed(CompositeException([lost]))) === lost
+        # Con varios errores no hay uno solo que elegir: se deja el envoltorio.
+        both = CompositeException([lost, ArgumentError("x")])
+        @test MarkovLabBackend.unwrap_task_error(both) === both
+        @test MarkovLabBackend.unwrap_task_error(lost) === lost
+    end
+
     @testset "connections detect a dead server instead of waiting forever" begin
         # Sin estos parámetros, una consulta sobre una conexión que el pooler soltó sin avisar
         # espera la respuesta para siempre y congela el servidor (visto el 2026-11-12).

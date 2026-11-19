@@ -33,11 +33,40 @@ end
 # bloquea el hilo, congela todo el servidor, incluido `/health` (visto el 2026-11-12).
 # - keepalives: sondeo TCP tras 5 s sin tráfico, cada 5 s, 3 intentos: una conexión muerta
 #   se detecta en unos 20 s, y el sondeo mantiene viva la ruta mientras está inactiva.
-# - tcp_user_timeout: lo mismo cuando hay datos enviados sin confirmar (20 s).
-# - connect_timeout: abrir la conexión no tarda más de 10 s.
+# - tcp_user_timeout: lo mismo cuando hay datos enviados sin confirmar (20 s). La libpq de
+#   LibPQ.jl lo acepta pero no lo aplica al socket (comprobado el 2026-11-17 con getsockopt);
+#   lo pone `set_user_timeout!`. Sin él, una consulta enviada después del corte reintentaba
+#   para siempre: los keepalives solo actúan cuando no hay datos pendientes.
+# - connect_timeout: abrir la conexión no tarda más de 10 s. LibPQ.jl conecta en modo no
+#   bloqueante y no lee este valor de la URL; se le pasa también como argumento.
 # Al detectarse, la consulta falla con un error de conexión y `with_connection` reconecta.
+const USER_TIMEOUT_MS = 20_000
+const CONNECT_TIMEOUT_SECONDS = 10
 const CONNECTION_PARAMS = ("keepalives" => "1", "keepalives_idle" => "5", "keepalives_interval" => "5",
-                           "keepalives_count" => "3", "tcp_user_timeout" => "20000", "connect_timeout" => "10")
+                           "keepalives_count" => "3", "tcp_user_timeout" => string(USER_TIMEOUT_MS),
+                           "connect_timeout" => string(CONNECT_TIMEOUT_SECONDS))
+
+# Constantes de Linux (netinet/tcp.h) para `setsockopt`.
+const IPPROTO_TCP = Cint(6)
+const TCP_USER_TIMEOUT = Cint(18)
+
+"""
+    set_user_timeout!(conn) -> Bool
+
+Pone `TCP_USER_TIMEOUT` en el socket de `conn`: si hay datos enviados sin confirmar durante
+`USER_TIMEOUT_MS`, el sistema cierra la conexión y la consulta falla. Solo existe en Linux,
+donde corre el servidor; en otro sistema no hace nada y devuelve `false`. Si `setsockopt`
+falla, lo avisa y devuelve `false`: la conexión sigue sirviendo, con los keepalives.
+"""
+function set_user_timeout!(conn::LibPQ.Connection)
+    Sys.islinux() || return false
+    fd = LibPQ.libpq_c.PQsocket(conn.conn)
+    value = Ref{Cint}(USER_TIMEOUT_MS)
+    ok = ccall(:setsockopt, Cint, (Cint, Cint, Cint, Ptr{Cint}, Cuint),
+               fd, IPPROTO_TCP, TCP_USER_TIMEOUT, value, sizeof(Cint)) == 0
+    ok || @warn "Could not set TCP_USER_TIMEOUT on the database socket" errno = Libc.errno()
+    return ok
+end
 
 """
     connection_url(url) -> String
@@ -63,7 +92,10 @@ function connection!(db::PostgresConnection)
         conn = db.conn
         if conn === nothing || LibPQ.status(conn) != LibPQ.libpq_c.CONNECTION_OK
             conn === nothing || close(conn)
-            db.conn = LibPQ.Connection(connection_url(db.url); throw_error=true)
+            conn = LibPQ.Connection(connection_url(db.url); throw_error=true,
+                                    connect_timeout=CONNECT_TIMEOUT_SECONDS)
+            set_user_timeout!(conn)
+            db.conn = conn
         end
         return db.conn
     end
@@ -112,20 +144,60 @@ function with_connection(f, db::PostgresConnection)
 end
 
 """
+    run_query(conn, sql, params=[]) -> LibPQ.Result
+
+Ejecuta una consulta sin bloquear el hilo. `LibPQ.execute` es una llamada a C que deja el
+hilo esperando la respuesta, y mientras tanto el servidor no atiende ninguna otra petición,
+ni siquiera `/health`. `async_execute` envía la consulta y espera el socket cediendo el
+hilo a las demás tareas.
+
+Un error sale como el error de LibPQ, no envuelto en el `TaskFailedException` o el
+`CompositeException` de las tareas de `async_execute`, para que `is_connection_error` lo
+siga reconociendo y `with_connection` pueda reconectar. Todas las consultas de los
+adaptadores pasan por aquí.
+"""
+function run_query(conn::LibPQ.Connection, sql::AbstractString, params::AbstractVector=Any[])
+    try
+        return fetch(LibPQ.async_execute(conn, sql, params; throw_error=true))
+    catch err
+        inner = unwrap_task_error(err)
+        inner === err ? rethrow() : throw(inner)
+    end
+end
+
+"""
+    unwrap_task_error(err) -> Exception
+
+El error original dentro de los envoltorios de tareas: `TaskFailedException` (de `fetch`)
+y `CompositeException` con un solo error (de `@sync`), en cualquier orden y anidados.
+"""
+function unwrap_task_error(err)
+    while true
+        if err isa TaskFailedException
+            err = err.task.exception
+        elseif err isa CompositeException && length(err.exceptions) == 1
+            err = only(err.exceptions)
+        else
+            return err
+        end
+    end
+end
+
+"""
     in_transaction(f, conn) -> resultado de f
 
 Ejecuta `f()` entre `BEGIN` y `COMMIT`; si `f` falla, hace `ROLLBACK` y vuelve a lanzar
 el error. El `ROLLBACK` puede fallar si la conexión se cortó; ese error se ignora.
 """
 function in_transaction(f, conn::LibPQ.Connection)
-    LibPQ.execute(conn, "BEGIN"; throw_error=true)
+    run_query(conn, "BEGIN")
     try
         result = f()
-        LibPQ.execute(conn, "COMMIT"; throw_error=true)
+        run_query(conn, "COMMIT")
         return result
     catch
         try
-            LibPQ.execute(conn, "ROLLBACK")
+            run_query(conn, "ROLLBACK")
         catch
         end
         rethrow()

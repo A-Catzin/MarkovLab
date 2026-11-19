@@ -19,8 +19,11 @@ julia --project=backend backend/scripts/sync_prices.jl AAPL WALMEX.MX --desde 20
 # Actualización: cada símbolo sigue desde su último precio guardado
 julia --project=backend backend/scripts/sync_prices.jl AAPL WALMEX.MX
 
-# Actualización de todo el catálogo (para la tarea diaria)
+# Actualización de todo el catálogo y de los tipos de cambio (para la tarea diaria)
 julia --project=backend backend/scripts/sync_prices.jl --catalogo
+
+# Solo los tipos de cambio (carga histórica)
+julia --project=backend backend/scripts/sync_prices.jl --divisas --desde 2000-01-01
 ```
 
 Salida de la carga histórica del 2026-11-06 (contra una base de prueba):
@@ -76,6 +79,17 @@ Un símbolo que ya está al día **no se consulta**, así que volver a correr la
 - **Si Apify no responde** (caída, error HTTP, tiempo agotado), cada símbolo pendiente queda como `fallida` con el motivo, por ejemplo `Apify answered HTTP 503`.
 - Hasta 50 símbolos por corrida.
 
+## Tipos de cambio
+
+Para valuar cada cartera en su moneda ([CARTERAS.md](CARTERAS.md#moneda)) se guardan los tipos de cambio diarios contra el dólar en la tabla `tipos_cambio` (migración `0004`), no en `activos`: una divisa no es algo que se agregue a una cartera.
+
+- **Series:** `MXN=X` ("USD/MXN", pesos por 1 USD) y `EUR=X` ("USD/EUR", euros por 1 USD), con el mismo Actor. Se guarda el cierre de cada día, con origen `api`. Con esas dos sale cualquier combinación: MXN → EUR = valor del EUR ÷ valor del MXN.
+- **Carga:** `--divisas` trae solo los tipos de cambio; `--catalogo` actualiza también las divisas, así la tarea diaria las incluye. Las mismas reglas de fechas que los precios: sin `--desde`, cada moneda sigue desde su último valor, y una moneda al día no se consulta.
+- **Fechas:** Yahoo manda las divisas con hora de Londres (`23:00Z` en verano, `00:00Z` en invierno). El redondeo al día más cercano ya da el día correcto: la barra del 2026-10-14 a las 23:00Z es la del 15.
+- Las divisas no aparecen en `/admin/activos` ni en `/admin/importaciones`.
+- **Carga en Supabase (2026-11-18):** `--divisas --desde 2000-01-01` guardó 5,979 días de `MXN=X` y 5,958 de `EUR=X`, del **2003-12-01** (Yahoo no tiene más atrás) al 2026-11-17, ninguno en fin de semana. Por eso la historia de una cartera con activos en otra moneda empieza, a lo más, en diciembre de 2003.
+- Comprobado el 2026-11-17 con el Actor: 22 días hábiles de cada serie entre el 15 de octubre y el 13 de noviembre de 2026; el 13 de noviembre, 18.59 MXN y 0.905 EUR por dólar.
+
 ## Seguridad
 
 - `APIFY_TOKEN` vive solo en `backend/.env` (en `.gitignore`) o en el entorno del despliegue.
@@ -93,7 +107,7 @@ Un símbolo que ya está al día **no se consulta**, así que volver a correr la
 | Capa | Archivos |
 |---|---|
 | Dominio | `backend/src/domain/market_data.jl`: `MarketSeries` y el puerto `MarketDataSource` (`fetch_daily_prices`). `domain/assets.jl`: `save_price_import(...; source)`, `latest_price_date` y `PRICE_SOURCES`. |
-| Servicio | `backend/src/services/market_sync.jl`: `sync_market_prices` (carga histórica y actualización). |
+| Servicio | `backend/src/services/market_sync.jl`: `sync_market_prices` (carga histórica y actualización) y `sync_exchange_rates` (tipos de cambio). |
 | Adaptadores | `backend/src/infrastructure/apify_market_data.jl`: `ApifyMarketData`, `actor_input` y `parse_actor_items`. `postgres_prices.jl` y `memory_prices.jl` guardan el origen. |
 | Script | `backend/scripts/sync_prices.jl`. |
 

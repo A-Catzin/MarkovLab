@@ -84,3 +84,33 @@ end
                                                                    f.ana.id, short.id; horizon=1, simulations=10)
     end
 end
+
+@testset "Portfolio simulations in another currency" begin
+    @testset "prices are converted to the currency of the portfolio before simulating" begin
+        f = simulation_fixture()
+        draft(currency) = PortfolioDraft("En $currency", 10_000, currency,
+                                         [PositionDraft(p.asset_id, p.weight) for p in f.saved.positions])
+        in_mxn = create_user_portfolio(f.users, f.portfolios, f.ana.id, draft("MXN"))
+        run(id) = simulate_user_portfolio(f.users, f.portfolios, f.prices, f.simulations, f.ana.id, id;
+                                          horizon=21, simulations=2_000, lookback_years=5, seed=7)
+        # Sin tipos de cambio no se simula en pesos.
+        @test_throws MissingExchangeRateError run(in_mxn.id)
+
+        # Con un tipo de cambio fijo, los rendimientos en pesos son los mismos que en dólares.
+        save_exchange_rates(f.prices, "MXN", [(d, 20.0) for d in f.days])
+        fixed, in_usd = run(in_mxn.id), run(f.saved.id)
+        @test fixed.value_at_risk ≈ in_usd.value_at_risk
+        @test fixed.expected_volatility ≈ in_usd.expected_volatility
+        @test fixed.observations == in_usd.observations
+
+        # Si el peso se mueve, el riesgo cambiario entra en la simulación.
+        f2 = simulation_fixture()
+        save_exchange_rates(f2.prices, "MXN", [(d, 20.0 * (1 + 0.02 * sin(3i))) for (i, d) in enumerate(f2.days)])
+        in_mxn2 = create_user_portfolio(f2.users, f2.portfolios, f2.ana.id,
+                                        PortfolioDraft("En MXN", 10_000, "MXN",
+                                                       [PositionDraft(p.asset_id, p.weight) for p in f2.saved.positions]))
+        sim(f, id) = simulate_user_portfolio(f.users, f.portfolios, f.prices, f.simulations, f.ana.id, id;
+                                             horizon=21, simulations=2_000, lookback_years=5, seed=7)
+        @test sim(f2, in_mxn2.id).expected_volatility > sim(f2, f2.saved.id).expected_volatility
+    end
+end

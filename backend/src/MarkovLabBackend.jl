@@ -16,6 +16,7 @@ include("domain/assets.jl")
 include("domain/saved_portfolios.jl")
 include("domain/portfolio_history.jl")
 include("domain/saved_simulations.jl")
+include("domain/exchange_rates.jl")
 include("infrastructure/csv_prices.jl")
 # Después del CSV: `MarketSeries` reutiliza `ImportIssue`.
 include("domain/market_data.jl")
@@ -60,10 +61,12 @@ export create_portfolio, list_portfolios, get_portfolio, delete_portfolio
 export InMemoryPortfolioRepository, PostgresPortfolioRepository, require_user
 export create_user_portfolio, list_user_portfolios, get_user_portfolio, delete_user_portfolio
 export PRICE_SOURCES, latest_price_date, MarketSeries, MarketDataSource, MarketDataError, fetch_daily_prices, ApifyMarketData
-export sync_market_prices, MARKET_HISTORY_START, MAX_SYNC_SYMBOLS
+export sync_market_prices, sync_exchange_rates, MARKET_HISTORY_START, MAX_SYNC_SYMBOLS
 export price_history, portfolio_value_history, user_portfolio_history
 export aligned_prices, SavedSimulation, SimulationRepository, save_simulation, list_simulations
 export InMemorySimulationRepository, PostgresSimulationRepository, simulate_user_portfolio, list_user_simulations
 export DEFAULT_LOOKBACK_YEARS, MAX_LOOKBACK_YEARS, MIN_SIMULATION_DAYS
+export EXCHANGE_RATE_SYMBOLS, MAX_RATE_GAP_DAYS, MissingExchangeRateError, convert_series
+export save_exchange_rates, exchange_rates, latest_exchange_rate_date
 
 end # módulo MarkovLabBackend

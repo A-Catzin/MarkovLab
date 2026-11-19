@@ -10,6 +10,8 @@ interface Props {
   currency: string;
   /** Simulaciones guardadas, de la más nueva a la más vieja. */
   previous: Simulation[];
+  /** De qué moneda salen los precios, por ejemplo "Precios en USD convertidos a MXN…". */
+  currencyNote: string;
 }
 
 const HORIZONS = [
@@ -28,7 +30,17 @@ const shortDate = (iso: string) =>
   new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 
 /** Resultado de una simulación en dinero: el escenario típico, el rango y las pérdidas en los malos. */
-function SimulationResult({ simulation, capital, currency }: { simulation: Simulation; capital: number; currency: string }) {
+function SimulationResult({
+  simulation,
+  capital,
+  currency,
+  currencyNote,
+}: {
+  simulation: Simulation;
+  capital: number;
+  currency: string;
+  currencyNote: string;
+}) {
   const p = simulation.summary.percentiles;
   const tail = Math.round((1 - simulation.confidence) * 100);
   const at = (r: number) => capital * (1 + r);
@@ -81,7 +93,7 @@ function SimulationResult({ simulation, capital, currency }: { simulation: Simul
       <p className="sim-result__note">
         {simulation.summary.scenarios.toLocaleString("es-MX")} escenarios con precios del {shortDate(simulation.window.from)} al{" "}
         {shortDate(simulation.window.to)} ({simulation.observations.toLocaleString("es-MX")} días). Modelo {simulation.model},
-        semilla {simulation.seed}. Sin conversión de moneda: cada activo rinde en la suya.
+        semilla {simulation.seed}. {currencyNote}
       </p>
     </div>
   );
@@ -91,7 +103,7 @@ function SimulationResult({ simulation, capital, currency }: { simulation: Simul
  * Panel "Simular": elige plazo y confianza, corre el Monte Carlo con los precios reales de la
  * base y muestra el resultado más reciente y las simulaciones anteriores.
  */
-export function PortfolioSimulation({ portfolioId, capital, currency, previous }: Props) {
+export function PortfolioSimulation({ portfolioId, capital, currency, previous, currencyNote }: Props) {
   const [state, formAction, pending] = useActionState<SimulationFormState, FormData>(simulatePortfolio, {
     simulation: null,
     error: null,
@@ -143,7 +155,7 @@ export function PortfolioSimulation({ portfolioId, capital, currency, previous }
 
       <div aria-live="polite">
         {latest ? (
-          <SimulationResult simulation={latest} capital={capital} currency={currency} />
+          <SimulationResult simulation={latest} capital={capital} currency={currency} currencyNote={currencyNote} />
         ) : (
           !state.error && <p className="sim-empty">Todavía no has simulado esta cartera.</p>
         )}

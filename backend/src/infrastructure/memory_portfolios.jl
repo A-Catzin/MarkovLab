@@ -16,12 +16,14 @@ InMemoryPortfolioRepository(prices::InMemoryPriceRepository) =
 
 function create_portfolio(portfolios::InMemoryPortfolioRepository, user_id, draft::PortfolioDraft)
     lock(portfolios.lock) do
-        catalog = Dict(asset.id => (symbol=symbol, market=market, name=asset.details.name)
+        catalog = Dict(asset.id => (symbol=symbol, market=market, name=asset.details.name,
+                                    currency=asset.details.currency)
                        for ((market, symbol), asset) in portfolios.prices.assets)
         unknown = [p.asset_id for p in draft.positions if !haskey(catalog, p.asset_id)]
         isempty(unknown) || throw(ArgumentError("unknown asset ids: $(join(unknown, ", "))"))
         positions = [SavedPosition(p.asset_id, catalog[p.asset_id].symbol, catalog[p.asset_id].market,
-                                   catalog[p.asset_id].name, p.weight) for p in draft.positions]
+                                   catalog[p.asset_id].name, p.weight, catalog[p.asset_id].currency)
+                     for p in draft.positions]
         saved = SavedPortfolio(random_uuid(), draft.name, draft.capital, draft.currency, string(Dates.today()),
                                :draft, nothing, positions)
         push!(portfolios.saved, saved)

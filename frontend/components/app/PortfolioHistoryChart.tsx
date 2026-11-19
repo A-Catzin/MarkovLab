@@ -18,6 +18,8 @@ interface Props {
   anchorDate: string;
   capital: number;
   currency: string;
+  /** Aclaración sobre la moneda, por ejemplo cuando los precios se convirtieron. */
+  currencyNote?: string;
 }
 
 const RANGES = [
@@ -96,6 +98,7 @@ export function PortfolioHistoryChart({
   anchorDate,
   capital,
   currency,
+  currencyNote,
 }: Props) {
   const [range, setRange] = useState<RangeId>("5y");
   const [active, setActive] = useState<number | null>(null);
@@ -206,6 +209,7 @@ export function PortfolioHistoryChart({
             Cuánto habría valido la cartera si la hubieras comprado antes con
             estos pesos y no la movieras. La línea vertical marca el día en que
             la creaste y la horizontal, tu capital.
+            {currencyNote && ` ${currencyNote}`}
           </p>
         </div>
         <div className="ph__ranges" role="group" aria-label="Periodo">

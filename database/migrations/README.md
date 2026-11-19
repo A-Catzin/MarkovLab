@@ -7,6 +7,7 @@ Esquema de la base y sus cambios versionados. Se aplican en orden y **nunca se e
 | [`esquema.sql`](./esquema.sql) | Esquema base (0001): `usuarios`, `activos`, `precios_historicos`, `sincronizaciones`, `lista_seguimiento`, `carteras`, `posiciones_cartera` y `simulaciones`, con sus tipos, restricciones, índices, triggers y RLS. | Sí |
 | [`0002_cierre_ajustado.sql`](./0002_cierre_ajustado.sql) | Columna opcional `cierre_ajustado` en `precios_historicos` (el `Adj Close` de los CSV), con su CHECK. | Sí, 2026-11-04 (MCP de Supabase) |
 | [`0003_roles.sql`](./0003_roles.sql) | Tipo `rol_usuario` (`usuario`, `admin`) y columna `usuarios.rol`, por defecto `usuario`. | Sí, 2026-11-05 (MCP de Supabase) |
+| [`0004_tipos_cambio.sql`](./0004_tipos_cambio.sql) | Tabla `tipos_cambio` (moneda, fecha, origen, valor por 1 USD), con sus CHECK y RLS. Solo agrega. | Sí, 2026-11-18 (la aplicó el usuario; comprobado: RLS y las tres restricciones) |
 
 ## Cómo se verificó que `esquema.sql` es igual a la base
 

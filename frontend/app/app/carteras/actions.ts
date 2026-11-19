@@ -103,6 +103,11 @@ export async function simulatePortfolio(_prev: SimulationFormState, formData: Fo
     revalidatePath(`/app/carteras/${id}`);
     return { simulation, error: null };
   } catch (error) {
+    if (error instanceof BackendError && error.code === "missing_exchange_rate")
+      return {
+        simulation: null,
+        error: "Falta el tipo de cambio para valuar estos activos en la moneda de la cartera. Pídele a un administrador que lo cargue.",
+      };
     if (error instanceof BackendError && error.status === 422)
       return {
         simulation: null,

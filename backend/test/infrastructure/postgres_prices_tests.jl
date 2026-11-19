@@ -117,3 +117,41 @@ using MarkovLabBackend
         end
     end
 end
+
+# Tipos de cambio en `tipos_cambio` (migración 0004). Usa la moneda ficticia ZZZ y la borra al final.
+@testset "PostgresPriceRepository exchange rates" begin
+    url = Base.get(ENV, "TEST_DATABASE_URL", "")
+    if isempty(url)
+        @info "TEST_DATABASE_URL is not set; skipping PostgreSQL exchange rate tests"
+        @test_skip false
+    else
+        prices = PostgresPriceRepository(url)
+        mon, tue, wed = Date(2026, 11, 9), Date(2026, 11, 10), Date(2026, 11, 11)
+        try
+            @test exchange_rates(prices, "ZZZ") == Tuple{Date,Float64}[]
+            @test latest_exchange_rate_date(prices, "ZZZ") === nothing
+            @test save_exchange_rates(prices, "ZZZ", [(tue, 19.0), (mon, 18.25)]) == 2
+            # Lo que ya estaba no se duplica ni se reemplaza; la moneda se pasa a mayúsculas.
+            @test save_exchange_rates(prices, "zzz", [(tue, 99.0), (wed, 19.5)]) == 1
+            @test save_exchange_rates(prices, "ZZZ", Tuple{Date,Float64}[]) == 0
+            @test exchange_rates(prices, "ZZZ") == [(mon, 18.25), (tue, 19.0), (wed, 19.5)]
+            @test latest_exchange_rate_date(prices, "zzz") == wed
+            @test latest_exchange_rate_date(prices, "ZZZ"; source=:csv) === nothing
+            # Si el mismo día hay valor de la API y del CSV, se usa el de la API.
+            @test save_exchange_rates(prices, "ZZZ", [(mon, 1.0), (Date(2026, 11, 12), 2.0)]; source=:csv) == 2
+            @test exchange_rates(prices, "ZZZ") == [(mon, 18.25), (tue, 19.0), (wed, 19.5), (Date(2026, 11, 12), 2.0)]
+            # Las mismas reglas que la tabla, antes de llegar a la base.
+            @test_throws ArgumentError save_exchange_rates(prices, "USD", [(mon, 1.0)])
+            @test_throws ArgumentError save_exchange_rates(prices, "ZZZ", [(mon, -1.0)])
+            # Y la tabla las hace cumplir aunque alguien escriba directo.
+            conn = MarkovLabBackend.connection!(prices)
+            @test_throws LibPQ.Errors.CheckViolation LibPQ.execute(conn,
+                "INSERT INTO tipos_cambio (moneda, fecha, origen, valor) VALUES ('USD', '2026-11-09', 'api', 1)"; throw_error=true)
+            @test_throws LibPQ.Errors.CheckViolation LibPQ.execute(conn,
+                "INSERT INTO tipos_cambio (moneda, fecha, origen, valor) VALUES ('ZZY', '2026-11-09', 'api', 'NaN')"; throw_error=true)
+        finally
+            LibPQ.execute(MarkovLabBackend.connection!(prices), "DELETE FROM tipos_cambio WHERE moneda IN ('ZZZ', 'ZZY')")
+            close(prices)
+        end
+    end
+end

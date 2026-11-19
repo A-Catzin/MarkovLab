@@ -142,3 +142,57 @@ const DAY1, DAY2, DAY3 = Date(2026, 11, 2), Date(2026, 11, 3), Date(2026, 11, 4)
         @test_throws ArgumentError sync_market_prices(prices, FakeMarket(), ["AAPL"]; from=DAY3, to=DAY1)
     end
 end
+
+@testset "Exchange rate sync" begin
+    fx(symbol, closes) = MarketSeries(symbol, AssetDetails("USD/MXN", "CCY", "Divisa", "MXN"),
+                                      [PriceBar(symbol, d, c, c, c, c, 0, c) for (d, c) in closes], ImportIssue[], nothing)
+
+    @testset "a full load saves the close of each day per currency" begin
+        prices = InMemoryPriceRepository()
+        market = FakeMarket(fx("MXN=X", [(DAY1, 18.5), (DAY2, 18.6)]), fx("EUR=X", [(DAY1, 0.9)]))
+        result = sync_exchange_rates(prices, market; from=Date(2000, 1, 1), to=DAY3)
+        @test only(market.calls) == (["EUR=X", "MXN=X"], Date(2000, 1, 1), DAY3)
+        @test [(r.currency, r.symbol, r.inserted, r.status) for r in result] ==
+              [("EUR", "EUR=X", 1, :success), ("MXN", "MXN=X", 2, :success)]
+        @test exchange_rates(prices, "MXN") == [(DAY1, 18.5), (DAY2, 18.6)]
+        @test exchange_rates(prices, "EUR") == [(DAY1, 0.9)]
+        # Las divisas no se guardan como activos ni como importaciones de precios.
+        @test isempty(list_assets(prices))
+        @test isempty(list_imports(prices))
+    end
+
+    @testset "an update continues from the last stored rate and skips currencies up to date" begin
+        prices = InMemoryPriceRepository()
+        save_exchange_rates(prices, "MXN", [(DAY1, 18.5)])
+        save_exchange_rates(prices, "EUR", [(DAY1, 0.9), (DAY2, 0.91)])
+        market = FakeMarket(fx("MXN=X", [(DAY1, 99.0), (DAY2, 18.6)]), fx("EUR=X", [(DAY2, 0.91)]))
+        result = sync_exchange_rates(prices, market; to=DAY2)
+        # Solo se consulta el peso, desde el día después de su último valor.
+        @test only(market.calls) == (["MXN=X"], DAY2, DAY2)
+        @test [(r.currency, r.inserted, r.status) for r in result] == [("EUR", 0, :up_to_date), ("MXN", 1, :success)]
+        @test exchange_rates(prices, "MXN") == [(DAY1, 18.5), (DAY2, 18.6)]
+    end
+
+    @testset "a currency the source cannot read is reported as failed" begin
+        prices = InMemoryPriceRepository()
+        broken = MarketSeries("MXN=X", nothing, PriceBar[], ImportIssue[], "status not_found")
+        result = sync_exchange_rates(prices, FakeMarket(broken), ["MXN"]; from=DAY1, to=DAY2)
+        @test only(result).status == :failed
+        @test only(result).message == "status not_found"
+        @test exchange_rates(prices, "MXN") == Tuple{Date,Float64}[]
+        # Que no venga en la respuesta también es una falla.
+        @test only(sync_exchange_rates(prices, FakeMarket(), ["MXN"]; from=DAY1, to=DAY2)).status == :failed
+        # Y si la fuente no responde, todas las pendientes quedan fallidas con el motivo.
+        down = sync_exchange_rates(prices, BrokenMarket(); from=DAY1, to=DAY2)
+        @test all(r.status == :failed for r in down)
+        @test all(occursin("HTTP 503", r.message) for r in down)
+    end
+
+    @testset "only supported currencies are accepted" begin
+        prices = InMemoryPriceRepository()
+        @test_throws ArgumentError sync_exchange_rates(prices, FakeMarket(), ["GBP"])
+        @test_throws ArgumentError sync_exchange_rates(prices, FakeMarket(), ["USD"])
+        @test_throws ArgumentError sync_exchange_rates(prices, FakeMarket(), String[])
+        @test_throws ArgumentError sync_exchange_rates(prices, FakeMarket(); from=DAY3, to=DAY1)
+    end
+end

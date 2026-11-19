@@ -8,7 +8,7 @@ module Api
 using Oxygen; @oxidize
 using HTTP
 import LibPQ
-using ..MarkovLabBackend: MarkovLabBackend, InsufficientDataError, Portfolio, analyze_prices, run_monte_carlo,
+using ..MarkovLabBackend: MarkovLabBackend, InsufficientDataError, MissingExchangeRateError, Portfolio, analyze_prices, run_monte_carlo,
                           DEFAULT_SIMULATIONS, DEFAULT_HORIZON, DEFAULT_CONFIDENCE,
                           GoogleProfile, EmailConflictError, UserRepository, PostgresUserRepository, sync_google_user,
                           PriceRepository, PostgresPriceRepository, AppUser, ForbiddenError, LastAdminError,
@@ -96,7 +96,9 @@ function start(; host::AbstractString=Base.get(ENV, "HOST", "0.0.0.0"),
     # la conexión al pooler ni la compilación de LibPQ, y un problema de la base se ve enseguida.
     if users !== nothing
         Threads.@spawn try
-            LibPQ.execute(MarkovLabBackend.connection!(users), "SELECT 1"; throw_error=true)
+            # Con el candado de la conexión, como toda consulta: así no cae dentro de la
+            # transacción de una petición que llegue mientras arranca.
+            MarkovLabBackend.with_connection(conn -> MarkovLabBackend.run_query(conn, "SELECT 1"), users.db)
             @info "Database connection ready"
         catch err
             @warn "Could not connect to the database at startup" error_type = nameof(typeof(err))

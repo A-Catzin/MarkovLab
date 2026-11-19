@@ -60,7 +60,7 @@ function save_simulation(simulations::PostgresSimulationRepository, user_id::Abs
     params = [user_id, something(s.portfolio_id, missing), s.model, s.simulations, s.horizon, s.confidence, s.seed,
               s.observations, JSON.json(Dict("symbols" => s.symbols, "weights" => s.weights)), s.expected_return,
               s.expected_volatility, s.value_at_risk, s.conditional_value_at_risk, JSON.json(summary)]
-    rows = with_connection(conn -> rows_from(LibPQ.execute(conn, INSERT_SIMULATION_SQL, params; throw_error=true)),
+    rows = with_connection(conn -> rows_from(run_query(conn, INSERT_SIMULATION_SQL, params)),
                            simulations.db)
     return simulation_from_row(only(rows))
 end
@@ -69,7 +69,7 @@ function list_simulations(simulations::PostgresSimulationRepository, user_id::Ab
                           portfolio_id::AbstractString; limit::Integer=20)
     (is_uuid(user_id) && is_uuid(portfolio_id)) || return SavedSimulation[]
     rows = with_connection(simulations.db) do conn
-        rows_from(LibPQ.execute(conn, LIST_SIMULATIONS_SQL, [user_id, portfolio_id, Int(limit)]; throw_error=true))
+        rows_from(run_query(conn, LIST_SIMULATIONS_SQL, [user_id, portfolio_id, Int(limit)]))
     end
     return [simulation_from_row(row) for row in rows]
 end

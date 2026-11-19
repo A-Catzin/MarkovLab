@@ -14,6 +14,9 @@ error_body(code, message) = Dict("error" => code, "message" => message)
 error_response(err::RequestError) = json(error_body(err.code, err.message); status=err.status)
 error_response(err::InsufficientDataError) =
     json(error_body("insufficient_data", sprint(showerror, err)); status=422)
+# Una cartera en otra moneda sin el tipo de cambio cargado: se puede corregir cargándolo.
+error_response(err::MissingExchangeRateError) =
+    json(error_body("missing_exchange_rate", sprint(showerror, err)); status=422)
 error_response(err::ArgumentError) = json(error_body("invalid_input", err.msg); status=400)
 error_response(err::ForbiddenError) = json(error_body("forbidden", err.message); status=403)
 error_response(::LastAdminError) =
@@ -136,7 +139,7 @@ portfolio_json(p::SavedPortfolio) = Dict(
     "id" => p.id, "name" => p.name, "capital" => p.capital, "currency" => p.currency,
     "start_date" => p.start_date, "status" => String(p.status), "created_at" => p.created_at,
     "positions" => [Dict("asset_id" => x.asset_id, "symbol" => x.symbol, "market" => x.market,
-                         "name" => x.name, "weight" => x.weight) for x in p.positions])
+                         "name" => x.name, "weight" => x.weight, "currency" => x.currency) for x in p.positions])
 
 """Lee el cuerpo de `POST /api/internal/portfolios` y lo valida como `PortfolioDraft`."""
 function portfolio_draft(body)

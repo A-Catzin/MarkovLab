@@ -45,6 +45,7 @@ Todos los errores devuelven el mismo formato:
 | 409 | `email_conflict` | El correo ya pertenece a otra cuenta de Google. |
 | 409 | `last_admin` | Se intentó quitar el rol al último admin. |
 | 422 | `insufficient_data` | No hay observaciones suficientes para el cálculo (RF-20). |
+| 422 | `missing_exchange_rate` | Una cartera tiene activos en otra moneda y falta el tipo de cambio para convertirlos. |
 | 500 | `internal_error` | Error inesperado; el detalle se registra en el servidor y no se expone. |
 | 503 | `not_configured` | Falta `INTERNAL_API_KEY` o `DATABASE_URL` para una ruta interna. |
 | 503 | `database_unavailable` | La base no responde; el detalle queda en el registro del servidor. |
@@ -185,9 +186,9 @@ Exigen `X-Internal-Key` y `X-Actor-Id` con el id de un usuario que exista en la 
 | `GET /api/internal/portfolios` | `{ portfolios: [cartera, ...] }`, de la más nueva a la más vieja. |
 | `POST /api/internal/portfolios` | Cuerpo `{ name, capital, currency, positions: [{ asset_id, weight }] }`, con pesos como fracciones que suman 1. Responde **201** con la cartera. Errores: 400 `invalid_input` (nombre, capital, moneda, pesos, activos repetidos o inexistentes). |
 | `GET /api/internal/portfolios/{id}` | La cartera, o 404 si no existe o es de otro usuario. |
-| `POST /api/internal/portfolios/{id}/simulations` | Simula la cartera con los precios de la base y guarda el resultado. Cuerpo: `{ horizon, simulations?, confidence?, lookback_years?, seed? }` (`horizon` en días hábiles; por defecto 10,000 escenarios, 95 % y 5 años). Responde 201 con `{ id, portfolio_id, model, simulations, horizon, confidence, seed, observations, symbols, weights, window: { from, to }, expected_return, expected_volatility, value_at_risk, conditional_value_at_risk, summary, created_at }`. 400 con parámetros fuera de rango, 404 si la cartera no es del usuario, 422 si no hay 60 días de precios en común. |
+| `POST /api/internal/portfolios/{id}/simulations` | Simula la cartera con los precios de la base y guarda el resultado. Cuerpo: `{ horizon, simulations?, confidence?, lookback_years?, seed? }` (`horizon` en días hábiles; por defecto 10,000 escenarios, 95 % y 5 años). Responde 201 con `{ id, portfolio_id, model, simulations, horizon, confidence, seed, observations, symbols, weights, window: { from, to }, expected_return, expected_volatility, value_at_risk, conditional_value_at_risk, summary, created_at }`. 400 con parámetros fuera de rango, 404 si la cartera no es del usuario, 422 `insufficient_data` si no hay 60 días de precios en común, o `missing_exchange_rate` si falta un tipo de cambio. Los precios se convierten a la moneda de la cartera ([CARTERAS.md](CARTERAS.md#moneda)). |
 | `GET /api/internal/portfolios/{id}/simulations` | `{ simulations: [...] }`, las 20 más recientes de la cartera, con la misma forma. 404 si la cartera no es del usuario. |
-| `GET /api/internal/portfolios/{id}/history` | `{ currency, capital, anchor_date, points: [[fecha, valor], …] }`: valor diario de comprar y mantener, anclado en el día de alta (ver [CARTERAS.md](CARTERAS.md#valor-histórico)). 404 en los mismos casos; 422 `insufficient_data` si los activos no tienen al menos dos días de precios en común. |
+| `GET /api/internal/portfolios/{id}/history` | `{ currency, capital, anchor_date, points: [[fecha, valor], …] }`: valor diario de comprar y mantener, anclado en el día de alta (ver [CARTERAS.md](CARTERAS.md#valor-histórico)). 404 en los mismos casos; 422 `insufficient_data` si los activos no tienen al menos dos días de precios en común, o `missing_exchange_rate` si falta un tipo de cambio. Los valores van en la moneda de la cartera. |
 | `DELETE /api/internal/portfolios/{id}` | `{ deleted: id }`, o 404 en los mismos casos. |
 
 Cada cartera tiene esta forma:
@@ -195,7 +196,7 @@ Cada cartera tiene esta forma:
 ```json
 { "id": "e295e3ff-…", "name": "Tecnología", "capital": 10000.0, "currency": "USD", "start_date": "2026-11-05",
   "status": "draft", "created_at": "2026-11-05T18:26:01Z",
-  "positions": [{ "asset_id": 1, "symbol": "AAPL", "market": "NASDAQ", "name": "Apple", "weight": 0.6 }] }
+  "positions": [{ "asset_id": 1, "symbol": "AAPL", "market": "NASDAQ", "name": "Apple", "weight": 0.6, "currency": "USD" }] }
 ```
 
 ### Rutas internas de admin

@@ -48,7 +48,7 @@ const GET_PORTFOLIO_SQL = "SELECT $PORTFOLIO_COLUMNS FROM carteras c WHERE c.id 
 
 # Posiciones de varias carteras a la vez (las del usuario), con los datos del activo.
 const POSITIONS_SQL = """
-    SELECT p.cartera_id::text AS cartera_id, p.activo_id, a.simbolo, a.mercado, a.nombre, p.peso::float8 AS peso
+    SELECT p.cartera_id::text AS cartera_id, p.activo_id, a.simbolo, a.mercado, a.nombre, p.peso::float8 AS peso, a.moneda
     FROM posiciones_cartera p
     JOIN carteras c ON c.id = p.cartera_id
     JOIN activos a ON a.id = p.activo_id
@@ -62,11 +62,11 @@ const DELETE_PORTFOLIO_SQL = "DELETE FROM carteras WHERE id = \$1::uuid AND usua
 function portfolios_with_positions(conn, user_id, rows)
     isempty(rows) && return SavedPortfolio[]
     ids = pg_array(row.id for row in rows)
-    positions = rows_from(LibPQ.execute(conn, POSITIONS_SQL, [user_id, ids]; throw_error=true))
+    positions = rows_from(run_query(conn, POSITIONS_SQL, [user_id, ids]))
     by_portfolio = Dict{String,Vector{SavedPosition}}()
     for p in positions
         push!(get!(by_portfolio, p.cartera_id, SavedPosition[]),
-              SavedPosition(Int(p.activo_id), p.simbolo, p.mercado, p.nombre, p.peso))
+              SavedPosition(Int(p.activo_id), p.simbolo, p.mercado, p.nombre, p.peso, strip(p.moneda)))
     end
     return [SavedPortfolio(r.id, r.nombre, r.capital, strip(r.moneda), r.fecha_inicio,
                            PORTFOLIO_STATUS_FROM_DB[r.estado], orelse(r.creado_en),
@@ -79,12 +79,12 @@ function create_portfolio(portfolios::PostgresPortfolioRepository, user_id, draf
     weights = [string(round(p.weight; digits=8)) for p in draft.positions]
     id = with_connection(portfolios.db) do conn
         in_transaction(conn) do
-            existing = rows_from(LibPQ.execute(conn, EXISTING_ASSETS_SQL, [pg_array(ids)]; throw_error=true))
+            existing = rows_from(run_query(conn, EXISTING_ASSETS_SQL, [pg_array(ids)]))
             unknown = setdiff(ids, [Int(row.id) for row in existing])
             isempty(unknown) || throw(ArgumentError("unknown asset ids: $(join(sort(unknown), ", "))"))
-            created = only(rows_from(LibPQ.execute(conn, INSERT_PORTFOLIO_SQL,
-                [user_id, draft.name, string(round(draft.capital; digits=2)), draft.currency]; throw_error=true)))
-            close(LibPQ.execute(conn, INSERT_POSITIONS_SQL, [created.id, pg_array(ids), pg_array(weights)]; throw_error=true))
+            created = only(rows_from(run_query(conn, INSERT_PORTFOLIO_SQL,
+                [user_id, draft.name, string(round(draft.capital; digits=2)), draft.currency])))
+            close(run_query(conn, INSERT_POSITIONS_SQL, [created.id, pg_array(ids), pg_array(weights)]))
             created.id
         end
     end
@@ -93,7 +93,7 @@ end
 
 function list_portfolios(portfolios::PostgresPortfolioRepository, user_id)
     with_connection(portfolios.db) do conn
-        rows = rows_from(LibPQ.execute(conn, LIST_PORTFOLIOS_SQL, [user_id]; throw_error=true))
+        rows = rows_from(run_query(conn, LIST_PORTFOLIOS_SQL, [user_id]))
         portfolios_with_positions(conn, user_id, rows)
     end
 end
@@ -101,7 +101,7 @@ end
 function get_portfolio(portfolios::PostgresPortfolioRepository, user_id, id)
     is_uuid(id) || return nothing
     with_connection(portfolios.db) do conn
-        rows = rows_from(LibPQ.execute(conn, GET_PORTFOLIO_SQL, [id, user_id]; throw_error=true))
+        rows = rows_from(run_query(conn, GET_PORTFOLIO_SQL, [id, user_id]))
         found = portfolios_with_positions(conn, user_id, rows)
         isempty(found) ? nothing : only(found)
     end
@@ -109,7 +109,7 @@ end
 
 function delete_portfolio(portfolios::PostgresPortfolioRepository, user_id, id)
     is_uuid(id) || return false
-    deleted = with_connection(conn -> rows_from(LibPQ.execute(conn, DELETE_PORTFOLIO_SQL, [id, user_id]; throw_error=true)),
+    deleted = with_connection(conn -> rows_from(run_query(conn, DELETE_PORTFOLIO_SQL, [id, user_id])),
                               portfolios.db)
     return !isempty(deleted)
 end

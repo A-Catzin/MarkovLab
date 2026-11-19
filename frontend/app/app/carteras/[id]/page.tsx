@@ -7,6 +7,7 @@ import { PortfolioHistoryChart } from "@/components/app/PortfolioHistoryChart";
 import { PortfolioSimulation } from "@/components/app/PortfolioSimulation";
 import {
   STATUS_LABELS,
+  currencyNote,
   formatMoney,
   formatWeight,
   getPortfolio,
@@ -24,10 +25,14 @@ export const metadata: Metadata = {
 };
 
 /** Historia de la cartera, o el motivo por el que no se puede dibujar. */
-async function loadHistory(actorId: string, id: string): Promise<PortfolioHistory | "insufficient" | "error"> {
+async function loadHistory(
+  actorId: string,
+  id: string,
+): Promise<PortfolioHistory | "insufficient" | "missing_rate" | "error"> {
   try {
     return await getPortfolioHistory(actorId, id);
   } catch (error) {
+    if (error instanceof BackendError && error.code === "missing_exchange_rate") return "missing_rate";
     if (error instanceof BackendError && error.status === 422) return "insufficient";
     console.error("[carteras] no se pudo leer la historia:", error);
     return "error";
@@ -65,6 +70,12 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
   }
 
   const [history, simulations] = await Promise.all([loadHistory(user.id, id), loadSimulations(user.id, id)]);
+  const note = currencyNote(portfolio);
+  const historyMessage = {
+    error: "No pudimos leer el valor histórico. Inténtalo en unos minutos.",
+    insufficient: "Todavía no hay precios suficientes de estos activos para dibujar su valor histórico.",
+    missing_rate: `Falta el tipo de cambio para valuar estos activos en ${portfolio.currency}. Pídele a un administrador que lo cargue.`,
+  };
 
   return (
     <>
@@ -94,12 +105,11 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
           anchorDate={history.anchor_date}
           capital={history.capital}
           currency={history.currency}
+          currencyNote={note}
         />
       ) : (
-        <p className={`notice ${history === "error" ? "notice--error" : ""}`} role="status">
-          {history === "error"
-            ? "No pudimos leer el valor histórico. Inténtalo en unos minutos."
-            : "Todavía no hay precios suficientes de estos activos para dibujar su valor histórico."}
+        <p className={`notice ${history === "insufficient" ? "" : "notice--error"}`} role="status">
+          {historyMessage[history]}
         </p>
       )}
 
@@ -108,6 +118,7 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
         capital={portfolio.capital}
         currency={portfolio.currency}
         previous={simulations}
+        currencyNote={note}
       />
 
       <section className="panel" aria-labelledby="composition">
@@ -129,7 +140,7 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
               <tr>
                 <th scope="col">Activo</th>
                 <th scope="col">Nombre</th>
-                <th scope="col">Mercado</th>
+                <th scope="col">Mercado y moneda</th>
                 <th scope="col" className="num">Peso</th>
                 <th scope="col" className="num">Monto</th>
               </tr>
@@ -142,7 +153,9 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
                     {position.symbol}
                   </th>
                   <td>{position.name}</td>
-                  <td>{position.market}</td>
+                  <td>
+                    {position.market} · {position.currency}
+                  </td>
                   <td className="num">{formatWeight(position.weight)}</td>
                   <td className="num">{formatMoney(portfolio.capital * position.weight, portfolio.currency)}</td>
                 </tr>

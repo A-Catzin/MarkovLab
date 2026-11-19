@@ -15,7 +15,8 @@ const MIN_SIMULATION_DAYS = 60
 
 Simula la cartera `id` del actor con [`run_monte_carlo`](@ref) y guarda el resultado.
 
-- **Precios:** el cierre ajustado diario de cada activo ([`price_history`](@ref)), solo los
+- **Precios:** el cierre ajustado diario de cada activo, en la moneda de la cartera
+  ([`portfolio_price_series`](@ref): incluye el riesgo cambiario), solo los
   días en que todos cotizaron ([`aligned_prices`](@ref)), en los últimos `lookback_years`
   años contados desde el último día en común. Hacen falta al menos
   [`MIN_SIMULATION_DAYS`](@ref).
@@ -24,7 +25,8 @@ Simula la cartera `id` del actor con [`run_monte_carlo`](@ref) y guarda el resul
 
 Lanza `ArgumentError` si un parámetro está fuera de rango (`lookback_years` entre 1 y
 [`MAX_LOOKBACK_YEARS`](@ref), y los límites de `run_monte_carlo`) e
-`InsufficientDataError` si no hay suficientes precios.
+`InsufficientDataError` si no hay suficientes precios, y `MissingExchangeRateError` si
+falta un tipo de cambio.
 """
 function simulate_user_portfolio(users::UserRepository, portfolios::PortfolioRepository, prices::PriceRepository,
                                  repository::SimulationRepository, actor_id, id; horizon::Integer,
@@ -36,7 +38,7 @@ function simulate_user_portfolio(users::UserRepository, portfolios::PortfolioRep
     portfolio = get_portfolio(portfolios, user.id, id)
     portfolio === nothing && return nothing
 
-    series = [price_history(prices, position.asset_id) for position in portfolio.positions]
+    series = portfolio_price_series(prices, portfolio)
     everything = aligned_prices(series; from=typemin(Date), min_days=MIN_SIMULATION_DAYS)
     window = aligned_prices(series; from=last(everything.dates) - Year(lookback_years), min_days=MIN_SIMULATION_DAYS)
     symbols = [position.symbol for position in portfolio.positions]

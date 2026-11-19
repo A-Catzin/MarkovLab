@@ -98,4 +98,40 @@ end
         @test user_portfolio_history(f.users, f.portfolios, f.prices, f.beto.id, saved.id) === nothing
         @test_throws ForbiddenError user_portfolio_history(f.users, f.portfolios, f.prices, nothing, saved.id)
     end
+
+    @testset "history converts each asset to the currency of the portfolio" begin
+        f = portfolio_fixture()
+        rows(symbol, closes...) = join(("$d,1,99,0.5,$c,$c,10,$symbol\n" for (d, c) in closes))
+        more(symbol, currency, closes...) =
+            import_prices(f.prices, IOBuffer("Date,Open,High,Low,Close,Adj Close,Volume,Symbol\n" * rows(symbol, closes...)),
+                          AssetDetails(symbol, currency == "MXN" ? "BMV" : "NASDAQ", "Acción", currency)).asset_id
+        more("AAPL", "USD", ("2024-06-11", 3))
+        walmex = more("WALMEX.MX", "MXN", ("2024-06-10", 30), ("2024-06-11", 30))
+        saved = create_user_portfolio(f.users, f.portfolios, f.ana.id,
+                                      PortfolioDraft("Mixta", 1000, "MXN", [PositionDraft(f.aapl, 0.5), PositionDraft(walmex, 0.5)]))
+        @test [(p.symbol, p.currency) for p in saved.positions] == [("AAPL", "USD"), ("WALMEX.MX", "MXN")]
+
+        # Sin el tipo de cambio del peso no se puede valuar en pesos: error claro, no un cálculo mezclado.
+        err = try
+            user_portfolio_history(f.users, f.portfolios, f.prices, f.ana.id, saved.id)
+            nothing
+        catch e
+            e
+        end
+        @test err isa MissingExchangeRateError
+        @test (err.from, err.to) == ("USD", "MXN")
+
+        # AAPL en pesos: 1.5 × 20 = 30 y 3 × 18 = 54. Creada hoy, vale el capital el 2024-06-11.
+        save_exchange_rates(f.prices, "MXN", [(Date(2024, 6, 10), 20.0), (Date(2024, 6, 11), 18.0)])
+        history = user_portfolio_history(f.users, f.portfolios, f.prices, f.ana.id, saved.id)
+        @test history.dates == [Date(2024, 6, 10), Date(2024, 6, 11)]
+        @test history.values ≈ [500 * 30 / 54 + 500, 1000.0]
+
+        # Una cartera en dólares con los mismos activos convierte el peso a dólares.
+        in_usd = create_user_portfolio(f.users, f.portfolios, f.ana.id,
+                                       PortfolioDraft("En dólares", 1000, "USD", [PositionDraft(f.aapl, 0.5), PositionDraft(walmex, 0.5)]))
+        # WALMEX en dólares: 30 / 20 = 1.5 y 30 / 18 ≈ 1.667.
+        @test user_portfolio_history(f.users, f.portfolios, f.prices, f.ana.id, in_usd.id).values ≈
+              [500 * 1.5 / 3 + 500 * 1.5 / (30 / 18), 1000.0]
+    end
 end

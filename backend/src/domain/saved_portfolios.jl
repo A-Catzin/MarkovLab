@@ -68,9 +68,11 @@ struct PortfolioDraft
 end
 
 """
-    SavedPosition(asset_id, symbol, market, name, weight)
+    SavedPosition(asset_id, symbol, market, name, weight, currency)
 
-Posición de una cartera guardada, con los datos del activo para mostrarla.
+Posición de una cartera guardada, con los datos del activo para mostrarla. `currency` es la
+moneda en que cotiza el activo: la historia y la simulación convierten sus precios a la
+moneda de la cartera (ver [`convert_series`](@ref)).
 """
 struct SavedPosition
     asset_id::Int
@@ -78,6 +80,7 @@ struct SavedPosition
     market::String
     name::String
     weight::Float64
+    currency::String
 end
 
 """

@@ -4,6 +4,24 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Agregado — 2026-11-17: conversión de moneda
+
+- Cada cartera se valúa en su moneda: la historia y la simulación convierten los precios de cada activo con el tipo de cambio diario (`portfolio_price_series`, `convert_series` en `src/domain/exchange_rates.jl`). El dólar es la moneda puente; un día sin tipo de cambio usa el último de hasta 5 días hábiles.
+- Tabla `tipos_cambio` (migración `0004`), con el puerto en `PriceRepository` (`save_exchange_rates`, `exchange_rates`, `latest_exchange_rate_date`) y sus adaptadores en memoria y PostgreSQL.
+- `sync_exchange_rates` y `sync_prices.jl --divisas` traen `MXN=X` y `EUR=X` desde Apify; `--catalogo` las actualiza también.
+- API: 422 `missing_exchange_rate` si falta un tipo de cambio; cada posición trae `currency` (la moneda del activo).
+- Corregido: `random_uuid` (adaptadores en memoria) podía repetir el UUID en dos peticiones seguidas; ahora usa `RandomDevice`.
+
+### Corregido — 2026-11-17: una consulta ya no congela el servidor
+
+- `run_query` en `src/infrastructure/postgres.jl` ejecuta todas las consultas de los adaptadores con `LibPQ.async_execute`, que espera la respuesta cediendo el hilo. Antes, `LibPQ.execute` bloqueaba el único hilo: mientras una consulta esperaba, no respondía ni `/health`. Los errores salen sin el envoltorio de la tarea (`unwrap_task_error`), así que `with_connection` sigue reconociendo una conexión perdida y reconecta.
+- `TCP_USER_TIMEOUT` se aplica a mano con `setsockopt` (`set_user_timeout!`). La entrada del 2026-11-12 decía que `tcp_user_timeout=20000` cortaba los datos sin confirmar, pero la libpq de LibPQ.jl lo acepta y no lo aplica: el socket quedaba en 0. Los keepalives solo cubrían la consulta que ya estaba esperando al momento del corte; una enviada después reintentaba sin fin, con `execute` o con `async_execute`.
+- `connect_timeout` se pasa también como argumento a `LibPQ.Connection`, porque en modo no bloqueante LibPQ.jl no lo lee de la URL.
+- Comprobado con el servidor real y un PostgreSQL de prueba:
+  - Con la tabla `usuarios` bloqueada 5 s, `/health` respondió en 1 ms.
+  - Con la red cortada, `/health` respondió en 1 ms y la petición afectada falló con 503 a los 22 s; al volver la red, la siguiente respondió en 11 ms.
+- Pruebas: `test/infrastructure/postgres_connection_tests.jl`, contra PostgreSQL (una consulta lenta no frena a otra conexión, los errores salen sin envoltorio, la reconexión y `TCP_USER_TIMEOUT` en el socket). Además, los envoltorios de error en `test/services/users_tests.jl`.
+
 ### Corregido — 2026-11-12: el servidor se congelaba con una conexión muerta
 
 - Síntoma: después de un rato sin uso, el backend dejaba de responder, incluido `/health`, y el frontend marcaba `TimeoutError`. El hilo principal estaba en `PQexecParams → pqSocketPoll(end_time=-1)`, esperando para siempre la respuesta de una conexión que el pooler de Supabase había soltado sin avisar.

@@ -58,9 +58,8 @@ function save_google_user(users::PostgresUserRepository, profile::GoogleProfile)
     # El upsert es idempotente, así que se puede repetir si la conexión se había cortado.
     result = try
         with_connection(users.db) do conn
-            LibPQ.execute(conn, UPSERT_GOOGLE_USER_SQL,
-                          [profile.email, something(profile.name, missing), profile.subject];
-                          throw_error=true)
+            run_query(conn, UPSERT_GOOGLE_USER_SQL,
+                      [profile.email, something(profile.name, missing), profile.subject])
         end
     catch err
         err isa LibPQ.Errors.UniqueViolation && throw(EmailConflictError(profile.email))
@@ -71,19 +70,19 @@ end
 
 function find_user(users::PostgresUserRepository, id)
     is_uuid(id) || return nothing
-    found = with_connection(conn -> users_from(LibPQ.execute(conn, FIND_USER_SQL, [id]; throw_error=true)), users.db)
+    found = with_connection(conn -> users_from(run_query(conn, FIND_USER_SQL, [id])), users.db)
     return isempty(found) ? nothing : only(found)
 end
 
 list_users(users::PostgresUserRepository) =
-    with_connection(conn -> users_from(LibPQ.execute(conn, LIST_USERS_SQL; throw_error=true)), users.db)
+    with_connection(conn -> users_from(run_query(conn, LIST_USERS_SQL)), users.db)
 
 function set_user_role(users::PostgresUserRepository, id, role::Symbol; actor_id=nothing)
     role in USER_ROLES || throw(ArgumentError("role must be one of $(join(USER_ROLES, ", "))"))
     is_uuid(id) || return nothing
     return with_connection(users.db) do conn
         in_transaction(conn) do
-            admin_ids = let result = LibPQ.execute(conn, LOCK_ADMINS_SQL; throw_error=true)
+            admin_ids = let result = run_query(conn, LOCK_ADMINS_SQL)
                 try
                     collect(LibPQ.columntable(result).id)
                 finally
@@ -94,7 +93,7 @@ function set_user_role(users::PostgresUserRepository, id, role::Symbol; actor_id
             # admin le quitó el rol un instante antes, este cambio ya no le corresponde.
             actor_id === nothing || lowercase(actor_id) in admin_ids || throw(ForbiddenError("admin role required"))
             role != :admin && lowercase(id) in admin_ids && length(admin_ids) <= 1 && throw(LastAdminError())
-            updated = users_from(LibPQ.execute(conn, SET_ROLE_SQL, [id, ROLE_TO_DB[role]]; throw_error=true))
+            updated = users_from(run_query(conn, SET_ROLE_SQL, [id, ROLE_TO_DB[role]]))
             isempty(updated) ? nothing : only(updated)
         end
     end

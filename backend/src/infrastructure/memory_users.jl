@@ -13,8 +13,11 @@ end
 InMemoryUserRepository() = InMemoryUserRepository(Dict{String,AppUser}(), ReentrantLock())
 
 # UUID versión 4 a partir de 128 bits aleatorios, con los bits de versión y variante fijos.
+# Los bits salen del sistema operativo (`RandomDevice`), no del generador de la tarea: el
+# servidor atiende cada petición en una tarea nueva, y Julia deriva su generador del de la
+# tarea que la crea, así que dos peticiones seguidas podían recibir el mismo UUID.
 function random_uuid()
-    bits = rand(UInt128)
+    bits = rand(Random.RandomDevice(), UInt128)
     bits = (bits & ~(UInt128(0xf) << 76)) | (UInt128(4) << 76)
     bits = (bits & ~(UInt128(0x3) << 62)) | (UInt128(0x2) << 62)
     return string(Base.UUID(bits))

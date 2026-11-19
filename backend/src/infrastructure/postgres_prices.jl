@@ -107,14 +107,14 @@ function rows_from(result)
 end
 
 function list_assets(prices::PostgresPriceRepository)
-    rows = with_connection(conn -> rows_from(LibPQ.execute(conn, LIST_ASSETS_SQL; throw_error=true)), prices.db)
+    rows = with_connection(conn -> rows_from(run_query(conn, LIST_ASSETS_SQL)), prices.db)
     return [(id=Int(r.id), symbol=r.simbolo, name=r.nombre, market=r.mercado, category=r.categoria,
              currency=strip(r.moneda), last_synced_at=orelse(r.ultima_sincronizacion), price_rows=Int(r.filas),
              first_date=orelse(r.desde), last_date=orelse(r.hasta)) for r in rows]
 end
 
 function list_imports(prices::PostgresPriceRepository; limit::Integer=50)
-    rows = with_connection(conn -> rows_from(LibPQ.execute(conn, LIST_IMPORTS_SQL, [Int(limit)]; throw_error=true)), prices.db)
+    rows = with_connection(conn -> rows_from(run_query(conn, LIST_IMPORTS_SQL, [Int(limit)])), prices.db)
     return [(id=Int(r.id), source=Symbol(r.origen), status=STATUS_FROM_DB[r.estado], asset_symbol=orelse(r.simbolo),
              asset_market=orelse(r.mercado), saved=Int(r.registros_guardados), failed=Int(r.registros_fallidos),
              message=orelse(r.mensaje_error), started_at=orelse(r.iniciado_en), finished_at=orelse(r.finalizado_en))
@@ -135,7 +135,7 @@ function single_value(result)
 end
 
 function upsert_asset(conn, symbol::AbstractString, details::AssetDetails)
-    result = LibPQ.execute(conn, FIND_ASSET_SQL, [details.market, symbol]; throw_error=true)
+    result = run_query(conn, FIND_ASSET_SQL, [details.market, symbol])
     # `columntable` lee del resultado sin copiarlo: se copian los ids antes de cerrarlo.
     found_ids = try
         collect(LibPQ.columntable(result).id)
@@ -143,12 +143,11 @@ function upsert_asset(conn, symbol::AbstractString, details::AssetDetails)
         close(result)
     end
     if isempty(found_ids)
-        return Int(single_value(LibPQ.execute(conn, INSERT_ASSET_SQL,
-            [symbol, details.name, details.market, details.category, details.currency]; throw_error=true)))
+        return Int(single_value(run_query(conn, INSERT_ASSET_SQL,
+            [symbol, details.name, details.market, details.category, details.currency])))
     end
     asset_id = Int(first(found_ids))
-    close(LibPQ.execute(conn, UPDATE_ASSET_SQL, [asset_id, details.name, details.category, details.currency];
-                        throw_error=true))
+    close(run_query(conn, UPDATE_ASSET_SQL, [asset_id, details.name, details.category, details.currency]))
     return asset_id
 end
 
@@ -157,7 +156,7 @@ function insert_bars(conn, asset_id::Integer, bars::AbstractVector{PriceBar}, so
               pg_array(bar.high for bar in bars), pg_array(bar.low for bar in bars),
               pg_array(bar.close for bar in bars), pg_array(bar.adj_close for bar in bars),
               pg_array(bar.volume for bar in bars), string(source)]
-    result = LibPQ.execute(conn, INSERT_BARS_SQL, params; throw_error=true)
+    result = run_query(conn, INSERT_BARS_SQL, params)
     try
         return LibPQ.num_affected_rows(result)
     finally
@@ -176,10 +175,9 @@ function save_price_import(prices::PostgresPriceRepository, symbol, details::Uni
         in_transaction(conn) do
             asset_id = isempty(bars) ? nothing : upsert_asset(conn, symbol, details)
             inserted = asset_id === nothing ? 0 : insert_bars(conn, asset_id, bars, source)
-            LibPQ.execute(conn, INSERT_SYNC_SQL,
-                          [something(asset_id, missing), status_value, inserted, Int(failed_rows),
-                           something(message, missing), string(started, "+00:00"), string(source)];
-                          throw_error=true)
+            run_query(conn, INSERT_SYNC_SQL,
+                      [something(asset_id, missing), status_value, inserted, Int(failed_rows),
+                       something(message, missing), string(started, "+00:00"), string(source)])
             (asset_id, inserted)
         end
     end
@@ -188,14 +186,57 @@ end
 function latest_price_date(prices::PostgresPriceRepository, symbol::AbstractString; source::Symbol=:api)
     source in PRICE_SOURCES || throw(ArgumentError("unknown price source $source"))
     value = with_connection(prices.db) do conn
-        single_value(LibPQ.execute(conn, LATEST_PRICE_DATE_SQL, [uppercase(strip(symbol)), string(source)];
-                                   throw_error=true))
+        single_value(run_query(conn, LATEST_PRICE_DATE_SQL, [uppercase(strip(symbol)), string(source)]))
+    end
+    return ismissing(value) ? nothing : Date(value)
+end
+
+# Tipos de cambio (tabla `tipos_cambio`, migración 0004): unidades de la moneda por 1 USD.
+const INSERT_RATES_SQL = """
+    INSERT INTO tipos_cambio (moneda, fecha, origen, valor)
+    SELECT \$1, t.fecha, \$4::origen_precio, t.valor
+    FROM unnest(\$2::date[], \$3::float8[]) AS t(fecha, valor)
+    ON CONFLICT (moneda, fecha, origen) DO NOTHING
+    """
+
+const EXCHANGE_RATES_SQL = """
+    SELECT DISTINCT ON (fecha) fecha::text AS fecha, valor
+    FROM tipos_cambio
+    WHERE moneda = \$1
+    ORDER BY fecha, (origen = 'api') DESC
+    """
+
+const LATEST_RATE_DATE_SQL = "SELECT max(fecha)::text AS hasta FROM tipos_cambio WHERE moneda = \$1 AND origen = \$2::origen_precio"
+
+function save_exchange_rates(prices::PostgresPriceRepository, currency::AbstractString, rates::AbstractVector;
+                             source::Symbol=:api)
+    code = check_exchange_rates(currency, rates, source)
+    isempty(rates) && return 0
+    params = [code, pg_array(Date(d) for (d, _) in rates), pg_array(Float64(v) for (_, v) in rates), string(source)]
+    result = with_connection(conn -> run_query(conn, INSERT_RATES_SQL, params), prices.db)
+    try
+        return LibPQ.num_affected_rows(result)
+    finally
+        close(result)
+    end
+end
+
+function exchange_rates(prices::PostgresPriceRepository, currency::AbstractString)
+    rows = with_connection(conn -> rows_from(run_query(conn, EXCHANGE_RATES_SQL, [uppercase(strip(currency))])),
+                           prices.db)
+    return [(Date(r.fecha), Float64(r.valor)) for r in rows]
+end
+
+function latest_exchange_rate_date(prices::PostgresPriceRepository, currency::AbstractString; source::Symbol=:api)
+    source in PRICE_SOURCES || throw(ArgumentError("unknown price source $source"))
+    value = with_connection(prices.db) do conn
+        single_value(run_query(conn, LATEST_RATE_DATE_SQL, [uppercase(strip(currency)), string(source)]))
     end
     return ismissing(value) ? nothing : Date(value)
 end
 
 function price_history(prices::PostgresPriceRepository, asset_id::Integer)
-    rows = with_connection(conn -> rows_from(LibPQ.execute(conn, PRICE_HISTORY_SQL, [Int(asset_id)]; throw_error=true)),
+    rows = with_connection(conn -> rows_from(run_query(conn, PRICE_HISTORY_SQL, [Int(asset_id)])),
                            prices.db)
     return [(Date(r.fecha), Float64(r.precio)) for r in rows]
 end

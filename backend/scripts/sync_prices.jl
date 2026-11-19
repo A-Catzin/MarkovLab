@@ -6,7 +6,8 @@
 #   set -a; source backend/.env; set +a
 #   julia --project=backend backend/scripts/sync_prices.jl AAPL WALMEX.MX --desde 2000-01-01   # carga histórica
 #   julia --project=backend backend/scripts/sync_prices.jl AAPL WALMEX.MX                      # actualización
-#   julia --project=backend backend/scripts/sync_prices.jl --catalogo                          # actualiza todo el catálogo
+#   julia --project=backend backend/scripts/sync_prices.jl --catalogo                          # actualiza el catálogo y las divisas
+#   julia --project=backend backend/scripts/sync_prices.jl --divisas --desde 2000-01-01        # tipos de cambio (MXN=X, EUR=X)
 #
 # Código de salida: 0 si todo se guardó (o ya estaba al día), 1 si algún símbolo falló.
 
@@ -16,9 +17,11 @@ using MarkovLabBackend
 const USAGE = """
 Uso: julia --project=backend backend/scripts/sync_prices.jl SIMBOLO... [--desde AAAA-MM-DD] [--hasta AAAA-MM-DD]
      julia --project=backend backend/scripts/sync_prices.jl --catalogo [--desde AAAA-MM-DD] [--hasta AAAA-MM-DD]
+     julia --project=backend backend/scripts/sync_prices.jl --divisas [--desde AAAA-MM-DD] [--hasta AAAA-MM-DD]
 
   SIMBOLO     Símbolos de Yahoo Finance, por ejemplo AAPL o WALMEX.MX (máximo $(MAX_SYNC_SYMBOLS))
-  --catalogo  Usa los símbolos de todos los activos del catálogo
+  --catalogo  Usa los símbolos de todos los activos del catálogo y actualiza también las divisas
+  --divisas   Solo los tipos de cambio contra el dólar: $(join(sort(collect(values(EXCHANGE_RATE_SYMBOLS))), ", "))
   --desde     Carga histórica desde esa fecha. Sin ella, cada símbolo sigue desde su
               último precio guardado (o desde $(MARKET_HISTORY_START) si no tiene)
   --hasta     Último día a traer (por defecto, ayer: el día en curso nunca se guarda)
@@ -41,6 +44,7 @@ function parse_arguments(args)
     symbols = String[]
     options = Dict{String,String}()
     catalog = false
+    currencies = false
     i = 1
     while i <= length(args)
         arg = args[i]
@@ -49,6 +53,9 @@ function parse_arguments(args)
             exit(0)
         elseif arg == "--catalogo"
             catalog = true
+            i += 1
+        elseif arg == "--divisas"
+            currencies = true
             i += 1
         elseif arg in ("--desde", "--hasta")
             i < length(args) || fail("falta el valor de $arg")
@@ -62,24 +69,30 @@ function parse_arguments(args)
         end
     end
     catalog && !isempty(symbols) && fail("usa --catalogo o una lista de símbolos, no los dos")
-    !catalog && isempty(symbols) && fail("indica al menos un símbolo o --catalogo")
+    currencies && catalog && fail("usa --divisas sola: --catalogo ya incluye las divisas")
+    currencies && !isempty(symbols) && fail("usa --divisas sola, sin símbolos: corre los símbolos en otra llamada")
+    !catalog && !currencies && isempty(symbols) && fail("indica al menos un símbolo, --catalogo o --divisas")
     from = haskey(options, "--desde") ? parse_date(options["--desde"], "--desde") : nothing
     to = haskey(options, "--hasta") ? parse_date(options["--hasta"], "--hasta") : Dates.today() - Day(1)
-    return symbols, catalog, from, to
+    return symbols, catalog, currencies, from, to
 end
 
 function main(args)
-    symbols, catalog, from, to = parse_arguments(args)
+    symbols, catalog, currencies, from, to = parse_arguments(args)
     database_url = strip(get(ENV, "DATABASE_URL", ""))
     isempty(database_url) && fail("falta DATABASE_URL en el entorno")
     token = strip(get(ENV, "APIFY_TOKEN", ""))
     isempty(token) && fail("falta APIFY_TOKEN en el entorno")
 
     prices = PostgresPriceRepository(database_url)
-    result = try
+    source = ApifyMarketData(token)
+    result, rates = try
         catalog && (symbols = unique([asset.symbol for asset in list_assets(prices)]))
         catalog && isempty(symbols) && fail("el catálogo no tiene activos")
-        sync_market_prices(prices, ApifyMarketData(token), symbols; from, to)
+        assets = currencies ? (; fetched=PriceImportSummary[], up_to_date=String[], corrected=Dict{String,Int}()) :
+                 sync_market_prices(prices, source, symbols; from, to)
+        # El catálogo actualiza también los tipos de cambio, para que la tarea diaria los incluya.
+        assets, (catalog || currencies ? sync_exchange_rates(prices, source; from, to) : [])
     catch err
         err isa ArgumentError || rethrow()
         fail(err.msg)
@@ -97,9 +110,16 @@ function main(args)
         end
     end
     isempty(result.up_to_date) || println("Al día, sin precios nuevos: ", join(result.up_to_date, ", "))
+    rate_labels = Dict(:success => "completa", :up_to_date => "al día", :failed => "fallida")
+    for rate in rates
+        println("$(rpad(rate.symbol, 12)) $(rpad(rate_labels[rate.status], 9)) $(rate.inserted) tipos de cambio nuevos",
+                rate.message === nothing ? "" : " ($(rate.message))")
+    end
     any(summary.status == :failed for summary in result.fetched) &&
         println(stderr, "Algún símbolo falló: revisa /admin/importaciones para ver el motivo.")
-    exit(any(summary.status == :failed for summary in result.fetched) ? 1 : 0)
+    any(rate.status == :failed for rate in rates) && println(stderr, "Algún tipo de cambio falló: el motivo está arriba.")
+    failed = any(summary.status == :failed for summary in result.fetched) || any(rate.status == :failed for rate in rates)
+    exit(failed ? 1 : 0)
 end
 
 main(ARGS)

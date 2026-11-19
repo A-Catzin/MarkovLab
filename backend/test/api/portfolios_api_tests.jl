@@ -74,6 +74,25 @@ using MarkovLabBackend.Api: configure!
             @test call("GET", "/api/internal/portfolios/$created_id/history"; with_key=false).status == 401
         end
 
+        @testset "a portfolio in another currency needs the exchange rate" begin
+            in_mxn = response_json(call("POST", "/api/internal/portfolios",
+                replace(payload, "\"usd\"" => "\"MXN\"", "Tecnología" => "En pesos")))
+            # Cada cartera tiene su propio id (antes, dos peticiones seguidas podían repetirlo).
+            @test in_mxn["id"] != created_id
+            # Las posiciones dicen en qué moneda cotiza cada activo.
+            @test [p["currency"] for p in in_mxn["positions"]] == ["USD", "USD"]
+            missing_rate = call("GET", "/api/internal/portfolios/$(in_mxn["id"])/history")
+            @test missing_rate.status == 422
+            @test response_json(missing_rate)["error"] == "missing_exchange_rate"
+            @test occursin("USD to MXN", response_json(missing_rate)["message"])
+            save_exchange_rates(prices, "MXN", [(Date(2024, 6, 10), 20.0), (Date(2024, 6, 11), 18.0)])
+            body = response_json(call("GET", "/api/internal/portfolios/$(in_mxn["id"])/history"))
+            @test body["currency"] == "MXN"
+            # En pesos los dos activos pasan de 1.5 × 20 = 30 a 3 × 18 = 54.
+            @test body["points"][1][2] ≈ 10000 * 30 / 54 atol=0.01
+            @test call("DELETE", "/api/internal/portfolios/$(in_mxn["id"])").status == 200
+        end
+
         @testset "invalid portfolios are rejected" begin
             cases = [
                 """{"name": "A", "capital": 1, "currency": "USD", "positions": [{"asset_id": $aapl, "weight": 0.5}]}""",
