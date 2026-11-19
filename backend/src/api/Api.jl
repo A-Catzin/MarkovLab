@@ -54,6 +54,30 @@ include("cors.jl")
 include("routes.jl")
 
 """
+    warm_database(users, prices, portfolios, simulations)
+
+Corre una vez las lecturas de cada repositorio de PostgreSQL al arrancar, para que la
+primera petición real no pague su compilación (la precompilación de `precompile.jl` usa
+repositorios en memoria y no llega a estos adaptadores). Solo lee: un usuario y una
+cartera que no existen, el catálogo, la historia de un activo y el tipo de cambio del peso.
+"""
+function warm_database(users, prices, portfolios, simulations)
+    nobody = "00000000-0000-4000-8000-000000000000"
+    MarkovLabBackend.find_user(users, nobody)
+    if prices !== nothing
+        assets = MarkovLabBackend.list_assets(prices)
+        isempty(assets) || MarkovLabBackend.price_history(prices, first(assets).id)
+        MarkovLabBackend.exchange_rates(prices, "MXN")
+    end
+    if portfolios !== nothing
+        MarkovLabBackend.list_portfolios(portfolios, nobody)
+        MarkovLabBackend.get_portfolio(portfolios, nobody, nobody)
+    end
+    simulations === nothing || MarkovLabBackend.list_simulations(simulations, nobody, nobody)
+    return nothing
+end
+
+"""
     start(; host, port, allowed_origins, async=false)
 
 Inicia el servidor HTTP. Los valores por defecto vienen del entorno: `HOST`
@@ -100,6 +124,8 @@ function start(; host::AbstractString=Base.get(ENV, "HOST", "0.0.0.0"),
             # transacción de una petición que llegue mientras arranca.
             MarkovLabBackend.with_connection(conn -> MarkovLabBackend.run_query(conn, "SELECT 1"), users.db)
             @info "Database connection ready"
+            warm_database(users, prices, portfolios, simulations)
+            @info "Database routes warmed up"
         catch err
             @warn "Could not connect to the database at startup" error_type = nameof(typeof(err))
         end

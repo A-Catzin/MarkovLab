@@ -4,6 +4,22 @@ using MarkovLabBackend
 @testset "MarkovLabBackend" begin
     @test nameof(MarkovLabBackend) == :MarkovLabBackend
 
+    @testset "the precompile workload leaves no state behind" begin
+        # La precompilación configura la API con datos en memoria: nada de eso puede quedar
+        # guardado en la imagen. Va primero, antes de que otra prueba llame a `configure!`.
+        api = MarkovLabBackend.Api
+        @test api.USERS[] === nothing && api.PRICES[] === nothing
+        @test api.PORTFOLIOS[] === nothing && api.SIMULATIONS[] === nothing
+        @test api.INTERNAL_KEY[] == ""
+    end
+
+    @testset "the precompile workload exercises every main route successfully" begin
+        statuses = MarkovLabBackend.precompile_workload()
+        @test length(statuses) == 9
+        @test all(code in (200, 201) for (_, code) in statuses)
+        @test MarkovLabBackend.Api.USERS[] === nothing && MarkovLabBackend.Api.INTERNAL_KEY[] == ""
+    end
+
     include("domain/metrics_tests.jl")
     include("domain/prices_tests.jl")
     include("domain/portfolio_tests.jl")

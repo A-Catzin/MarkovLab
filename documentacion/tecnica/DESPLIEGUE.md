@@ -4,14 +4,15 @@ El frontend Next.js corre en Vercel, la API Julia en Railway y PostgreSQL en Sup
 
 ## 1. Preparar PostgreSQL
 
-Usa una base de Supabase accesible desde Railway y comprueba qué migraciones ya tiene aplicadas. En una base nueva aplica, en orden, `database/migrations/esquema.sql`, `0002_cierre_ajustado.sql` y `0003_roles.sql`. **No vuelvas a aplicar el esquema a una base existente** sin revisar su estado. Consulta `database/migrations/README.md` y haz respaldo antes de modificar datos existentes.
+Usa una base de Supabase accesible desde Railway y comprueba qué migraciones ya tiene aplicadas. En una base nueva aplica, en orden, `database/migrations/esquema.sql`, `0002_cierre_ajustado.sql`, `0003_roles.sql` y `0004_tipos_cambio.sql`, y después carga los tipos de cambio (`sync_prices.jl --divisas --desde 2000-01-01`, ver `PRECIOS_API.md`). La base de Supabase actual ya tiene las cuatro (2026-11-18). **No vuelvas a aplicar el esquema a una base existente** sin revisar su estado. Consulta `database/migrations/README.md` y haz respaldo antes de modificar datos existentes.
 
 Guarda la cadena de conexión de PostgreSQL como `DATABASE_URL` en Railway. Según `AUTENTICACION.md`, el usuario conectado debe poder acceder a las tablas protegidas por RLS. Usa TLS y verifica que el tipo de conexión de Supabase sea compatible con la red de Railway; la dirección directa puede requerir IPv6, mientras que el pooler ofrece otra opción.
 
 ## 2. Desplegar la API en Railway
 
 1. Crea un proyecto y un servicio desde el repositorio. Selecciona la rama y configura **Root Directory** como `/backend`.
-2. Railway debe detectar `backend/Dockerfile`. El contenedor instala las dependencias y arranca `scripts/serve.jl`.
+2. Railway debe detectar `backend/Dockerfile`. El contenedor instala las dependencias, precompila el paquete y arranca `scripts/serve.jl`. La imagen pesa unos 2 GB y se construyó en 1 min 38 s en local (2026-11-19).
+   - **Arranque en frío:** al precompilar, `src/precompile.jl` recorre una vez las rutas principales con datos en memoria, y el código compilado queda en la imagen. Al arrancar, después de conectarse a la base, el servidor corre una vez las lecturas de PostgreSQL (`warm_database`). Medido en local con Supabase, la primera petición tras arrancar bajó de 2.7 s a 1.2 s en la historia y de 2.4 s a 1.3 s al simular; el frontend corta a los 10 s.
 3. Agrega estas variables al servicio:
 
    | Variable | Valor |
@@ -21,7 +22,7 @@ Guarda la cadena de conexión de PostgreSQL como `DATABASE_URL` en Railway. Seg�
    | `ALLOWED_ORIGINS` | URL HTTPS exacta del frontend, por ejemplo `https://tu-proyecto.vercel.app`, sin barra final. Actualízala una vez conocida. |
 
    Railway asigna `PORT`; el backend escucha en `0.0.0.0`. No copies archivos `.env` a la imagen ni al repositorio.
-4. Genera un dominio público HTTPS para el servicio y comprueba `https://TU-BACKEND/health`. Debe responder con `status: ok`. **Este endpoint solo confirma que el servidor responde; no comprueba la base de datos ni el login.** Revisa también los logs de inicio y las funciones de la aplicación.
+4. Genera un dominio público HTTPS para el servicio y comprueba `https://TU-BACKEND/health`. Debe responder con `status: ok`. En los logs deben aparecer `Database connection ready` y `Database routes warmed up` unos segundos después del arranque; si en su lugar aparece `Could not connect to the database at startup`, revisa `DATABASE_URL`. **Este endpoint solo confirma que el servidor responde; no comprueba la base de datos ni el login.** Revisa también los logs de inicio y las funciones de la aplicación.
 
 ## 3. Desplegar el frontend en Vercel
 
@@ -62,5 +63,11 @@ docker run --rm -p 8080:8080 markovlab-backend:local
 # En otra terminal:
 curl http://localhost:8080/health
 ```
+
+Prueba completa del 2026-11-19, como en Railway (`PORT` asignado, base de pruebas local con las cuatro migraciones, clave generada con `openssl rand -hex 32`):
+- `/health` respondió 8 s después de arrancar el contenedor.
+- Las rutas internas responden 401 sin clave y 403 con un usuario inexistente.
+- CORS deja pasar el origen de `ALLOWED_ORIGINS`.
+- Los logs muestran `Database connection ready` y `Database routes warmed up`.
 
 Sin `DATABASE_URL` ni `INTERNAL_API_KEY`, la prueba solo comprueba el arranque; las rutas que dependen de la base o de la clave no estarán disponibles. Para una prueba completa, proporciona las variables de forma segura y usa una base de pruebas.

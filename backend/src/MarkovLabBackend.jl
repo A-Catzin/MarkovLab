@@ -69,4 +69,7 @@ export DEFAULT_LOOKBACK_YEARS, MAX_LOOKBACK_YEARS, MIN_SIMULATION_DAYS
 export EXCHANGE_RATE_SYMBOLS, MAX_RATE_GAP_DAYS, MissingExchangeRateError, convert_series
 export save_exchange_rates, exchange_rates, latest_exchange_rate_date
 
+# Al final: usa todo lo anterior, incluida la API.
+include("precompile.jl")
+
 end # módulo MarkovLabBackend

@@ -78,6 +78,15 @@ using MarkovLabBackend
                 wait(slow)
                 @test time() - started >= 1.5
             end
+            @testset "the startup warm-up only reads and works on a real database" begin
+                repos = (PostgresUserRepository(url), PostgresPriceRepository(url),
+                         PostgresPortfolioRepository(url), PostgresSimulationRepository(url))
+                try
+                    @test MarkovLabBackend.Api.warm_database(repos...) === nothing
+                finally
+                    foreach(close, repos)
+                end
+            end
         finally
             close(db)
             close(other)

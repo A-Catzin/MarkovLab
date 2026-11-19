@@ -4,6 +4,14 @@ Historial de lo implementado en `MarkovLabBackend`. Las entradas más recientes 
 
 ## [Sin publicar]
 
+### Agregado — 2026-11-19: arranque en frío más rápido para el despliegue
+
+- `src/precompile.jl`: al precompilar el paquete (al construir la imagen de Docker) recorre las rutas principales con repositorios en memoria, incluida la conversión de moneda, y deja la API sin configurar al terminar. Si falla, solo avisa: la imagen se construye igual.
+- `Api.warm_database`: al arrancar, después de `SELECT 1`, corre una vez las lecturas de cada repositorio de PostgreSQL (solo lectura). Mensaje nuevo en los logs: `Database routes warmed up`.
+- Medido contra Supabase, primera petición tras arrancar: historia de 2.7 s a 1.2 s, simular de 2.4 s a 1.3 s, lista de carteras de 1.4 s a 0.9 s.
+- Comprobado el contenedor como en Railway: `/health` a los 8 s, 401 sin clave, 403 con usuario inexistente, CORS con `ALLOWED_ORIGINS`.
+- Pruebas: que la carga de precompilación responda bien en todas las rutas y no deje estado guardado, y `warm_database` contra PostgreSQL.
+
 ### Agregado — 2026-11-17: conversión de moneda
 
 - Cada cartera se valúa en su moneda: la historia y la simulación convierten los precios de cada activo con el tipo de cambio diario (`portfolio_price_series`, `convert_series` en `src/domain/exchange_rates.jl`). El dólar es la moneda puente; un día sin tipo de cambio usa el último de hasta 5 días hábiles.
