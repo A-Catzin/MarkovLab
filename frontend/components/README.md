@@ -17,3 +17,9 @@ Elementos de interfaz de MarkovLab. Las rutas y la composición de páginas pert
 - `PortfolioCard.tsx`: tarjeta de cartera con métricas rápidas, composición en miniatura y acciones.
 - `PortfolioDetail.tsx`: vista detallada con desglose porcentual, tabla de activos, efecto de diversificación e historial de versiones.
 - `PortfolioForm.tsx`: editor interactivo de carteras con barras de asignación, validación de 100 %, normalizador automático y estimación en tiempo real.
+
+`app/optimizacion/` contiene los componentes del módulo de optimización:
+- `OptimizationManager.tsx`: coordinador del flujo de optimización, sincronización y acciones de guardado/simulación.
+- `OptimizationSetup.tsx`: selector de cartera base, objetivos (mínima varianza / máximo Sharpe) y controles de restricciones de peso.
+- `OptimizationComparison.tsx`: comparativa lado a lado (cartera manual vs. optimizada), deltas métricos y tabla de rebalanceo.
+- `EfficientFrontierChart.tsx`: gráfico vectorial de la Frontera Eficiente de Markowitz con puntos destacados.

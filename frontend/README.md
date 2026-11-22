@@ -24,7 +24,7 @@ Configuración de **Next.js (App Router)**, **TypeScript** y **Tailwind CSS**, c
 | `/app` | `app/app/page.tsx` | Inicio de la aplicación: resumen y lista de módulos. |
 | `/app/simulador` | `app/app/simulador/page.tsx` | Simulador de riesgo dentro de la aplicación. |
 | `/app/carteras` | `app/app/carteras/page.tsx` | Gestión de carteras: creación, activos y pesos con validación del 100 %, rendimiento y riesgo estimado, historial de versiones (RF-32), duplicación (RF-33) y acceso directo al simulador. |
-| `/app/optimizacion` | `app/app/optimizacion/page.tsx` | Módulo de optimización en diseño. |
+| `/app/optimizacion` | `app/app/optimizacion/page.tsx` | Optimización de carteras (Markowitz): mínima varianza, máximo ratio de Sharpe (RF-34, RF-35), restricciones por activo (RF-36), factibilidad (RF-39), comparativa lado a lado (RF-40) y frontera eficiente. |
 | `/app/backtesting` | `app/app/backtesting/page.tsx` | Módulo de backtesting en diseño. |
 | `/app/historial` | `app/app/historial/page.tsx` | Módulo de historial en diseño. |
 

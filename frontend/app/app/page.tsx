@@ -24,7 +24,7 @@ const MODULES = [
     name: "Optimización",
     description: "Encuentra la combinación con menos riesgo o con mejor relación entre ganancia y riesgo.",
     href: "/app/optimizacion",
-    status: "Próximamente",
+    status: "Disponible",
   },
   {
     name: "Backtesting",
