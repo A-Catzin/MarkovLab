@@ -131,7 +131,20 @@ function ResultFigures({ result }: { result: Result }) {
   );
 }
 
-export function Simulator({ initial }: { initial: DemoResult }) {
+type SimulatorProps = {
+  initial: DemoResult;
+  /** La landing usa la grilla editorial; la app usa una columna simple. */
+  variant?: "landing" | "app";
+  title?: string;
+  intro?: string;
+};
+
+export function Simulator({
+  initial,
+  variant = "landing",
+  title = "Prueba una cartera",
+  intro = "Decide cómo repartir tu dinero entre cuatro empresas y la página imagina 10,000 futuros posibles para ver cuánto podrías ganar o perder. Usa el mismo modelo que el motor de MarkovLab.",
+}: SimulatorProps) {
   const [weights, setWeights] = useState<number[]>(DEFAULT_REQUEST.weights);
   const [horizon, setHorizon] = useState(DEFAULT_REQUEST.horizon);
   const [seed, setSeed] = useState(DEFAULT_REQUEST.seed);
@@ -161,13 +174,16 @@ export function Simulator({ initial }: { initial: DemoResult }) {
   else hint = `Te pasaste por ${total - 100} %: baja alguna de las partes.`;
 
   return (
-    <section className="sim grid section" id="simulador" aria-labelledby="simulador-title">
+    <section
+      className={variant === "app" ? "sim sim--app" : "sim grid section"}
+      id={variant === "app" ? undefined : "simulador"}
+      aria-labelledby="simulador-title"
+    >
       <h2 className="sim__title" id="simulador-title" data-reveal>
-        Prueba una cartera
+        {title}
       </h2>
       <p className="sim__intro" data-reveal style={{ ["--i" as string]: 1 }}>
-        Decide cómo repartir tu dinero entre cuatro empresas y la página imagina 10,000 futuros posibles para ver
-        cuánto podrías ganar o perder. Usa el mismo modelo que el motor de MarkovLab.
+        {intro}
       </p>
 
       <p className="sim__state sim__state--first" aria-hidden="true">

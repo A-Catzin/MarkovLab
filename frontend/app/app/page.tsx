@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Wordmark } from "@/components/brand/Wordmark";
 
 export const metadata: Metadata = {
-  title: "Inicio · MarkovLab",
+  title: "Inicio",
   description: "Página principal de la aplicación de MarkovLab.",
 };
 
@@ -12,75 +11,79 @@ const MODULES = [
   {
     name: "Simulador de riesgo",
     description: "Reparte tu dinero entre cuatro empresas de ejemplo y mira 10,000 futuros posibles.",
-    href: "/#simulador",
+    href: "/app/simulador",
     status: "Disponible",
   },
   {
     name: "Mis carteras",
     description: "Crea carteras con tus propios activos y pesos, y guarda varias versiones.",
+    href: "/app/carteras",
     status: "Próximamente",
   },
   {
     name: "Optimización",
     description: "Encuentra la combinación con menos riesgo o con mejor relación entre ganancia y riesgo.",
+    href: "/app/optimizacion",
     status: "Próximamente",
   },
   {
     name: "Backtesting",
     description: "Prueba una estrategia con precios del pasado y compárala contra un índice de referencia.",
+    href: "/app/backtesting",
+    status: "Próximamente",
+  },
+  {
+    name: "Historial",
+    description: "Vuelve a tus simulaciones, carteras y análisis guardados.",
+    href: "/app/historial",
     status: "Próximamente",
   },
 ] as const;
 
 /**
- * Página principal provisional de la aplicación. Se llega desde /login mientras no
- * exista autenticación real.
+ * Página principal de la aplicación. Se llega desde /login mientras no exista
+ * autenticación real; el layout de /app aporta la navegación común.
  */
 export default function AppHomePage() {
   return (
-    <div className="app">
-      <header className="app__top">
-        <Wordmark href="/app" />
-        <nav aria-label="Cuenta">
-          <Link className="link" href="/login">
-            Salir
-          </Link>
-        </nav>
+    <div className="app-page">
+      <header>
+        <h1>¿Qué quieres analizar hoy?</h1>
+        <p className="app-page__lead">
+          Empieza por el simulador para medir el riesgo de una cartera. Los demás módulos están en diseño y puedes
+          entrar a ver qué incluirán.
+        </p>
       </header>
 
-      <main className="app__main">
-        <h1>Tu laboratorio</h1>
-        <p className="app__lead">
-          Desde aquí vas a crear carteras, simular su riesgo y revisar tus resultados. Empieza por el simulador mientras
-          terminamos los demás módulos.
-        </p>
+      <div className="app-page__summary" aria-label="Resumen del laboratorio">
+        <div>
+          <strong>10,000</strong>
+          <span>escenarios por simulación</span>
+        </div>
+        <div>
+          <strong>4</strong>
+          <span>empresas de ejemplo</span>
+        </div>
+        <div>
+          <strong>3 ms</strong>
+          <span>de respuesta del motor Julia</span>
+        </div>
+      </div>
 
-        <ul className="app__modules" aria-label="Módulos">
-          {MODULES.map((module) => {
-            const available = module.status === "Disponible";
-            const body = (
-              <>
+      <ul className="app__modules" aria-label="Módulos">
+        {MODULES.map((module) => {
+          const available = module.status === "Disponible";
+          return (
+            <li key={module.name} className={`app__module ${available ? "app__module--on" : ""}`}>
+              <Link className="app__module-link" href={module.href}>
                 <span className={`app__status ${available ? "app__status--on" : ""}`}>{module.status}</span>
                 <h2>{module.name}</h2>
                 <p>{module.description}</p>
-              </>
-            );
-            return (
-              <li key={module.name} className={`app__module ${available ? "app__module--on" : ""}`}>
-                {"href" in module ? (
-                  <Link className="app__module-link" href={module.href}>
-                    {body}
-                  </Link>
-                ) : (
-                  <div className="app__module-link" aria-disabled="true">
-                    {body}
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </main>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

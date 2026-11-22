@@ -9,3 +9,5 @@ Elementos de interfaz de MarkovLab. Las rutas y la composición de páginas pert
 `Simulator` y `RevealOnScroll` son componentes de cliente; los demás se renderizan en el servidor.
 
 `brand/Wordmark.tsx` es el logotipo de texto ("Markov" + "Lab" en acento) que usan `/login` y `/app`.
+
+`app/AppShell.tsx` es el shell de la aplicación: navegación con estado activo, cuenta provisional, enlace para saltar al contenido y reactivación de las entradas al cambiar de ruta. `app/ModulePlaceholder.tsx` es la pantalla común de los módulos que todavía están en diseño.

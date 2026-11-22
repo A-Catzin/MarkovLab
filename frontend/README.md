@@ -21,7 +21,14 @@ Configuración de **Next.js (App Router)**, **TypeScript** y **Tailwind CSS**, c
 | --- | --- | --- |
 | `/` | `app/page.tsx` | Landing de presentación con el simulador. |
 | `/login` | `app/login/page.tsx` | Acceso provisional: un botón "Entrar a MarkovLab" que lleva a `/app`. Todavía no hay autenticación. |
-| `/app` | `app/app/page.tsx` | Página principal de la aplicación: lista de módulos, disponibles y próximos. |
+| `/app` | `app/app/page.tsx` | Inicio de la aplicación: resumen y lista de módulos. |
+| `/app/simulador` | `app/app/simulador/page.tsx` | Simulador de riesgo dentro de la aplicación. |
+| `/app/carteras` | `app/app/carteras/page.tsx` | Módulo de carteras en diseño. |
+| `/app/optimizacion` | `app/app/optimizacion/page.tsx` | Módulo de optimización en diseño. |
+| `/app/backtesting` | `app/app/backtesting/page.tsx` | Módulo de backtesting en diseño. |
+| `/app/historial` | `app/app/historial/page.tsx` | Módulo de historial en diseño. |
+
+El layout `app/app/layout.tsx` aporta el shell común: wordmark, navegación con estado activo, enlace para saltar al contenido y cuenta provisional.
 
 **Acceso provisional:** por decisión del equipo, `/login` no autentica; el botón solo redirige a `/app` para avanzar con la aplicación. El siguiente paso es integrar el inicio de sesión con Google; cuando exista, `/app` deberá protegerse y "Salir" deberá cerrar la sesión.
 
