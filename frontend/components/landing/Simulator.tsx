@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { runDemo, type DemoResult } from "@/lib/demo";
 import { DEFAULT_CAPITAL, DEFAULT_REQUEST, HORIZON_OPTIONS, SAMPLE_ASSETS } from "@/lib/landing-data";
 
@@ -137,6 +138,9 @@ type SimulatorProps = {
   variant?: "landing" | "app";
   title?: string;
   intro?: string;
+  initialWeights?: number[];
+  initialCapital?: number;
+  portfolioName?: string;
 };
 
 export function Simulator({
@@ -144,13 +148,19 @@ export function Simulator({
   variant = "landing",
   title = "Prueba una cartera",
   intro = "Decide cómo repartir tu dinero entre cuatro empresas y la página imagina 10,000 futuros posibles para ver cuánto podrías ganar o perder. Usa el mismo modelo que el motor de MarkovLab.",
+  initialWeights,
+  initialCapital,
+  portfolioName,
 }: SimulatorProps) {
-  const [weights, setWeights] = useState<number[]>(DEFAULT_REQUEST.weights);
+  const [weights, setWeights] = useState<number[]>(initialWeights ?? DEFAULT_REQUEST.weights);
   const [horizon, setHorizon] = useState(DEFAULT_REQUEST.horizon);
   const [seed, setSeed] = useState(DEFAULT_REQUEST.seed);
   const [confidence, setConfidence] = useState(DEFAULT_REQUEST.confidence);
-  const [capital, setCapital] = useState(DEFAULT_CAPITAL);
-  const [result, setResult] = useState<Result>({ ...initial, capital: DEFAULT_CAPITAL });
+  const [capital, setCapital] = useState(initialCapital ?? DEFAULT_CAPITAL);
+  const [result, setResult] = useState<Result>({
+    ...initial,
+    capital: initialCapital ?? DEFAULT_CAPITAL,
+  });
 
   const total = weights.reduce((a, b) => a + b, 0);
   const capitalValid = Number.isFinite(capital) && capital > 0 && capital <= MAX_CAPITAL;
@@ -179,6 +189,17 @@ export function Simulator({
       id={variant === "app" ? undefined : "simulador"}
       aria-labelledby="simulador-title"
     >
+      {portfolioName ? (
+        <div className="sim-portfolio-banner" data-reveal>
+          <span>
+            Simulando cartera: <strong>{portfolioName}</strong>
+          </span>
+          <Link className="link" href="/app/carteras">
+            ← Volver a Mis carteras
+          </Link>
+        </div>
+      ) : null}
+
       <h2 className="sim__title" id="simulador-title" data-reveal>
         {title}
       </h2>

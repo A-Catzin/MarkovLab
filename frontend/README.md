@@ -23,7 +23,7 @@ Configuración de **Next.js (App Router)**, **TypeScript** y **Tailwind CSS**, c
 | `/login` | `app/login/page.tsx` | Acceso provisional: un botón "Entrar a MarkovLab" que lleva a `/app`. Todavía no hay autenticación. |
 | `/app` | `app/app/page.tsx` | Inicio de la aplicación: resumen y lista de módulos. |
 | `/app/simulador` | `app/app/simulador/page.tsx` | Simulador de riesgo dentro de la aplicación. |
-| `/app/carteras` | `app/app/carteras/page.tsx` | Módulo de carteras en diseño. |
+| `/app/carteras` | `app/app/carteras/page.tsx` | Gestión de carteras: creación, activos y pesos con validación del 100 %, rendimiento y riesgo estimado, historial de versiones (RF-32), duplicación (RF-33) y acceso directo al simulador. |
 | `/app/optimizacion` | `app/app/optimizacion/page.tsx` | Módulo de optimización en diseño. |
 | `/app/backtesting` | `app/app/backtesting/page.tsx` | Módulo de backtesting en diseño. |
 | `/app/historial` | `app/app/historial/page.tsx` | Módulo de historial en diseño. |

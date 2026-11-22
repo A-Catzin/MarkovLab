@@ -18,7 +18,7 @@ const MODULES = [
     name: "Mis carteras",
     description: "Crea carteras con tus propios activos y pesos, y guarda varias versiones.",
     href: "/app/carteras",
-    status: "Próximamente",
+    status: "Disponible",
   },
   {
     name: "Optimización",
