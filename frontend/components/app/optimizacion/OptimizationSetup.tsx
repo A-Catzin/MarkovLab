@@ -83,9 +83,11 @@ export function OptimizationSetup({
             role="radio"
             aria-checked={objective === "min_variance"}
           >
-            <div className="opt-objective-card__icon">🛡️</div>
             <div className="opt-objective-card__body">
-              <strong>Mínima varianza</strong>
+              <div className="opt-objective-card__head">
+                <strong>Mínima varianza</strong>
+                <span className="ui-tag">Mínimo riesgo</span>
+              </div>
               <span>
                 Minimiza el riesgo y la oscilación de la cartera mediante la correlación entre activos.
                 Ideal para perfiles conservadores.
@@ -100,9 +102,11 @@ export function OptimizationSetup({
             role="radio"
             aria-checked={objective === "max_sharpe"}
           >
-            <div className="opt-objective-card__icon">📈</div>
             <div className="opt-objective-card__body">
-              <strong>Máximo ratio de Sharpe</strong>
+              <div className="opt-objective-card__head">
+                <strong>Máximo ratio de Sharpe</strong>
+                <span className="ui-tag">Mayor eficiencia</span>
+              </div>
               <span>
                 Encuentra la cartera tangente que maximiza la rentabilidad obtenida por cada unidad de
                 riesgo asumida (tasa libre de riesgo 4.5 %).
@@ -158,7 +162,7 @@ export function OptimizationSetup({
           </div>
         ) : (
           <div className="opt-feasibility-ok">
-            <span>✓ Restricciones factibles para los {selectedPortfolio?.assets.length ?? 0} activos.</span>
+            <span>Restricciones factibles para los {selectedPortfolio?.assets.length ?? 0} activos seleccionados.</span>
           </div>
         )}
       </div>

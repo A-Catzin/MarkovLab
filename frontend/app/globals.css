@@ -2613,14 +2613,17 @@ img {
   background: var(--field);
 }
 
-.opt-objective-card__icon {
-  font-size: 24px;
-  line-height: 1;
+.opt-objective-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
 }
 
 .opt-objective-card__body {
   display: grid;
-  gap: 4px;
+  gap: 6px;
+  width: 100%;
 }
 
 .opt-objective-card__body strong {
@@ -2899,6 +2902,234 @@ img {
   }
 
   .opt-comparison__actions .button {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ---------- Módulo de Backtesting (RF-49 a RF-53) ---------- */
+
+.bt-page {
+  max-width: 980px;
+}
+
+.bt-setup {
+  margin-top: var(--space-4);
+}
+
+.bt-setup__fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bt-setup__bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--surface-2);
+}
+
+.bt-setup__capital-field {
+  display: grid;
+  gap: 6px;
+  font-size: var(--step-small);
+}
+
+.bt-setup__capital-field input {
+  width: 200px;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--field-strong);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.bt-setup__run-btn {
+  min-width: 260px;
+  font-size: var(--step-body);
+}
+
+.bt-empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.bt-results {
+  margin-top: var(--space-5);
+}
+
+.bt-results__summary {
+  margin-top: var(--space-3);
+  max-width: 75ch;
+  line-height: 1.5;
+}
+
+.bt-results__summary strong {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.bt-metric-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.bt-metric-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  background: var(--bg);
+  border-radius: 6px;
+}
+
+.bt-metric-card__title {
+  font-size: var(--step-small);
+  color: var(--muted);
+}
+
+.bt-metric-card__values {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bt-metric-card__values strong {
+  font-size: var(--step-lead);
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.bt-metric-card__val--portfolio {
+  color: var(--accent);
+}
+
+.bt-metric-card__benchmark {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.bt-metric-card small {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.bt-table th:not(:first-child),
+.bt-table td:not(:first-child) {
+  text-align: right;
+}
+
+.bt-chart-panel {
+  margin-top: var(--space-4);
+}
+
+.bt-chart-container {
+  margin-top: var(--space-3);
+  width: 100%;
+  overflow-x: auto;
+}
+
+.bt-chart {
+  display: block;
+  width: 100%;
+  min-width: 480px;
+  max-height: 360px;
+}
+
+.bt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: var(--space-3);
+  font-size: var(--step-small);
+  color: var(--muted);
+}
+
+.bt-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bt-legend__item strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.bt-legend__line {
+  display: inline-block;
+  width: 22px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.bt-legend__line--portfolio {
+  background: var(--accent);
+}
+
+.bt-legend__line--benchmark {
+  height: 0;
+  background: none;
+  border-top: 3px dashed #94a3b8;
+}
+
+.bt-results__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--surface-2);
+}
+
+.bt-footnote {
+  margin-top: var(--space-4);
+  max-width: 75ch;
+  color: var(--muted);
+  font-size: var(--step-small);
+}
+
+@media (max-width: 760px) {
+  .bt-setup__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .bt-setup__bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bt-setup__capital-field input {
+    width: 100%;
+  }
+
+  .bt-setup__run-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .bt-metric-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .bt-results__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bt-results__actions .button {
     width: 100%;
     text-align: center;
   }

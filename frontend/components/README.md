@@ -23,3 +23,9 @@ Elementos de interfaz de MarkovLab. Las rutas y la composición de páginas pert
 - `OptimizationSetup.tsx`: selector de cartera base, objetivos (mínima varianza / máximo Sharpe) y controles de restricciones de peso.
 - `OptimizationComparison.tsx`: comparativa lado a lado (cartera manual vs. optimizada), deltas métricos y tabla de rebalanceo.
 - `EfficientFrontierChart.tsx`: gráfico vectorial de la Frontera Eficiente de Markowitz con puntos destacados.
+
+`app/backtesting/` contiene los componentes del módulo de backtesting:
+- `BacktestManager.tsx`: orquestador del flujo (cartera, período, rebalanceo, benchmark), ejecución y guardado del resultado en `localStorage`.
+- `BacktestSetup.tsx`: panel de configuración con cartera, período histórico, frecuencia de rebalanceo, benchmark y capital inicial.
+- `BacktestResults.tsx`: resumen, tarjetas y tabla de métricas comparadas (rendimiento, CAGR, volatilidad, Sharpe, drawdown, beta y alfa), acciones de guardado, simulación y descarga CSV.
+- `BacktestPerformanceChart.tsx`: gráfico SVG de la evolución del patrimonio de la cartera contra el benchmark.

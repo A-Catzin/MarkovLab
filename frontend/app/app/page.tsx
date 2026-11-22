@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Página principal de la aplicación de MarkovLab.",
 };
 
-/** Módulos de la aplicación según el SRS; solo el simulador está disponible por ahora. */
+/** Módulos de la aplicación según el SRS; solo el historial sigue en diseño. */
 const MODULES = [
   {
     name: "Simulador de riesgo",
@@ -30,7 +30,7 @@ const MODULES = [
     name: "Backtesting",
     description: "Prueba una estrategia con precios del pasado y compárala contra un índice de referencia.",
     href: "/app/backtesting",
-    status: "Próximamente",
+    status: "Disponible",
   },
   {
     name: "Historial",
@@ -50,8 +50,8 @@ export default function AppHomePage() {
       <header>
         <h1>¿Qué quieres analizar hoy?</h1>
         <p className="app-page__lead">
-          Empieza por el simulador para medir el riesgo de una cartera. Los demás módulos están en diseño y puedes
-          entrar a ver qué incluirán.
+          Crea una cartera, simula su riesgo, optimízala o pruébala con el backtesting. El historial está en diseño y
+          puedes entrar a ver qué incluirá.
         </p>
       </header>
 
