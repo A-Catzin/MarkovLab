@@ -472,3 +472,13 @@ export function saveBacktest(result: BacktestResult, portfolioId: string): Saved
   }
   return list;
 }
+
+export function deleteBacktest(id: string): SavedBacktest[] {
+  const list = readBacktests().filter((item) => item.id !== id);
+  try {
+    window.localStorage.setItem(BACKTEST_STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    // Ignorar: si no se puede escribir, la próxima lectura conserva el dato.
+  }
+  return list;
+}

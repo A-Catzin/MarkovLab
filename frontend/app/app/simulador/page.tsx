@@ -65,6 +65,7 @@ export default async function SimuladorPage({ searchParams }: SimuladorPageProps
         initialWeights={weights}
         initialCapital={capital}
         portfolioName={portfolioName}
+        allowSave
       />
     </div>
   );

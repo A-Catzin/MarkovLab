@@ -10,7 +10,7 @@ Elementos de interfaz de MarkovLab. Las rutas y la composición de páginas pert
 
 `brand/Wordmark.tsx` es el logotipo de texto ("Markov" + "Lab" en acento) que usan `/login` y `/app`.
 
-`app/AppShell.tsx` es el shell de la aplicación: navegación con estado activo, cuenta provisional, enlace para saltar al contenido y reactivación de las entradas al cambiar de ruta. `app/ModulePlaceholder.tsx` es la pantalla común de los módulos que todavía están en diseño.
+`app/AppShell.tsx` es el shell de la aplicación: navegación con estado activo, cuenta provisional, enlace para saltar al contenido y reactivación de las entradas al cambiar de ruta.
 
 `app/carteras/` contiene los componentes del módulo de gestión de carteras:
 - `CarterasManager.tsx`: orquestador de estado, sincronización con `localStorage`, vistas y notificaciones.
@@ -29,3 +29,5 @@ Elementos de interfaz de MarkovLab. Las rutas y la composición de páginas pert
 - `BacktestSetup.tsx`: panel de configuración con cartera, período histórico, frecuencia de rebalanceo, benchmark y capital inicial.
 - `BacktestResults.tsx`: resumen, tarjetas y tabla de métricas comparadas (rendimiento, CAGR, volatilidad, Sharpe, drawdown, beta y alfa), acciones de guardado, simulación y descarga CSV.
 - `BacktestPerformanceChart.tsx`: gráfico SVG de la evolución del patrimonio de la cartera contra el benchmark.
+
+`app/historial/HistorialManager.tsx` reúne las simulaciones, los backtesting y las carteras guardadas en `localStorage`, con repetición de simulaciones y eliminación de registros.

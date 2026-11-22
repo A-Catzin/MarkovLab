@@ -3135,4 +3135,179 @@ img {
   }
 }
 
+/* ---------- Guardado de simulación en el simulador (RF-47) ---------- */
+
+.sim__save {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--surface-2);
+}
+
+.sim__save .button {
+  min-height: 44px;
+  font-size: var(--step-small);
+}
+
+.sim__save .muted {
+  font-size: var(--step-small);
+  max-width: 60ch;
+}
+
+/* ---------- Módulo de Historial (RF-24, RF-47, RF-53) ---------- */
+
+.hist {
+  margin-top: var(--space-4);
+}
+
+.hist-section + .hist-section {
+  margin-top: var(--space-6);
+}
+
+.hist-section h2 {
+  font-size: var(--step-lead);
+  font-weight: 600;
+}
+
+.hist-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hist-item {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.hist-item__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.hist-item__top h3 {
+  font-family: var(--font-text), Georgia, serif;
+  font-size: var(--step-body);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.hist-item__meta {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: var(--step-small);
+}
+
+.hist-item__weights {
+  color: var(--muted);
+  font-size: var(--step-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.hist-item__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.hist-item__stats div {
+  display: grid;
+  gap: 2px;
+}
+
+.hist-item__stats dt {
+  color: var(--muted);
+  font-size: var(--step-small);
+}
+
+.hist-item__stats dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.hist-item__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--surface-2);
+}
+
+.hist-item__danger {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--step-small);
+  color: var(--muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 0.07em;
+  transition:
+    color var(--t-hover) ease,
+    text-decoration-color var(--t-hover) ease;
+}
+
+.hist-item__danger:hover,
+.hist-item__danger:focus-visible {
+  color: #f87171;
+  text-decoration-color: currentColor;
+}
+
+.hist-empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+}
+
+.hist-empty__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.hist-footnote {
+  margin-top: var(--space-5);
+  max-width: 70ch;
+  color: var(--muted);
+  font-size: var(--step-small);
+}
+
+@media (max-width: 600px) {
+  .hist-item__top {
+    flex-direction: column;
+  }
+
+  .hist-item__stats {
+    gap: var(--space-2);
+  }
+
+  .hist-item__stats div {
+    min-width: 40%;
+  }
+
+  .hist-empty__actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .hist-empty__actions .button {
+    width: 100%;
+  }
+}
+
 

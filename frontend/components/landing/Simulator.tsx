@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { runDemo, type DemoResult } from "@/lib/demo";
 import { DEFAULT_CAPITAL, DEFAULT_REQUEST, HORIZON_OPTIONS, SAMPLE_ASSETS } from "@/lib/landing-data";
+import { saveSimulation } from "@/lib/simulations";
 
 type Result = DemoResult & { capital: number };
 
@@ -141,6 +142,8 @@ type SimulatorProps = {
   initialWeights?: number[];
   initialCapital?: number;
   portfolioName?: string;
+  /** En la app, permite guardar la simulación en el historial (RF-47). */
+  allowSave?: boolean;
 };
 
 export function Simulator({
@@ -151,6 +154,7 @@ export function Simulator({
   initialWeights,
   initialCapital,
   portfolioName,
+  allowSave = false,
 }: SimulatorProps) {
   const [weights, setWeights] = useState<number[]>(initialWeights ?? DEFAULT_REQUEST.weights);
   const [horizon, setHorizon] = useState(DEFAULT_REQUEST.horizon);
@@ -161,6 +165,7 @@ export function Simulator({
     ...initial,
     capital: initialCapital ?? DEFAULT_CAPITAL,
   });
+  const [saved, setSaved] = useState(false);
 
   const total = weights.reduce((a, b) => a + b, 0);
   const capitalValid = Number.isFinite(capital) && capital > 0 && capital <= MAX_CAPITAL;
@@ -172,6 +177,21 @@ export function Simulator({
     const start = performance.now();
     const next = runDemo(request);
     setResult({ ...next, capital, elapsedMs: performance.now() - start });
+    setSaved(false);
+  }
+
+  function handleSave() {
+    saveSimulation({
+      name: portfolioName ?? "Cartera de ejemplo",
+      weights: result.request.weights,
+      horizon: result.request.horizon,
+      simulations: result.request.simulations,
+      seed: result.request.seed,
+      confidence: result.request.confidence,
+      capital: result.capital,
+      summary: result.summary,
+    });
+    setSaved(true);
   }
 
   const { request } = result;
@@ -364,6 +384,18 @@ export function Simulator({
               ? `en ${n - 1} de cada ${n} pierdes menos de ${money(result.capital * result.summary.valueAtRisk)}.`
               : `en ${n - 1} de cada ${n} ganas al menos ${money(result.capital * -result.summary.valueAtRisk)}.`}
           </p>
+          {allowSave ? (
+            <div className="sim__save">
+              <button className="button button--secondary" type="button" onClick={handleSave} disabled={saved}>
+                {saved ? "Simulación guardada" : "Guardar simulación"}
+              </button>
+              <span className="muted">
+                {saved
+                  ? "Quedó en tu historial con semilla, parámetros y resultados."
+                  : "Guárdala con su semilla para poder repetirla o compararla desde el historial."}
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
 
