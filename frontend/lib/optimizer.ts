@@ -174,6 +174,57 @@ export function validateConstraintsFeasibility(
 }
 
 /**
+ * Resuelve la cartera de mínima varianza con gradiente proyectado sobre el
+ * símplex y devuelve los pesos en fracciones. Se usa tanto para el objetivo
+ * "min_variance" como para un arranque del "max_sharpe", sin recursión.
+ */
+function solveMinVarianceWeights(sourceAssets: PortfolioAsset[], constraints: OptimizationConstraints): number[] {
+  const n = sourceAssets.length;
+  const lower = new Array(n).fill(constraints.minWeight / 100);
+  const upper = new Array(n).fill(constraints.maxWeight / 100);
+  const cov = buildCovarianceMatrix(sourceAssets);
+
+  function variance(w: number[]): number {
+    let v = 0;
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) v += w[i] * w[j] * cov[i][j];
+    }
+    return Math.max(1e-12, v);
+  }
+
+  let w = projectBoundedSimplex(new Array(n).fill(1 / n), lower, upper);
+  let step = 0.5;
+
+  for (let iter = 0; iter < 150; iter++) {
+    const grad = new Array<number>(n);
+    for (let i = 0; i < n; i++) {
+      let g = 0;
+      for (let j = 0; j < n; j++) g += cov[i][j] * w[j];
+      grad[i] = g;
+    }
+
+    const unprojected = w.map((wi, i) => wi - step * grad[i]);
+    const wNext = projectBoundedSimplex(unprojected, lower, upper);
+
+    const fCurr = variance(w);
+    const fNext = variance(wNext);
+
+    if (fNext < fCurr) {
+      w = wNext;
+      step = Math.min(step * 1.05, 2.0);
+    } else {
+      step = Math.max(step * 0.5, 1e-6);
+    }
+
+    let diff = 0;
+    for (let i = 0; i < n; i++) diff += Math.abs(wNext[i] - w[i]);
+    if (diff < 1e-7 && iter > 15) break;
+  }
+
+  return w;
+}
+
+/**
  * Motor de optimización de carteras según la teoría de Markowitz (RF-34, RF-35, RF-38).
  */
 export function optimizePortfolio(
@@ -222,39 +273,7 @@ export function optimizePortfolio(
   let optimalWeights: number[];
 
   if (objective === "min_variance") {
-    // Minimizar f(w) = 0.5 * w^T Cov w
-    let w = projectBoundedSimplex(new Array(n).fill(1 / n), lower, upper);
-    let step = 0.5;
-
-    for (let iter = 0; iter < 150; iter++) {
-      const grad = new Array<number>(n);
-      for (let i = 0; i < n; i++) {
-        let g = 0;
-        for (let j = 0; j < n; j++) g += cov[i][j] * w[j];
-        grad[i] = g;
-      }
-
-      // Proyección con gradiente descendente
-      const unprojected = w.map((wi, i) => wi - step * grad[i]);
-      const wNext = projectBoundedSimplex(unprojected, lower, upper);
-
-      const fCurr = portfolioVar(w);
-      const fNext = portfolioVar(wNext);
-
-      // Backtracking adaptativo
-      if (fNext < fCurr) {
-        w = wNext;
-        step = Math.min(step * 1.05, 2.0);
-      } else {
-        step = Math.max(step * 0.5, 1e-6);
-      }
-
-      // Criterio de parada
-      let diff = 0;
-      for (let i = 0; i < n; i++) diff += Math.abs(wNext[i] - w[i]);
-      if (diff < 1e-7 && iter > 15) break;
-    }
-    optimalWeights = w;
+    optimalWeights = solveMinVarianceWeights(sourceAssets, constraints);
   } else {
     // Maximizar Ratio de Sharpe (RF-35)
     // Múltiples inicios para evitar óptimos locales
@@ -264,8 +283,7 @@ export function optimizePortfolio(
     candidates.push(projectBoundedSimplex(new Array(n).fill(1 / n), lower, upper));
 
     // Inicio 2: Cartera de mínima varianza
-    const minVarRes = optimizePortfolio(sourceAssets, "min_variance", constraints);
-    candidates.push(minVarRes.weights.map((w) => w / 100));
+    candidates.push(solveMinVarianceWeights(sourceAssets, constraints));
 
     // Inicio 3: Favorecer activos con mayor Sharpe individual
     const singleSharpes = sourceAssets.map((a) => {

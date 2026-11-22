@@ -113,7 +113,7 @@ export function BacktestSetup({
           <span>Capital inicial ({selectedPortfolio?.currency ?? "MXN"})</span>
           <input
             type="number"
-            min={100}
+            min={1}
             step="any"
             value={Number.isNaN(capital) ? "" : capital}
             onChange={(e) => onChangeCapital(Number.parseFloat(e.target.value) || 0)}

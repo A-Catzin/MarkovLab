@@ -37,7 +37,7 @@ export function BacktestPerformanceChart({
   const maxVal = Math.max(...allValues) * 1.05;
 
   const scaleX = (idx: number) => padLeft + (idx / (series.length - 1)) * plotW;
-  const scaleY = (val: number) => height - padBottom - ((val - minVal) / (maxVal - minVal)) * plotH;
+  const scaleY = (val: number) => height - padBottom - ((val - minVal) / Math.max(maxVal - minVal, 1e-6)) * plotH;
 
   // Path de la cartera
   const portPath = series.reduce((acc, pt, i) => {

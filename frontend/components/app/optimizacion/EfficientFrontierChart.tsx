@@ -48,8 +48,8 @@ export function EfficientFrontierChart({
   const plotW = width - padLeft - padRight;
   const plotH = height - padTop - padBottom;
 
-  const scaleX = (vol: number) => padLeft + ((vol - minVol) / (maxVol - minVol)) * plotW;
-  const scaleY = (ret: number) => height - padBottom - ((ret - minRet) / (maxRet - minRet)) * plotH;
+  const scaleX = (vol: number) => padLeft + ((vol - minVol) / Math.max(maxVol - minVol, 1e-6)) * plotW;
+  const scaleY = (ret: number) => height - padBottom - ((ret - minRet) / Math.max(maxRet - minRet, 1e-6)) * plotH;
 
   // Puntos de la curva de la frontera
   const pathD = points.reduce((acc, pt, i) => {

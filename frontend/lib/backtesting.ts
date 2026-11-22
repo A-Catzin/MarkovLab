@@ -140,6 +140,23 @@ const BENCHMARK_PROFILES: Record<string, BenchmarkProfile> = {
 };
 
 /**
+ * Fin aproximado de la ventana de simulación, fijo para que el backtesting sea
+ * reproducible día a día: misma semilla → mismas fechas, sin depender de cuándo
+ * se ejecuta. Se usan días UTC para que tampoco dependa de la zona horaria.
+ */
+const BACKTEST_REFERENCE_MS = Date.UTC(2026, 10, 21); // 21 de noviembre de 2026
+const ONE_DAY_MS = 86_400_000;
+
+function isWeekend(ms: number): boolean {
+  const day = new Date(ms).getUTCDay();
+  return day === 0 || day === 6;
+}
+
+function toDateString(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+/**
  * Ejecuta un backtest histórico determinista y reproducible (RF-49, RF-50, RF-51, RF-52).
  */
 export function runBacktest(params: {
@@ -207,11 +224,6 @@ export function runBacktest(params: {
   const uniform = mulberry32(seed);
   const nextNormal = normalGenerator(uniform);
 
-  // Variables de seguimiento temporal
-  const dates: string[] = [];
-  const baseDate = new Date();
-  baseDate.setDate(baseDate.getDate() - Math.round(horizonDays * 1.45)); // Retroceder días calendario
-
   // Frecuencia de rebalanceo en días bursátiles
   const rebalanceInterval =
     rebalanceFrequency === "monthly"
@@ -234,9 +246,13 @@ export function runBacktest(params: {
 
   const rawSeries: BacktestSeriesPoint[] = [];
 
+  // Ventana de fechas fija (UTC): retrocede días calendario y avanza saltando
+  // fines de semana, para que la misma semilla dé las mismas fechas siempre.
+  let cursorMs = BACKTEST_REFERENCE_MS - Math.round(horizonDays * 1.45) * ONE_DAY_MS;
+
   // Punto inicial (día 0)
   rawSeries.push({
-    date: baseDate.toISOString().slice(0, 10),
+    date: toDateString(cursorMs),
     dayIndex: 0,
     portfolioValue: initialCapital,
     benchmarkValue: initialCapital,
@@ -244,16 +260,12 @@ export function runBacktest(params: {
     benchmarkDrawdown: 0,
   });
 
-  let currentDate = new Date(baseDate);
-
   // Simulación paso a paso a lo largo de los días bursátiles
   for (let day = 1; day <= horizonDays; day++) {
     // Avanzar fecha saltando fines de semana
-    currentDate.setDate(currentDate.getDate() + 1);
-    while (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    const dateStr = currentDate.toISOString().slice(0, 10);
+    cursorMs += ONE_DAY_MS;
+    while (isWeekend(cursorMs)) cursorMs += ONE_DAY_MS;
+    const dateStr = toDateString(cursorMs);
 
     // 1. Generar choques normales estándar independientes
     const zIndep = new Array<number>(m);

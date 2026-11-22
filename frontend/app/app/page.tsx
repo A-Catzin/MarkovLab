@@ -65,8 +65,8 @@ export default function AppHomePage() {
           <span>empresas de ejemplo</span>
         </div>
         <div>
-          <strong>3 ms</strong>
-          <span>de respuesta del motor Julia</span>
+          <strong>5</strong>
+          <span>módulos disponibles</span>
         </div>
       </div>
 

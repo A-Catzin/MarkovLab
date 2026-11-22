@@ -78,11 +78,13 @@ export function OptimizationManager() {
     }
   }
 
-  // Ejecutar automáticamente al cambiar de cartera o primer render
+  // Ejecutar automáticamente al cambiar de cartera o de objetivo. Las restricciones
+  // se aplican al pulsar "Calcular cartera óptima", por eso no están en las dependencias.
   useEffect(() => {
     if (selectedPortfolio && feasibility.feasible) {
       runOptimization();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPortfolioId, objective]);
 
   function showToast(message: string) {

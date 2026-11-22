@@ -8,7 +8,7 @@ export function Modules() {
           <h2 id="modulos-title">Qué calcula</h2>
           <p>
             El motor está escrito en Julia y separado en capas: dominio puro, casos de uso, importación de datos y una
-            API HTTP que consume esta página.
+            API HTTP. Por ahora esta página calcula en el navegador con datos de ejemplo.
           </p>
         </div>
 
