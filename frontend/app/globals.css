@@ -1311,72 +1311,6 @@ img {
   background: var(--field-strong);
 }
 
-/* ---------- Módulos en diseño ---------- */
-
-.module-page {
-  max-width: 880px;
-}
-
-.module-page h1 {
-  font-size: var(--step-head);
-}
-
-.module-page__status {
-  margin-top: var(--space-2);
-  color: var(--accent);
-  font-size: var(--step-small);
-  font-weight: 600;
-}
-
-.module-page__lead {
-  margin-top: var(--space-3);
-  max-width: 60ch;
-  font-size: var(--step-lead);
-  line-height: 1.4;
-}
-
-.module-page__panel {
-  margin-top: var(--space-5);
-  padding: var(--space-4);
-  border-radius: 8px;
-  background: var(--surface);
-}
-
-.module-page__panel h2 {
-  font-size: var(--step-lead);
-}
-
-.module-page__list {
-  margin: var(--space-3) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.module-page__list li {
-  padding: var(--space-2) 0;
-  border-top: 1px solid var(--surface-2);
-  color: var(--muted);
-}
-
-.module-page__list li:first-child {
-  border-top: 0;
-}
-
-.module-page__note {
-  margin-top: var(--space-3);
-  max-width: 70ch;
-  color: var(--muted);
-  font-size: var(--step-small);
-}
-
-.module-page__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  margin-top: var(--space-5);
-}
-
 /* ---------- Simulador dentro de la aplicación ---------- */
 
 .sim--app {
@@ -1448,10 +1382,6 @@ img {
 
   .app-page__summary {
     grid-template-columns: 1fr;
-  }
-
-  .module-page__panel {
-    padding: var(--space-3);
   }
 }
 
@@ -2239,6 +2169,7 @@ img {
 /* Formulario de creación y edición */
 .portfolio-form {
   max-width: 980px;
+  margin-top: var(--space-3);
 }
 
 .portfolio-form__fields {

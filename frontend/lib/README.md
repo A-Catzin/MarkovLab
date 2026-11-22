@@ -11,6 +11,7 @@ Lógica compartida que da soporte a la interfaz.
 - `optimizer.ts`: optimización de Markowitz (mínima varianza y máximo Sharpe), restricciones por activo y frontera eficiente.
 - `backtesting.ts`: backtesting determinista con choques correlacionados (Cholesky), rebalanceo, métricas comparadas contra un benchmark y guardado de resultados.
 - `simulations.ts`: persistencia provisional de simulaciones guardadas con sus parámetros y resultados (RF-47).
-- `format.ts`: formatos comunes de dinero, porcentajes y fechas (es-MX).
+- `asset-meta.ts`: paleta de colores por activo para las barras de composición y leyendas.
+- `format.ts`: formatos de fecha (es-MX).
 
 Ver [`LANDING.md`](../../documentacion/tecnica/LANDING.md). Todavía no hay cliente HTTP para la API Julia; su contrato está en [`API.md`](../../documentacion/tecnica/API.md).

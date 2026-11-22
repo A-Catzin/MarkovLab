@@ -8,7 +8,7 @@ import {
   type RebalanceFrequency,
   type SavedBacktest,
 } from "@/lib/backtesting";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { HORIZON_OPTIONS, SAMPLE_ASSETS } from "@/lib/landing-data";
 import {
   formatMoney,
@@ -34,10 +34,9 @@ const HORIZON_LABELS: Record<number, string> = {
 
 const horizonLabel = (days: number) => HORIZON_OPTIONS.find((option) => option.days === days)?.label ?? `${days} días`;
 
-function weightsSummary(weights: number[]): string {
-  return weights
-    .map((weight, index) => ({ ticker: SAMPLE_ASSETS[index]?.ticker, weight }))
-    .filter((item) => item.ticker && item.weight > 0)
+function weightsSummary(assets: Array<{ ticker: string; weight: number }>): string {
+  return assets
+    .filter((item) => item.weight > 0)
     .map((item) => `${item.ticker} ${item.weight} %`)
     .join(" · ");
 }
@@ -60,7 +59,7 @@ function SimulationItem({ item, onDelete }: { item: SavedSimulation; onDelete: (
         <span className="ui-tag">Simulación</span>
       </div>
 
-      <p className="hist-item__weights">{weightsSummary(item.weights)}</p>
+      <p className="hist-item__weights">{weightsSummary(item.weights.map((weight, index) => ({ ticker: SAMPLE_ASSETS[index]?.ticker ?? "", weight })))}</p>
 
       <dl className="hist-item__stats">
         <div>
@@ -156,13 +155,13 @@ function PortfolioItem({ item }: { item: Portfolio }) {
         <div>
           <h3>{item.name}</h3>
           <p className="hist-item__meta">
-            Creada el {item.createdAt} · {formatMoney(item.capital, item.currency)} · versión {item.version}
+            Creada el {formatDate(item.createdAt)} · {formatMoney(item.capital, item.currency)} · versión {item.version}
           </p>
         </div>
         <span className="ui-tag">Cartera</span>
       </div>
 
-      <p className="hist-item__weights">{weightsSummary(item.assets.map((asset) => asset.weight))}</p>
+      <p className="hist-item__weights">{weightsSummary(item.assets)}</p>
 
       <div className="hist-item__actions">
         <Link className="button button--small button--secondary" href="/app/carteras">

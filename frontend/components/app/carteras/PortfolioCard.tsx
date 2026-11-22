@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { getAssetColor } from "@/lib/asset-meta";
 import {
   type Portfolio,
   portfolioMetrics,
@@ -9,25 +10,6 @@ import {
   formatSignedPercent,
   getSampleAsset,
 } from "@/lib/portfolios";
-
-const ASSET_COLORS: Record<string, string> = {
-  AAPL: "#5a9bfc", // aciano / accent
-  MSFT: "#38bdf8", // azul cielo
-  JPM: "#818cf8", // índigo
-  XOM: "#fbbf24", // ámbar
-  NVDA: "#34d399", // esmeralda
-  GOOGL: "#f472b6", // rosa
-  AMZN: "#fb923c", // naranja
-  TSLA: "#f87171", // rojo
-  SPY: "#22d3ee", // cian
-  BND: "#a78bfa", // violeta
-};
-
-function getAssetColor(ticker: string, index: number): string {
-  if (ticker in ASSET_COLORS) return ASSET_COLORS[ticker];
-  const fallback = ["#5a9bfc", "#38bdf8", "#818cf8", "#fbbf24", "#34d399", "#f472b6"];
-  return fallback[index % fallback.length];
-}
 
 interface PortfolioCardProps {
   portfolio: Portfolio;

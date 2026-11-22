@@ -122,15 +122,19 @@ export function PortfolioForm({
 
   function handleNormalizeWeights() {
     if (assets.length === 0 || total <= 0) return;
-    let distributed = 0;
-    const next = assets.map((a, i) => {
-      if (i === assets.length - 1) {
-        return { ...a, weight: Math.max(0, 100 - distributed) };
-      }
-      const proportional = Math.round((a.weight / total) * 100);
-      distributed += proportional;
-      return { ...a, weight: proportional };
-    });
+    // Reparto proporcional por el método del resto mayor, para que la suma sea
+    // exactamente 100 % aunque los redondeos individuales no cuadren.
+    const raw = assets.map((a) => (a.weight / total) * 100);
+    const floors = raw.map((value) => Math.floor(value));
+    let remaining = 100 - floors.reduce((sum, value) => sum + value, 0);
+    const order = raw
+      .map((value, index) => ({ index, fraction: value - Math.floor(value) }))
+      .sort((a, b) => b.fraction - a.fraction);
+
+    const next = assets.map((a, index) => ({ ...a, weight: floors[index] }));
+    for (let i = 0; i < remaining; i++) {
+      next[order[i].index].weight += 1;
+    }
     setAssets(next);
   }
 

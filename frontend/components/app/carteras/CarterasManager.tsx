@@ -23,7 +23,6 @@ type ViewMode = "list" | "detail" | "create" | "edit" | "new_version";
 
 export function CarterasManager() {
   const [portfolios, setPortfolios] = useState<Portfolio[]>(DEMO_PORTFOLIOS);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
@@ -38,7 +37,6 @@ export function CarterasManager() {
       // Primera visita: guardar los demos para que persistan
       writePortfolios(DEMO_PORTFOLIOS);
     }
-    setIsLoaded(true);
   }, []);
 
   function showToast(message: string) {
@@ -211,15 +209,22 @@ export function CarterasManager() {
 
       {/* Vista de formulario (Crear / Editar / Nueva versión) */}
       {viewMode === "create" || viewMode === "edit" || viewMode === "new_version" ? (
-        <PortfolioForm
-          initialPortfolio={editingPortfolio}
-          mode={viewMode}
-          onSave={handleSaveForm}
-          onCancel={() => {
-            if (selectedId) setViewMode("detail");
-            else setViewMode("list");
-          }}
-        />
+        <div className="app-page">
+          <header>
+            <h1>
+              {viewMode === "create" ? "Nueva cartera" : viewMode === "new_version" ? "Nueva versión" : "Editar cartera"}
+            </h1>
+          </header>
+          <PortfolioForm
+            initialPortfolio={editingPortfolio}
+            mode={viewMode}
+            onSave={handleSaveForm}
+            onCancel={() => {
+              if (selectedId) setViewMode("detail");
+              else setViewMode("list");
+            }}
+          />
+        </div>
       ) : null}
 
       {/* Vista de detalle de cartera */}

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { getAssetColor } from "@/lib/asset-meta";
+import { formatDate } from "@/lib/format";
 import {
   type Portfolio,
   type PortfolioVersionSnapshot,
@@ -12,25 +14,6 @@ import {
   getSampleAsset,
   totalWeight,
 } from "@/lib/portfolios";
-
-const ASSET_COLORS: Record<string, string> = {
-  AAPL: "#5a9bfc",
-  MSFT: "#38bdf8",
-  JPM: "#818cf8",
-  XOM: "#fbbf24",
-  NVDA: "#34d399",
-  GOOGL: "#f472b6",
-  AMZN: "#fb923c",
-  TSLA: "#f87171",
-  SPY: "#22d3ee",
-  BND: "#a78bfa",
-};
-
-function getAssetColor(ticker: string, index: number): string {
-  if (ticker in ASSET_COLORS) return ASSET_COLORS[ticker];
-  const fallback = ["#5a9bfc", "#38bdf8", "#818cf8", "#fbbf24", "#34d399", "#f472b6"];
-  return fallback[index % fallback.length];
-}
 
 interface PortfolioDetailProps {
   portfolio: Portfolio;
@@ -99,8 +82,8 @@ export function PortfolioDetail({
         ) : null}
 
         <div className="portfolio-detail__timestamps">
-          <span>Creada: {portfolio.createdAt}</span>
-          <span>Última actualización: {portfolio.updatedAt}</span>
+          <span>Creada: {formatDate(portfolio.createdAt)}</span>
+          <span>Última actualización: {formatDate(portfolio.updatedAt)}</span>
         </div>
       </header>
 

@@ -55,7 +55,7 @@ export function Modules() {
         </div>
 
         <div className="tile tile--muted tile--next" data-reveal>
-          <p className="tile-sentence">Optimización y backtesting llegan en la próxima etapa.</p>
+          <p className="tile-sentence">Optimización y backtesting ya se prueban en la aplicación, con datos de ejemplo.</p>
         </div>
 
         <figure className="tile tile--photo tile--ticker" data-reveal style={{ ["--i" as string]: 1 }}>

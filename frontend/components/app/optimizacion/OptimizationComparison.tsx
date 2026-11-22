@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { getAssetColor } from "@/lib/asset-meta";
 import { type OptimizationResult } from "@/lib/optimizer";
 import {
   type Portfolio,
@@ -9,25 +11,6 @@ import {
   formatSignedPercent,
   getSampleAsset,
 } from "@/lib/portfolios";
-
-const ASSET_COLORS: Record<string, string> = {
-  AAPL: "#5a9bfc",
-  MSFT: "#38bdf8",
-  JPM: "#818cf8",
-  XOM: "#fbbf24",
-  NVDA: "#34d399",
-  GOOGL: "#f472b6",
-  AMZN: "#fb923c",
-  TSLA: "#f87171",
-  SPY: "#22d3ee",
-  BND: "#a78bfa",
-};
-
-function getAssetColor(ticker: string, index: number): string {
-  if (ticker in ASSET_COLORS) return ASSET_COLORS[ticker];
-  const fallback = ["#5a9bfc", "#38bdf8", "#818cf8", "#fbbf24", "#34d399", "#f472b6"];
-  return fallback[index % fallback.length];
-}
 
 interface OptimizationComparisonProps {
   originalPortfolio: Portfolio;
@@ -231,7 +214,7 @@ export function OptimizationComparison({
         <p>
           {result.objective === "min_variance"
             ? `La cartera optimizada reduce la volatilidad esperada a un ±${formatPercent(optMetrics.annualVolatility)}, logrando la combinación más estable posible para estos activos.`
-            : `La cartera optimizada alcanza un ratio de Sharpe de ${optMetrics.sharpeRatio.toFixed(2)}, ofreciendo la máxima compensación de rendimiento (+${formatPercent(optMetrics.annualReturn)}) por unidad de riesgo assumida.`}
+            : `La cartera optimizada alcanza un ratio de Sharpe de ${optMetrics.sharpeRatio.toFixed(2)}, ofreciendo la máxima compensación de rendimiento (+${formatPercent(optMetrics.annualReturn)}) por unidad de riesgo asumida.`}
         </p>
       </div>
 
