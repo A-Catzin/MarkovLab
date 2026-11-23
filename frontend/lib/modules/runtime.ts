@@ -197,14 +197,11 @@ export const MODULE_REGISTRY: readonly ModuleRegistryItem[] = [
     srsRefs: "RF-21 a RF-26",
     appHref: "/app/prediccion",
     devHref: "/dev/vistas/prediccion",
-    deliveryState: "pantalla con datos de prueba",
-    backendDependency: "B6 · pendiente de API",
+    deliveryState: "integrado con API",
+    backendDependency: "B6 · conectado (POST /api/internal/assets/{id}/predictions y GET /api/internal/predictions/{id})",
     summary: "Pronóstico de rendimiento y volatilidad con bandas de incertidumbre, metadatos persistidos y contraste observado.",
     pendingFields: [
-      "POST / GET /api/internal/forecasts",
-      "request: { asset_id, metric ('return'|'volatility'), horizon_days, cutoff_date? }",
-      "response: { model_name, model_params, training_window, calculated_at, limitations[], series[], evaluation_metrics? }",
-      "distinción explícita de observations posterior vs forecast_band",
+      "POST /api/internal/assets/{id}/predictions y GET /api/internal/predictions/{id} conectados en prediction.server.ts y acciones",
     ],
   },
   {

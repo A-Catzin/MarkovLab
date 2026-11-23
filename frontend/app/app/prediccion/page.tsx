@@ -17,29 +17,41 @@ export default async function PredictionPage({
 }: {
   searchParams: Promise<{
     activo?: string;
+    activoId?: string;
     metrica?: string;
     horizonte?: string;
     contraste?: string;
+    prediccion?: string;
     escenario?: string;
   }>;
 }) {
   const user = await requireUser();
   const q = await searchParams;
-  const symbol = q.activo ?? "AAPL";
+  const symbol = q.activo;
+  const parsedAssetId = Number(q.activoId);
+  const assetId = Number.isInteger(parsedAssetId) && parsedAssetId > 0 ? parsedAssetId : undefined;
   const metric: PredictionMetricKind = q.metrica === "volatility" ? "volatility" : "return";
   const parsedHorizon = Number(q.horizonte);
   const horizonDays: 21 | 63 | 126 = parsedHorizon === 21 || parsedHorizon === 126 ? parsedHorizon : 63;
   const withObserved = q.contraste !== "0";
+  const predictionId = q.prediccion;
   const scenario = parseScenario(q.escenario);
 
   const result = await loadPredictionView({
     actorId: user.id,
     symbol,
+    assetId,
     metric,
     horizonDays,
     withObserved,
+    predictionId,
     scenario,
   });
+
+  const resolvedSymbol = result.status === "ok" ? result.data.selectedSymbol : symbol ?? "AAPL";
+  const resolvedMetric = result.status === "ok" ? result.data.metric : metric;
+  const resolvedHorizon = result.status === "ok" ? result.data.horizonDays : horizonDays;
+  const viewKey = `${predictionId ?? ""}:${assetId ?? ""}:${resolvedSymbol}:${resolvedMetric}:${resolvedHorizon}:${scenario}`;
 
   return (
     <>
@@ -50,12 +62,13 @@ export default async function PredictionPage({
         <ExampleDataBanner moduleName="Predicción de activos (F5)" />
       )}
       <PredictionView
+        key={viewKey}
         result={result}
         basePath="/app/prediccion"
         currentScenario={scenario}
-        initialSymbol={symbol}
-        initialMetric={metric}
-        initialHorizon={horizonDays}
+        initialSymbol={resolvedSymbol}
+        initialMetric={resolvedMetric}
+        initialHorizon={resolvedHorizon}
         initialWithObserved={withObserved}
       />
     </>

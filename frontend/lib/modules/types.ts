@@ -210,6 +210,7 @@ export type PredictionMetricKind = "return" | "volatility";
 export interface PredictionSeriesPoint {
   date: string;
   phase: "historical" | "forecast";
+  dateEstimated?: boolean;
   historicalValue: number | null;
   forecastPoint: number | null;
   lowerBound: number | null;
@@ -224,8 +225,18 @@ export interface PredictionEvaluationSummary {
   intervalCoverage: number;
 }
 
+export interface PredictionAssetOption {
+  id: number;
+  symbol: string;
+  name: string;
+  market?: string;
+  lastDate?: string | null;
+  priceRows?: number;
+}
+
 export interface PredictionData {
-  assets: { id: number; symbol: string; name: string }[];
+  assets: PredictionAssetOption[];
+  selectedAssetId?: number | null;
   selectedSymbol: string;
   metric: PredictionMetricKind;
   horizonDays: 21 | 63 | 126;
@@ -234,6 +245,12 @@ export interface PredictionData {
   modelParameters: string;
   trainingWindow: { from: string; to: string; observations: number };
   calculatedAt: string;
+  asOf?: string | null;
+  activePredictionId?: string | null;
+  point?: number | null;
+  lowerBound?: number | null;
+  upperBound?: number | null;
+  predictionLoadError?: string | null;
   hasPostObservations: boolean;
   evaluation: PredictionEvaluationSummary | null;
   limitations: string[];
