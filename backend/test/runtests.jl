@@ -27,6 +27,7 @@ using MarkovLabBackend
     include("domain/simulation_tests.jl")
     include("domain/prediction_tests.jl")
     include("domain/portfolio_history_tests.jl")
+    include("domain/backtesting_tests.jl")
     include("domain/exchange_rates_tests.jl")
     include("services/services_tests.jl")
     include("services/users_tests.jl")
