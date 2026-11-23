@@ -11,13 +11,12 @@ export const USER_NAV: NavItem[] = [
   { href: "/app/optimizacion", label: "Optimización" },
   { href: "/app/prediccion", label: "Predicción" },
   { href: "/app/backtesting", label: "Backtesting" },
+  { href: "/app/reportes", label: "Reportes" },
   { href: "/app/simulador", label: "Simulador" },
 ];
 
 /** Módulos en fase de vista previa local cuando `MARKOVLAB_USE_LOCAL_FIXTURES=1`. */
-export const PREVIEW_APP_NAV: NavItem[] = [
-  { href: "/app/reportes", label: "Reportes" },
-];
+export const PREVIEW_APP_NAV: NavItem[] = [];
 
 /** Destinos del banco visual local (`/dev/vistas`). */
 export const DEV_PREVIEW_NAV: NavItem[] = [

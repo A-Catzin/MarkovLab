@@ -20,7 +20,7 @@ Esta carpeta concentra los contratos de vista, validadores, adaptadores de servi
 | **F4. Optimización de carteras** (`RF-34–40`) | `/app/optimizacion` | `/dev/vistas/optimizacion` | `adapters/optimization.server.ts` | Completa | Conectado (`B5`) | Local en rama |
 | **F5. Predicción de activos** (`RF-21–26`) | `/app/prediccion` | `/dev/vistas/prediccion` | `adapters/prediction.server.ts` | Completa | Conectado (`B6`) | Local en rama |
 | **F6. Backtesting de estrategias** (`RF-49–53`) | `/app/backtesting` | `/dev/vistas/backtesting` | `adapters/backtesting.server.ts` | Completa | Conectado (`B7`) | Local en rama |
-| **F7. Dashboard y reportes** (`RF-54–58`) | `/app`, `/app/reportes` | `/dev/vistas/dashboard`, `/dev/vistas/reportes` | `adapters/reports.server.ts` | Completa | `/app` conectado a carteras/mercado/F1–F6; `B8` pendiente | `/app` sí; `/app/reportes` no |
+| **F7. Dashboard y reportes** (`RF-54–58`) | `/app`, `/app/reportes` | `/dev/vistas/dashboard`, `/dev/vistas/reportes` | `adapters/reports.server.ts` | Completa | Conectado (`B8`) | Local en rama |
 
 ## Estado de contratos Backend (`B1`–`B8`)
 - **B1 (`RF-13`, conectado)**: `GET /api/internal/watchlist` expone `latest_price_source` (`"api" | "csv" | "manual" | null`) y `latest_price_status` (`"updated" | "cached" | "local_file" | "unavailable"`).
@@ -30,4 +30,4 @@ Esta carpeta concentra los contratos de vista, validadores, adaptadores de servi
 - **B5 (`RF-34–40`, conectado)**: `POST` y `GET /api/internal/portfolios/{id}/optimizations` (`min_variance` / `max_sharpe`, cotas por activo, `max_volatility`, `risk_free_rate`, `lookback_years`, historial con insumos y error `422 optimization_infeasible` con `details.reason` y `details.minimum_volatility`).
 - **B6 (`RF-21–26`, conectado)**: `POST /api/internal/assets/{id}/predictions` y `GET /api/internal/predictions/{id}` con `model`, `parameters`, `training_window`, `calculated_at`, `as_of`, `limitations[]`, `series[]` (incluyendo `date_estimated`) y `evaluation` opcional con contraste posterior sin reentrenar.
 - **B7 (`RF-49–53`, conectado)**: `POST` y `GET /api/internal/portfolios/{id}/backtests` diferenciando `config_from < config_to < eval_from < eval_to`, estrategias `manual`/`min_variance`/`max_sharpe`, `rebalance`, `transaction_cost_bps`, `risk_free_rate`, `benchmark_id` opcional e historial persistido por versión de cartera.
-- **B8 (`RF-54–58`)**: `GET /api/internal/reports/summary` y descarga `GET /api/internal/reports/{id}/export?format=csv` controlada por capacidad real `can_export_csv`.
+- **B8 (`RF-54–58`, conectado)**: `GET /api/internal/reports/summary` (límite 1–50, glosario `formulas[]`, `export_capabilities` y reportes con `freshness: "unknown"`) y descarga `GET /api/internal/reports/{id}/export?format=csv` expuesta en Next.js vía `/api/reports/[id]/export` con sesión verificada (`Cache-Control: private, no-store`).

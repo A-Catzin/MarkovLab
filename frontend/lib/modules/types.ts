@@ -357,8 +357,19 @@ export interface DashboardOverviewData {
   recentAnalyses: DashboardRecentAnalysis[];
 }
 
+export type ReportKind = "simulation" | "optimization" | "prediction" | "backtest";
+
+export interface ReportMetricValue {
+  id: string;
+  label: string;
+  unit: string;
+  value: number | null;
+  formattedValue: string;
+}
+
 export interface ReportAnalysisItem {
   id: string;
+  kind?: ReportKind;
   moduleCode: ModuleCode;
   title: string;
   subject: string;
@@ -369,6 +380,11 @@ export interface ReportAnalysisItem {
   freshness: DataFreshness;
   frequency: string;
   currency: string;
+  model?: string | null;
+  sourceStorage?: string;
+  sourcePriceMethod?: string;
+  parameters?: Record<string, unknown>;
+  metrics?: ReportMetricValue[];
   primaryMetricLabel: string;
   primaryMetricValue: string;
   secondaryMetricLabel: string;
@@ -387,6 +403,7 @@ export interface MetricFormulaDoc {
 export interface ReportsData {
   reports: ReportAnalysisItem[];
   formulas: MetricFormulaDoc[];
+  coveredKinds?: string[];
   exportCapabilities: {
     csvAvailable: boolean;
     reasonWhenUnavailable: string;

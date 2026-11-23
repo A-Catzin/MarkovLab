@@ -24,6 +24,7 @@ const FRESHNESS_LABELS: Record<ProvenanceInfo["freshness"], string> = {
   cached: "En caché",
   local: "Archivo local",
   example: "Datos de ejemplo",
+  unknown: "Histórico guardado",
 };
 
 export function ExampleDataBanner({ moduleName }: { moduleName: string }) {
