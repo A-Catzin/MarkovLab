@@ -1,6 +1,16 @@
 /* Estilos compartidos para las vistas operativas F1–F7.
    Todos los colores, tipografías y radios heredan de globals.css y experience.css. */
 
+.viewRoot {
+  min-width: 0;
+}
+
+.viewRoot h1.pageTitle {
+  font-size: clamp(1.5rem, 1.8vw, 1.875rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
 .pageHeadMeta {
   display: flex;
   flex-wrap: wrap;
@@ -527,6 +537,23 @@
   font-size: 0.75rem;
   color: var(--muted);
   font-weight: 400;
+}
+
+.matrixButton {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: right;
+  cursor: pointer;
+}
+
+.matrixButtonSelected {
+  border-color: var(--accent);
+  background: rgb(226 176 74 / 12%);
 }
 
 .scenarioBar {
