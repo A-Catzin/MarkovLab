@@ -37,6 +37,30 @@ using MarkovLabBackend.Api: configure!
             @test asset["currency"] == "USD"
             @test asset["latest_price"] == 12 && asset["latest_date"] == "2024-06-11"
         end
+        @testset "RF-10: close-to-close changes only when a reference exists" begin
+            changes = only(response_json(call("GET"))["assets"])["changes"]
+            @test changes["daily"] ≈ 3.0
+            @test changes["weekly"] === nothing && changes["monthly"] === nothing
+
+            dated_csv = "Date,Open,High,Low,Close,Volume,Symbol\n" *
+                        "2024-05-31,100,100,100,100,10,VARIATION\n" *
+                        "2024-06-21,110,110,110,110,10,VARIATION\n" *
+                        "2024-06-25,111,111,111,111,10,VARIATION\n" *
+                        "2024-06-27,120,120,120,120,10,VARIATION\n" *
+                        "2024-06-28,132,132,132,132,10,VARIATION\n"
+            varied = import_prices(prices, IOBuffer(dated_csv), details).asset_id
+            @test call("PUT", "$root/$varied").status == 200
+            asset = only(a for a in response_json(call("GET"))["assets"] if a["id"] == varied)
+            @test asset["latest_price"] == 132 && asset["latest_date"] == "2024-06-28"
+            @test asset["changes"]["daily"] ≈ 0.10
+            @test asset["changes"]["weekly"] ≈ 0.20
+            @test asset["changes"]["monthly"] === nothing
+            june_csv = replace(dated_csv, "2024-05-31" => "2024-05-28")
+            import_prices(prices, IOBuffer(june_csv), details)
+            updated = only(a for a in response_json(call("GET"))["assets"] if a["id"] == varied)
+            @test updated["changes"]["monthly"] ≈ 0.32
+            @test call("DELETE", "$root/$varied").status == 200
+        end
         @testset "RF-11: chronological series, restricted to watched assets" begin
             @test call("GET", "$root/$id/history"; actor=beto.id).status == 404
             history = call("GET", "$root/$id/history")

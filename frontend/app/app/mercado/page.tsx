@@ -14,10 +14,18 @@ type WatchedAsset = {
   currency: string;
   latest_price: number | null;
   latest_date: string | null;
+  changes?: Record<"daily" | "weekly" | "monthly", number | null>;
 };
 type Point = [date: string, price: number];
 
 export const metadata: Metadata = { title: "Seguimiento de mercado · MarkovLab" };
+
+const percent = new Intl.NumberFormat("es-MX", {
+  style: "percent",
+  maximumFractionDigits: 2,
+  signDisplay: "exceptZero",
+});
+const periodLabels = { daily: "Día", weekly: "Semana", monthly: "Mes" } as const;
 
 function ClosingChart({ asset, points }: { asset: WatchedAsset; points: Point[] }) {
   if (points.length < 2) return <p>Se necesitan al menos dos cierres para mostrar el gráfico.</p>;
@@ -107,6 +115,19 @@ export default async function MarketPage({ searchParams }: {
                     <td className="num">
                       {item.latest_price === null ? "Sin datos" : formatMoney(item.latest_price, item.currency)}
                       {item.latest_date && <time className={`data-table__hint ${styles.detail}`} dateTime={item.latest_date}>{item.latest_date}</time>}
+                      {item.changes && (
+                        <dl className={styles.changes} aria-label="Variación por período">
+                          {(Object.keys(periodLabels) as (keyof typeof periodLabels)[]).map((period) => {
+                            const change = item.changes?.[period];
+                            return (
+                              <div key={period}>
+                                <dt>{periodLabels[period]}</dt>
+                                <dd>{change == null ? "Sin datos" : percent.format(change)}</dd>
+                              </div>
+                            );
+                          })}
+                        </dl>
+                      )}
                     </td>
                     <td>
                       <form action={updateWatchlist.bind(null, "DELETE")}>

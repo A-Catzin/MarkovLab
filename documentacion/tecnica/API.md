@@ -199,7 +199,7 @@ Cada cartera tiene esta forma:
   "positions": [{ "asset_id": 1, "symbol": "AAPL", "market": "NASDAQ", "name": "Apple", "weight": 0.6, "currency": "USD" }] }
 ```
 
-### Seguimiento de mercado (RF-08, RF-09, RF-11)
+### Seguimiento de mercado (RF-08 a RF-11)
 
 Requiere la clave interna y un actor de usuario válido. La pertenencia a la lista se
 determina exclusivamente por el actor autenticado; no se acepta un ID de usuario
@@ -207,7 +207,7 @@ en la URL ni en el cuerpo.
 
 | Ruta | Resultado |
 |---|---|
-| `GET /api/internal/watchlist` | `{ assets: [...] }`. Cada activo incluye `id`, `symbol`, `name`, `market`, `currency`, `latest_price` y `latest_date`; los dos últimos son nulos si no hay precios. |
+| `GET /api/internal/watchlist` | `{ assets: [...] }`. Cada activo incluye `id`, `symbol`, `name`, `market`, `currency`, `latest_price`, `latest_date` y `changes: { daily, weekly, monthly }`. |
 | `PUT /api/internal/watchlist/{id}` | Agrega un activo del catálogo a la lista y devuelve `{ asset_id }`. Si ya lo sigue, devuelve el mismo resultado sin duplicarlo. |
 | `DELETE /api/internal/watchlist/{id}` | Retira el activo de la lista del actor y devuelve `{ asset_id }`. |
 | `GET /api/internal/watchlist/{id}/history` | `{ points: [[fecha, cierre], …] }`, ordenados por fecha. |
@@ -216,6 +216,12 @@ Un ID inválido devuelve 400; un activo inexistente al agregarlo o ajeno a la li
 al consultar o quitarlo devuelve 404. Se usa el cierre ajustado cuando existe y,
 si coinciden dos fuentes para la misma fecha, se prefiere API sobre CSV. La lista
 se guarda en la tabla existente `lista_seguimiento`.
+
+Las variaciones son fracciones: `0.02` equivale a 2 %. Se calculan desde el
+último cierre disponible: la diaria usa el cierre anterior; la semanal y la
+mensual usan el último cierre en o antes de la fecha de referencia (siete días
+naturales y un mes calendario antes, respectivamente). Sin cierre de referencia
+la variación es nula; sin precios también son nulos el último cierre y su fecha.
 
 ### Rutas internas de admin
 
