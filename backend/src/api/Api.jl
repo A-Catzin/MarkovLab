@@ -69,6 +69,7 @@ include("asset_analysis.jl")
 include("portfolio_versions.jl")
 include("portfolio_stress.jl")
 include("portfolio_optimizations.jl")
+include("portfolio_backtests.jl")
 include("predictions.jl")
 
 """

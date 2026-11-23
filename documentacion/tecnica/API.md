@@ -334,6 +334,65 @@ o `database_unavailable`. Las escrituras fallidas no crean versiones parciales.
 Aplicar la migración `0006_versiones_cartera.sql` antes de usar estas rutas
 en producción; la migración agrega una tabla y no reescribe carteras existentes.
 
+### Backtesting de carteras (B7, RF-49 a RF-53)
+
+Requiere `X-Internal-Key`, `X-Actor-Id` y `0009_backtests_cartera.sql`.
+Solo el propietario puede guardar y leer las ejecuciones. El backtest no cambia la cartera.
+
+| Método y ruta | Entrada | Resultado |
+|---|---|---|
+| `POST /api/internal/portfolios/{id}/backtests` | JSON, sin query (ver ejemplo). | **201**, ejecución guardada. |
+| `GET /api/internal/portfolios/{id}/backtests` | Sin cuerpo ni query. | **200**, `{"backtests":[ejecución, ...]}`, hasta 20, más recientes primero. |
+
+```json
+{
+  "strategy": "min_variance",
+  "config_from": "2022-01-01",
+  "config_to": "2024-12-31",
+  "eval_from": "2025-01-01",
+  "eval_to": "2025-12-31",
+  "rebalance": "quarterly",
+  "transaction_cost_bps": 10,
+  "risk_free_rate": 0.02,
+  "benchmark_id": 17
+}
+```
+
+- `strategy` es `manual`, `min_variance` o `max_sharpe`. Las cuatro fechas
+  ISO son obligatorias e inclusivas; `config_from < config_to < eval_from < eval_to`.
+- `rebalance`: `none` (predeterminado), `monthly`, `quarterly` o `semiannual`.
+  `transaction_cost_bps` va de 0 a 1000 y `risk_free_rate`, de −1 a 1 (fracción
+  anual); ambos valen 0 si se omiten.
+- `benchmark_id` es opcional y debe ser un ID positivo del catálogo. Estrategia
+  y benchmark se evalúan en sesiones comunes y moneda de la cartera. La
+  configuración no utiliza el benchmark ni datos de evaluación.
+
+Cada ejecución devuelve:
+
+- `id`, `portfolio_id`, `portfolio_version`, `portfolio_name`, `currency`,
+  `executed_at` (UTC) y `model` (`fixed_target_rebalance_v1`).
+- Parámetros: `strategy`, `config_from`, `config_to`, `eval_from`, `eval_to`,
+  `rebalance`, `transaction_cost_bps` y `risk_free_rate`.
+- `configuration` y `evaluation`: `{from,to,observations}` con fechas efectivas
+  y número de cierres comunes. `weights: [{asset_id,symbol,market,manual_weight,target_weight}]`.
+- `benchmark: null` o `{asset_id,symbol,market,currency}` (moneda original).
+  `strategy_metrics` y `benchmark_metrics` contienen `cumulative_return`,
+  `annualized_return`, `annualized_volatility`, `max_drawdown` y `sharpe_ratio`.
+  `benchmark_metrics` es `null` sin benchmark; Sharpe es `null` si la volatilidad es cero.
+- `curve: [{date,phase,strategy_index,benchmark_index}]`, con `phase` igual a
+  `config` o `evaluation`; `benchmark_index` es `null` fuera de evaluación
+  o sin benchmark. Las curvas se reinician antes de costes en cada fase.
+
+Consultar [BACKTESTING.md](BACKTESTING.md) para costes, rebalanceo y limitaciones.
+
+| HTTP | Error |
+|---|---|
+| 400 | `invalid_json` o `invalid_input`: cuerpo, fechas o parámetros inválidos. |
+| 401 / 403 | `unauthorized` o `forbidden`: clave o actor inválido. |
+| 404 | `not_found`: cartera inaccesible o benchmark inexistente. |
+| 422 | `insufficient_data`, `missing_exchange_rate`, `undefined_sharpe` u `optimization_infeasible`: datos o restricciones no permiten calibrar o evaluar. |
+| 503 | `not_configured`, `database_unavailable` u `optimization_unavailable`: falta configuración, falla la base o el solver no certificó una solución. |
+
 ### Optimización de carteras (B5, RF-34 a RF-40)
 
 Requiere `X-Internal-Key`, `X-Actor-Id` de un usuario existente y la migración

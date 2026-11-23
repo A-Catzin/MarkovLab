@@ -12,6 +12,7 @@ Esquema de la base y sus cambios versionados. Se aplican en orden y **nunca se e
 | [`0006_versiones_cartera.sql`](./0006_versiones_cartera.sql) | Historial de versiones de carteras. | Sí, confirmada por el operador |
 | [`0007_optimizaciones_cartera.sql`](./0007_optimizaciones_cartera.sql) | Tabla con RLS para guardar ejecuciones de optimización y sus insumos, dependiente de la cartera. | Pendiente |
 | [`0008_predicciones_activos.sql`](./0008_predicciones_activos.sql) | Pronósticos con metadatos e insumos de evaluación, con RLS. | Pendiente |
+| [`0009_backtests_cartera.sql`](./0009_backtests_cartera.sql) | Historial de backtesting por cartera con RLS. | Pendiente |
 
 ## Cómo se verificó que `esquema.sql` es igual a la base
 
