@@ -622,3 +622,47 @@ El middleware de `backend/src/api/cors.jl` solo devuelve `Access-Control-Allow-O
 ```bash
 julia --project=backend backend/test/runtests.jl
 ```
+
+## Resumen y exportación (B8, RF-54 a RF-58)
+
+Enviar `X-Internal-Key` y `X-Actor-User-Id` con el UUID del usuario. También se acepta
+`X-Actor-Id` para el transporte interno existente. Si llegan los dos, deben indicar el
+mismo usuario. No se acepta elegir al actor mediante query o body.
+
+| Método y ruta | Entrada | Respuesta |
+|---|---|---|
+| `GET /api/internal/reports/summary` | Query `limit` opcional: entero 1–50 (20 si se omite). Sin cuerpo. | **200** JSON, ejecuciones propias más recientes primero (lista vacía si no hay resultados). |
+| `GET /api/internal/reports/{id}/export?format=csv` | `id` exacto del resumen (`kind:UUID`); el único formato es `csv`, predeterminado. Sin cuerpo. | **200** `text/csv; charset=utf-8`, adjunto `report.csv`. |
+
+El resumen devuelve:
+
+- `reports: [{ id, kind, module_code, title, subject, period_from, period_to, calculated_at,
+  origin, freshness, frequency, currency, source, model, parameters, metrics }]`.
+  `kind` identifica `simulation` (F2), `optimization` (F4), `prediction` (F5) o
+  `backtest` (F6). `model` es el identificador guardado; `parameters` conserva los parámetros
+  principales de cada ejecución. Las fechas efectivas son ISO, `calculated_at` está en UTC.
+- `source: { storage: "postgresql", price_method: "adjusted_close_or_close", ingestion: null }`.
+  `origin` es `"api"`, `frequency` es `"daily_sessions"` y `freshness` es `"unknown"`: el
+  historial no acredita la fuente original por sesión (API o CSV), ni la vigencia actual.
+  `currency` y los campos de ventana pueden ser `null` si no se guardaron.
+- `metrics: [{ id, label, unit, value }]`; `unit` es `"fraction"` o `"ratio"`.
+  `value` es numérico o `null` si no se puede calcular. Los resultados de predicción
+  se refieren a la métrica guardada; los de backtesting, a la ventana de evaluación.
+- `formulas: [{ id, name, unit, formula, interpretation, assumptions }]`; `id` enlaza
+  con `metrics[].id`. `export_capabilities: { csv_available, expected_columns }` y
+  `covered_kinds` indican los resultados disponibles.
+
+El CSV tiene una fila por métrica del mismo registro visible, en el mismo orden del resumen:
+`id,kind,title,subject,period_from,period_to,calculated_at,currency,model,storage,price_method,metric_id,metric_label,unit,value`.
+Los valores nulos quedan vacíos; los textos se escapan y un texto con inicio interpretable
+como fórmula se marca con `text: `. Los números negativos se conservan como números.
+
+El análisis multiactivo y el estrés sin persistencia no aparecen en el historial. Ambas
+respuestas exitosas incluyen `Cache-Control: private, no-store`.
+
+| HTTP | Error |
+|---|---|
+| 400 | `invalid_input`: formato o límite inválido, o encabezados de actor en conflicto. |
+| 401 / 403 | `unauthorized` (clave inválida) o `forbidden` (actor inválido o ausente). |
+| 404 | `not_found`: ID de reporte inexistente, inválido o de otro usuario. |
+| 503 | `not_configured` o `database_unavailable`. |
