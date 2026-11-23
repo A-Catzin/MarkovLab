@@ -6,9 +6,11 @@ import { MarketOriginPreview } from "@/components/app/MarketOriginPreview";
 import { ExampleDataBanner, LoadingSkeletonPanel, ModuleStatePanel, ScenarioBar } from "@/components/app/ModuleStateViews";
 import { PortfolioForm } from "@/components/app/PortfolioForm";
 import { PortfolioVersionsPanel } from "@/components/app/PortfolioVersionsPanel";
+import { StressTestingView } from "@/components/app/StressTestingView";
 import styles from "@/components/app/modules.module.css";
 import { loadAssetAnalysisView } from "@/lib/modules/adapters/asset-analysis.server";
 import { loadPortfolioEditView } from "@/lib/modules/adapters/portfolio-edit.server";
+import { loadStressTestingView } from "@/lib/modules/adapters/stress.server";
 import { buildMarketOriginFixture } from "@/lib/modules/fixtures/market-origin.fixture";
 import { isLocalFixturesEnabled, MODULE_REGISTRY, parseScenario, type ViewScenario } from "@/lib/modules/runtime";
 import type { PeriodPreset, ReturnKind } from "@/lib/modules/types";
@@ -129,6 +131,19 @@ export default async function DevModulePreviewPage({
           </>
         )}
       </div>
+    );
+  } else if (modulo === "estres") {
+    const stressResult = await loadStressTestingView({
+      actorId: "dev-preview",
+      portfolioId: "pf-v3",
+      scenario,
+    });
+    content = (
+      <StressTestingView
+        result={stressResult}
+        basePath="/dev/vistas/estres"
+        currentScenario={scenario}
+      />
     );
   } else {
     content = (
