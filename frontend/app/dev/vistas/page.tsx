@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 export const DEV_PREVIEW_NAV: NavItem[] = [
   { href: "/dev/vistas", label: "Índice F1–F7" },
+  { href: "/dev/vistas/dashboard", label: "Dashboard" },
   { href: "/dev/vistas/analisis", label: "F1 Análisis" },
   { href: "/dev/vistas/mercado", label: "F2 Mercado" },
   { href: "/dev/vistas/cartera-editar", label: "F2 Carteras" },
@@ -32,10 +33,11 @@ export default function DevViewsIndexPage() {
       signOutHref="/"
     >
       <ExampleDataBanner moduleName="el banco local de vistas F1–F7" />
-      <div className={styles.pageHeadMeta}>
-        <div>
-          <h1>Banco local de vistas pendientes (F1–F7)</h1>
-          <p className={styles.pageLead}>
+      <div className={styles.viewRoot}>
+        <div className={styles.pageHeadMeta}>
+          <div>
+            <h1 className={styles.pageTitle}>Banco local de vistas pendientes (F1–F7)</h1>
+            <p className={styles.pageLead}>
             Entorno aislado de desarrollo habilitado únicamente con MARKOVLAB_USE_LOCAL_FIXTURES=1. Permite inspeccionar
             flujos, tablas, gráficos, estados de error y navegación por teclado sin alterar la autenticación de /app ni
             exponer datos sintéticos en producción.
@@ -86,6 +88,7 @@ export default function DevViewsIndexPage() {
           </table>
         </div>
       </section>
+      </div>
     </AppShell>
   );
 }

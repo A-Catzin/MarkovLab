@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app/AppShell";
 import { AssetAnalysisView } from "@/components/app/AssetAnalysisView";
 import { BacktestingView } from "@/components/app/BacktestingView";
+import { DashboardOverview } from "@/components/app/DashboardOverview";
 import { MarketOriginPreview } from "@/components/app/MarketOriginPreview";
 import { ExampleDataBanner, LoadingSkeletonPanel, ModuleStatePanel, ScenarioBar } from "@/components/app/ModuleStateViews";
 import { OptimizationView } from "@/components/app/OptimizationView";
 import { PortfolioForm } from "@/components/app/PortfolioForm";
 import { PortfolioVersionsPanel } from "@/components/app/PortfolioVersionsPanel";
 import { PredictionView } from "@/components/app/PredictionView";
+import { ReportsView } from "@/components/app/ReportsView";
 import { StressTestingView } from "@/components/app/StressTestingView";
 import styles from "@/components/app/modules.module.css";
 import { loadAssetAnalysisView } from "@/lib/modules/adapters/asset-analysis.server";
@@ -16,8 +18,8 @@ import { loadBacktestingView } from "@/lib/modules/adapters/backtesting.server";
 import { loadOptimizationView } from "@/lib/modules/adapters/optimization.server";
 import { loadPortfolioEditView } from "@/lib/modules/adapters/portfolio-edit.server";
 import { loadPredictionView } from "@/lib/modules/adapters/prediction.server";
+import { loadDashboardOverview, loadReportsView } from "@/lib/modules/adapters/reports.server";
 import { loadStressTestingView } from "@/lib/modules/adapters/stress.server";
-import { buildMarketOriginFixture } from "@/lib/modules/fixtures/market-origin.fixture";
 import { isLocalFixturesEnabled, MODULE_REGISTRY, parseScenario, type ViewScenario } from "@/lib/modules/runtime";
 import type { OptimizationObjective, PeriodPreset, PredictionMetricKind, ReturnKind } from "@/lib/modules/types";
 import { DEV_PREVIEW_NAV } from "../page";
@@ -26,6 +28,17 @@ export const dynamic = "force-dynamic";
 
 const DEFAULT_SCENARIOS: readonly ViewScenario[] = [
   "normal",
+  "vacio",
+  "pocos-datos",
+  "validacion",
+  "no-disponible",
+  "denegado",
+  "cargando",
+];
+
+const OPTIMIZATION_SCENARIOS: readonly ViewScenario[] = [
+  "normal",
+  "inviable",
   "vacio",
   "pocos-datos",
   "validacion",
@@ -62,7 +75,11 @@ export default async function DevModulePreviewPage({
   const { modulo } = await params;
   const q = await searchParams;
   const scenario = parseScenario(q.escenario);
-  const entry = MODULE_REGISTRY.find((item) => item.slug === modulo);
+  const isDashboard = modulo === "dashboard";
+  const entry = isDashboard
+    ? { code: "F7" as const, slug: "dashboard", name: "Dashboard consolidado", devHref: "/dev/vistas/dashboard" }
+    : MODULE_REGISTRY.find((item) => item.slug === modulo);
+
   if (!entry) notFound();
 
   const symbols = q.activos
@@ -77,7 +94,14 @@ export default async function DevModulePreviewPage({
   const to = q.hasta ?? "2026-10-30";
 
   let content: React.ReactNode = null;
-  if (modulo === "analisis") {
+  if (modulo === "dashboard") {
+    const dashResult = await loadDashboardOverview({
+      actorId: "dev-preview",
+      userName: "Vista previa local",
+      scenario,
+    });
+    content = <DashboardOverview result={dashResult} />;
+  } else if (modulo === "analisis") {
     const result = await loadAssetAnalysisView({
       actorId: "dev-preview",
       symbols,
@@ -100,6 +124,7 @@ export default async function DevModulePreviewPage({
       />
     );
   } else if (modulo === "mercado") {
+    const { buildMarketOriginFixture } = await import("@/lib/modules/fixtures/market-origin.fixture");
     const marketResult = buildMarketOriginFixture(scenario);
     content = (
       <MarketOriginPreview
@@ -208,20 +233,12 @@ export default async function DevModulePreviewPage({
         currentScenario={scenario}
       />
     );
-  } else {
-    content = (
-      <section className={styles.panelCard}>
-        <div className={styles.panelHeader}>
-          <h1>{entry.name}</h1>
-          <span className={`${styles.pill} ${styles.pillWarning}`}>{entry.deliveryState}</span>
-        </div>
-        <p className={styles.pageLead}>{entry.summary}</p>
-        <p style={{ marginTop: 12, color: "var(--muted)" }}>
-          Este módulo se conectará en su entrega correspondiente mientras conserva la estructura de adaptador en{" "}
-          <code>frontend/lib/modules/adapters/</code>.
-        </p>
-      </section>
-    );
+  } else if (modulo === "reportes") {
+    const repResult = await loadReportsView({
+      actorId: "dev-preview",
+      scenario,
+    });
+    content = <ReportsView result={repResult} currentScenario={scenario} />;
   }
 
   return (
@@ -231,7 +248,11 @@ export default async function DevModulePreviewPage({
       signOutHref="/"
     >
       <ExampleDataBanner moduleName={`${entry.code} · ${entry.name}`} />
-      <ScenarioBar basePath={entry.devHref} currentScenario={scenario} scenarios={DEFAULT_SCENARIOS} />
+      <ScenarioBar
+        basePath={entry.devHref}
+        currentScenario={scenario}
+        scenarios={modulo === "optimizacion" ? OPTIMIZATION_SCENARIOS : DEFAULT_SCENARIOS}
+      />
       <p className="crumbs">
         <Link href="/dev/vistas">Banco local</Link> / {entry.code} · {entry.name}
       </p>
