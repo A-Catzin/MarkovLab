@@ -275,7 +275,7 @@
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
   gap: 24px;
   margin-top: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .splitGridEqual {
@@ -283,10 +283,12 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   margin-top: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .panelCard {
+  display: flex;
+  flex-direction: column;
   padding: 20px 24px;
   border: 1px solid var(--surface-2);
   border-radius: 8px;
@@ -478,12 +480,12 @@
 .matrixTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
 .matrixTable th,
 .matrixTable td {
-  padding: 10px 12px;
+  padding: 6px;
   border: 1px solid var(--surface-2);
   font-variant-numeric: lining-nums tabular-nums;
 }
@@ -541,7 +543,7 @@
 
 .matrixButton {
   width: 100%;
-  padding: 6px 8px;
+  padding: 4px;
   border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;
@@ -658,7 +660,9 @@
   border-radius: 4px;
   background: var(--surface);
   color: var(--accent);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-text), Georgia, serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-weight: 600;
   font-size: 0.875rem;
   overflow-x: auto;
 }

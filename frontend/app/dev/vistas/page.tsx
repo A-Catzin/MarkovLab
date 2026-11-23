@@ -1,25 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AppShell } from "@/components/app/AppShell";
+import { AppShell, DEV_PREVIEW_NAV } from "@/components/app/AppShell";
 import { ExampleDataBanner } from "@/components/app/ModuleStateViews";
 import styles from "@/components/app/modules.module.css";
-import type { NavItem } from "@/components/app/NavLinks";
 import { isLocalFixturesEnabled, MODULE_REGISTRY } from "@/lib/modules/runtime";
 
 export const dynamic = "force-dynamic";
-
-export const DEV_PREVIEW_NAV: NavItem[] = [
-  { href: "/dev/vistas", label: "Índice F1–F7" },
-  { href: "/dev/vistas/dashboard", label: "Dashboard" },
-  { href: "/dev/vistas/analisis", label: "F1 Análisis" },
-  { href: "/dev/vistas/mercado", label: "F2 Mercado" },
-  { href: "/dev/vistas/cartera-editar", label: "F2 Carteras" },
-  { href: "/dev/vistas/estres", label: "F3 Estrés" },
-  { href: "/dev/vistas/optimizacion", label: "F4 Optimización" },
-  { href: "/dev/vistas/prediccion", label: "F5 Predicción" },
-  { href: "/dev/vistas/backtesting", label: "F6 Backtesting" },
-  { href: "/dev/vistas/reportes", label: "F7 Reportes" },
-];
 
 export default function DevViewsIndexPage() {
   if (process.env.NODE_ENV === "production" || !isLocalFixturesEnabled()) {

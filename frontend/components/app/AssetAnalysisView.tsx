@@ -137,7 +137,7 @@ function NormalizedSeriesChart({ data }: { data: AssetAnalysisData }) {
             </thead>
             <tbody>
               {xDates.map((date, rowIdx) => (
-                <tr key={date}>
+                <tr key={`${date}-${rowIdx}`}>
                   <th scope="row">{date}</th>
                   {data.series.map((s) => (
                     <td key={s.symbol} className="num">
@@ -410,7 +410,7 @@ export function AssetAnalysisView({
             </div>
             <div className={styles.kpiCell}>
               <dt className={styles.kpiLabel}>Mayor drawdown observado</dt>
-              <dd className={`${styles.kpiValue} ${styles.negativeText}`}>
+              <dd className={styles.kpiValue}>
                 {formatPercent(
                   Math.min(...result.data.metrics.map((row) => row.maxDrawdown ?? 0)),
                   { signed: true },

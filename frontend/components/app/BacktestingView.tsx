@@ -332,7 +332,7 @@ export function BacktestingView({
             </div>
             <div className={styles.kpiCell}>
               <dt className={styles.kpiLabel}>Drawdown máximo</dt>
-              <dd className={`${styles.kpiValue} ${styles.negativeText}`}>
+              <dd className={styles.kpiValue}>
                 {formatPercent(activeRun.strategyMetrics.maxDrawdown, { signed: true })}
               </dd>
               <dd className={styles.kpiSub}>

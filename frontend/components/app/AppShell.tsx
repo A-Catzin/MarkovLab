@@ -19,6 +19,20 @@ export const PREVIEW_APP_NAV: NavItem[] = [
   { href: "/app/reportes", label: "Reportes" },
 ];
 
+/** Destinos del banco visual local (`/dev/vistas`). */
+export const DEV_PREVIEW_NAV: NavItem[] = [
+  { href: "/dev/vistas", label: "Índice F1–F7" },
+  { href: "/dev/vistas/dashboard", label: "Dashboard" },
+  { href: "/dev/vistas/analisis", label: "F1 Análisis" },
+  { href: "/dev/vistas/mercado", label: "F2 Mercado" },
+  { href: "/dev/vistas/cartera-editar", label: "F2 Carteras" },
+  { href: "/dev/vistas/estres", label: "F3 Estrés" },
+  { href: "/dev/vistas/optimizacion", label: "F4 Optimización" },
+  { href: "/dev/vistas/prediccion", label: "F5 Predicción" },
+  { href: "/dev/vistas/backtesting", label: "F6 Backtesting" },
+  { href: "/dev/vistas/reportes", label: "F7 Reportes" },
+];
+
 /** Páginas que además ve un admin. */
 const ADMIN_NAV: NavItem[] = [
   { href: "/admin", label: "Resumen" },

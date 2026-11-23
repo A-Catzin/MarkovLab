@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AppShell } from "@/components/app/AppShell";
+import { AppShell, DEV_PREVIEW_NAV } from "@/components/app/AppShell";
 import { AssetAnalysisView } from "@/components/app/AssetAnalysisView";
 import { BacktestingView } from "@/components/app/BacktestingView";
 import { DashboardOverview } from "@/components/app/DashboardOverview";
@@ -22,7 +22,6 @@ import { loadDashboardOverview, loadReportsView } from "@/lib/modules/adapters/r
 import { loadStressTestingView } from "@/lib/modules/adapters/stress.server";
 import { isLocalFixturesEnabled, MODULE_REGISTRY, parseScenario, type ViewScenario } from "@/lib/modules/runtime";
 import type { OptimizationObjective, PeriodPreset, PredictionMetricKind, ReturnKind } from "@/lib/modules/types";
-import { DEV_PREVIEW_NAV } from "../page";
 
 export const dynamic = "force-dynamic";
 
@@ -75,10 +74,12 @@ export default async function DevModulePreviewPage({
   const { modulo } = await params;
   const q = await searchParams;
   const scenario = parseScenario(q.escenario);
-  const isDashboard = modulo === "dashboard";
-  const entry = isDashboard
-    ? { code: "F7" as const, slug: "dashboard", name: "Dashboard consolidado", devHref: "/dev/vistas/dashboard" }
-    : MODULE_REGISTRY.find((item) => item.slug === modulo);
+  const entry =
+    modulo === "dashboard"
+      ? { code: "F7" as const, slug: "dashboard", name: "Dashboard consolidado", devHref: "/dev/vistas/dashboard" }
+      : modulo === "mercado"
+        ? { code: "F2" as const, slug: "mercado", name: "Seguimiento de mercado (RF-13)", devHref: "/dev/vistas/mercado" }
+        : MODULE_REGISTRY.find((item) => item.slug === modulo);
 
   if (!entry) notFound();
 

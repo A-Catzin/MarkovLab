@@ -327,7 +327,7 @@ export function StressTestingView({
             </div>
             <div className={styles.kpiCell}>
               <dt className={styles.kpiLabel}>VaR bajo estrés ({Math.round(result.data.confidence * 100)} %)</dt>
-              <dd className={`${styles.kpiValue} ${styles.negativeText}`}>
+              <dd className={styles.kpiValue}>
                 {formatMoney(stressed.varAmount, result.data.currency)}
               </dd>
               <dd className={styles.kpiSub}>
@@ -337,7 +337,7 @@ export function StressTestingView({
             </div>
             <div className={styles.kpiCell}>
               <dt className={styles.kpiLabel}>CVaR bajo estrés</dt>
-              <dd className={`${styles.kpiValue} ${styles.negativeText}`}>
+              <dd className={styles.kpiValue}>
                 {formatMoney(stressed.cvarAmount, result.data.currency)}
               </dd>
               <dd className={styles.kpiSub}>

@@ -196,8 +196,8 @@ export function buildAssetAnalysisFixture(params: {
     };
   }
 
-  const reqFrom = params.from ?? (period === "custom" ? "2026-01-05" : PERIOD_SPECS[period].from);
-  const reqTo = params.to ?? (period === "custom" ? "2026-10-30" : PERIOD_SPECS[period].to);
+  const reqFrom = period === "custom" ? (params.from ?? "2026-01-05") : PERIOD_SPECS[period].from;
+  const reqTo = period === "custom" ? (params.to ?? "2026-10-30") : PERIOD_SPECS[period].to;
 
   if (scenario === "validacion") {
     return {
@@ -277,12 +277,20 @@ export function buildAssetAnalysisFixture(params: {
     correlationSymbols.map((colSym) => getCorrelation(rowSym, colSym)),
   );
 
+  const startMs = Date.parse(`${reqFrom}T00:00:00Z`);
+  const endMs = Date.parse(`${reqTo}T00:00:00Z`);
   const series: NormalizedAssetSeries[] = validItems.map((item) => {
     const base = BASE_METRICS[item.symbol];
-    const scaledPoints: [string, number][] = base.points1Y.map(([date, val], idx) => {
-      if (idx === 0) return [reqFrom, 100];
-      const delta = (val - 100) * scale;
-      return [idx === base.points1Y.length - 1 ? reqTo : date, Number((100 + delta).toFixed(2))];
+    const lastIdx = base.points1Y.length - 1;
+    const scaledPoints: [string, number][] = base.points1Y.map(([, val], idx) => {
+      const pointDate =
+        idx === 0
+          ? reqFrom
+          : idx === lastIdx
+            ? reqTo
+            : new Date(startMs + Math.round(((endMs - startMs) * idx) / lastIdx)).toISOString().slice(0, 10);
+      const delta = idx === 0 ? 0 : (val - 100) * scale;
+      return [pointDate, Number((100 + delta).toFixed(2))];
     });
     return { symbol: item.symbol, points: scaledPoints };
   });
