@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app/AppShell";
 import { AssetAnalysisView } from "@/components/app/AssetAnalysisView";
+import { BacktestingView } from "@/components/app/BacktestingView";
 import { MarketOriginPreview } from "@/components/app/MarketOriginPreview";
 import { ExampleDataBanner, LoadingSkeletonPanel, ModuleStatePanel, ScenarioBar } from "@/components/app/ModuleStateViews";
 import { OptimizationView } from "@/components/app/OptimizationView";
@@ -11,6 +12,7 @@ import { PredictionView } from "@/components/app/PredictionView";
 import { StressTestingView } from "@/components/app/StressTestingView";
 import styles from "@/components/app/modules.module.css";
 import { loadAssetAnalysisView } from "@/lib/modules/adapters/asset-analysis.server";
+import { loadBacktestingView } from "@/lib/modules/adapters/backtesting.server";
 import { loadOptimizationView } from "@/lib/modules/adapters/optimization.server";
 import { loadPortfolioEditView } from "@/lib/modules/adapters/portfolio-edit.server";
 import { loadPredictionView } from "@/lib/modules/adapters/prediction.server";
@@ -192,6 +194,18 @@ export default async function DevModulePreviewPage({
         initialMetric={metric}
         initialHorizon={horizonDays}
         initialWithObserved={withObserved}
+      />
+    );
+  } else if (modulo === "backtesting") {
+    const btResult = await loadBacktestingView({
+      actorId: "dev-preview",
+      scenario,
+    });
+    content = (
+      <BacktestingView
+        result={btResult}
+        basePath="/dev/vistas/backtesting"
+        currentScenario={scenario}
       />
     );
   } else {
