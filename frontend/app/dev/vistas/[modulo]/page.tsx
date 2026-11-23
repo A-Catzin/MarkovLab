@@ -2,9 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app/AppShell";
 import { AssetAnalysisView } from "@/components/app/AssetAnalysisView";
-import { ExampleDataBanner, ScenarioBar } from "@/components/app/ModuleStateViews";
+import { MarketOriginPreview } from "@/components/app/MarketOriginPreview";
+import { ExampleDataBanner, LoadingSkeletonPanel, ModuleStatePanel, ScenarioBar } from "@/components/app/ModuleStateViews";
+import { PortfolioForm } from "@/components/app/PortfolioForm";
+import { PortfolioVersionsPanel } from "@/components/app/PortfolioVersionsPanel";
 import styles from "@/components/app/modules.module.css";
 import { loadAssetAnalysisView } from "@/lib/modules/adapters/asset-analysis.server";
+import { loadPortfolioEditView } from "@/lib/modules/adapters/portfolio-edit.server";
+import { buildMarketOriginFixture } from "@/lib/modules/fixtures/market-origin.fixture";
 import { isLocalFixturesEnabled, MODULE_REGISTRY, parseScenario, type ViewScenario } from "@/lib/modules/runtime";
 import type { PeriodPreset, ReturnKind } from "@/lib/modules/types";
 import { DEV_PREVIEW_NAV } from "../page";
@@ -80,6 +85,50 @@ export default async function DevModulePreviewPage({
         initialFrom={from}
         initialTo={to}
       />
+    );
+  } else if (modulo === "mercado") {
+    const marketResult = buildMarketOriginFixture(scenario);
+    content = (
+      <MarketOriginPreview
+        result={marketResult}
+        currentScenario={scenario}
+        analysisHref="/dev/vistas/analisis"
+      />
+    );
+  } else if (modulo === "cartera-editar") {
+    const editResult = await loadPortfolioEditView({
+      actorId: "dev-preview",
+      portfolioId: "pf-v3",
+      scenario,
+    });
+    content = (
+      <div className={styles.viewRoot}>
+        <h1 className={styles.pageTitle}>Edición, versiones y duplicación de cartera (F2)</h1>
+        {scenario === "cargando" ? (
+          <LoadingSkeletonPanel title="Edición y versiones" />
+        ) : editResult.status !== "ok" ? (
+          <ModuleStatePanel result={editResult} />
+        ) : (
+          <>
+            <PortfolioForm
+              assets={editResult.data.catalog}
+              mode="edit"
+              initialValues={{
+                name: editResult.data.portfolioName,
+                capital: editResult.data.capital,
+                currency: editResult.data.currency,
+                startDate: editResult.data.startDate,
+                positions: editResult.data.positions,
+              }}
+              pendingBackend={editResult.data.pendingBackend}
+              submitLabel="Validar cambios (pendiente B3)"
+              cancelHref="/dev/vistas"
+              initialShowValidationDemo={scenario === "validacion"}
+            />
+            <PortfolioVersionsPanel data={editResult.data} />
+          </>
+        )}
+      </div>
     );
   } else {
     content = (
