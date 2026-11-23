@@ -28,5 +28,9 @@ por defecto; este cambio no modifica el despliegue ni el cron del catálogo.
   puede quedar en curso. No se reintenta automáticamente: la consulta anterior
   pudo haber generado un cargo. Revisar los logs y confirmar que el consumidor
   terminó antes de que un operador autorizado lo marque como fallido.
+- Si falla el guardado del resultado de un símbolo, el consumidor sigue
+  guardando los demás resultados del lote y termina con error. No vuelve a
+  consultar al proveedor. Revisar el símbolo registrado en el log antes de
+  intervenir en el trabajo que quedó en curso.
 - Para desactivar, quitar primero el indicador de la API y luego apagar la
   tarea. La lista y los precios ya almacenados siguen disponibles.

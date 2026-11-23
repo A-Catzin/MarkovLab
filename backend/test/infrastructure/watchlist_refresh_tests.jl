@@ -69,6 +69,47 @@ end
             @test count(==("RFTARGET"), fake.calls) == 1
             @test count(==("RFOTHER"), fake.calls) == 1
             @test MarkovLabBackend.process_market_refresh!(watchlist, prices, fake) == (; completed=0, failed=0)
+
+            @testset "one failed completion does not strand the rest of the batch" begin
+                for symbol in ("RFCLOSEA", "RFCLOSEB")
+                    id = add_fixture(symbol)
+                    @test call("PUT", "/api/internal/watchlist/$id", ana.id).status == 200
+                end
+                @test call("POST", root, ana.id).status == 202
+                conn = MarkovLabBackend.connection!(prices)
+                close(MarkovLabBackend.run_query(conn, "CREATE TEMP SEQUENCE rf12_completion_attempt"))
+                close(MarkovLabBackend.run_query(conn, raw"""
+                    CREATE FUNCTION pg_temp.rf12_reject_first_completion() RETURNS trigger LANGUAGE plpgsql AS $$
+                    BEGIN
+                        IF nextval('pg_temp.rf12_completion_attempt') = 1 THEN
+                            RAISE EXCEPTION 'rf12 test: completion write failed';
+                        END IF;
+                        RETURN NEW;
+                    END;
+                    $$
+                    """))
+                close(MarkovLabBackend.run_query(conn, """
+                    CREATE TRIGGER rf12_reject_first_completion BEFORE UPDATE ON actualizaciones_mercado
+                    FOR EACH ROW WHEN (OLD.estado = 'en_curso' AND NEW.simbolo IN ('RFCLOSEA', 'RFCLOSEB'))
+                    EXECUTE FUNCTION pg_temp.rf12_reject_first_completion()
+                    """))
+                source = RefreshFakeSource(String[])
+                try
+                    @test_throws "rf12 test: completion write failed" MarkovLabBackend.process_market_refresh!(
+                        watchlist, prices, source; to=Date(2024, 6, 4))
+                    outcomes = MarkovLabBackend.rows_from(MarkovLabBackend.run_query(conn, """
+                        SELECT estado FROM actualizaciones_mercado
+                        WHERE simbolo IN ('RFCLOSEA','RFCLOSEB') ORDER BY estado
+                        """))
+                    @test [row.estado for row in outcomes] == ["completada", "en_curso"]
+                    @test MarkovLabBackend.process_market_refresh!(watchlist, prices, source) == (; completed=0, failed=0)
+                    @test sort(source.calls) == ["RFCLOSEA", "RFCLOSEB"]
+                finally
+                    close(MarkovLabBackend.run_query(conn, "DROP TRIGGER rf12_reject_first_completion ON actualizaciones_mercado"))
+                    close(MarkovLabBackend.run_query(conn, "DROP FUNCTION pg_temp.rf12_reject_first_completion()"))
+                    close(MarkovLabBackend.run_query(conn, "DROP SEQUENCE pg_temp.rf12_completion_attempt"))
+                end
+            end
         finally
             Api.configure!(users=nothing, internal_key="")
             conn = MarkovLabBackend.connection!(prices)

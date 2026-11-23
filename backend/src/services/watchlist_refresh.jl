@@ -27,8 +27,18 @@ function process_market_refresh!(queue::PostgresWatchlist, prices::PriceReposito
     for item in result.fetched
         item.status in (:success, :partial) && push!(successes, item.symbol)
     end
+    first_failure = nothing
     for symbol in symbols
-        finish_market_refresh!(queue, symbol, symbol in successes)
+        try
+            finish_market_refresh!(queue, symbol, symbol in successes)
+        catch err
+            err isa InterruptException && rethrow()
+            @error "Could not persist market refresh outcome" symbol error_type = nameof(typeof(err))
+            first_failure = something(first_failure, err)
+        end
     end
+    # Los demás resultados ya se intentaron guardar. El proceso conserva el
+    # fallo de salida original y nunca vuelve a consultar por este lote.
+    first_failure === nothing || throw(first_failure)
     return (; completed=length(successes), failed=length(jobs) - length(successes))
 end
