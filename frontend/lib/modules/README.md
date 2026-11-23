@@ -17,17 +17,17 @@ Esta carpeta concentra los contratos de vista, validadores, adaptadores de servi
 | **F2. Mercado origen/frescura** (`RF-13`) | `/app/mercado` | `/dev/vistas/mercado` | `app/app/mercado/page.tsx` | Completa | Conectado (`RF-12` y `B1`) | Local en rama |
 | **F2. Carteras edición/versiones** (`RF-27–33`) | `/app/carteras/[id]/editar` | `/dev/vistas/cartera-editar` | `adapters/portfolio-edit.server.ts` | Completa | Conectado (`B3`) | Local en rama |
 | **F3. Escenarios de estrés** (`RF-46`) | `/app/carteras/[id]/estres` | `/dev/vistas/estres` | `adapters/stress.server.ts` | Completa | Conectado (`B4`) | Local en rama |
-| **F4. Optimización de carteras** (`RF-34–40`) | `/app/optimizacion` | `/dev/vistas/optimizacion` | `adapters/optimization.server.ts` | Completa | Pendiente (`B5`) | No |
+| **F4. Optimización de carteras** (`RF-34–40`) | `/app/optimizacion` | `/dev/vistas/optimizacion` | `adapters/optimization.server.ts` | Completa | Conectado (`B5`) | Local en rama |
 | **F5. Predicción de activos** (`RF-21–26`) | `/app/prediccion` | `/dev/vistas/prediccion` | `adapters/prediction.server.ts` | Completa | Pendiente (`B6`) | No |
 | **F6. Backtesting de estrategias** (`RF-49–53`) | `/app/backtesting` | `/dev/vistas/backtesting` | `adapters/backtesting.server.ts` | Completa | Pendiente (`B7`) | No |
-| **F7. Dashboard y reportes** (`RF-54–58`) | `/app`, `/app/reportes` | `/dev/vistas/dashboard`, `/dev/vistas/reportes` | `adapters/reports.server.ts` | Completa | `/app` conectado a carteras/mercado/F1–F3; `B8` pendiente | `/app` sí; `/app/reportes` no |
+| **F7. Dashboard y reportes** (`RF-54–58`) | `/app`, `/app/reportes` | `/dev/vistas/dashboard`, `/dev/vistas/reportes` | `adapters/reports.server.ts` | Completa | `/app` conectado a carteras/mercado/F1–F4; `B8` pendiente | `/app` sí; `/app/reportes` no |
 
 ## Estado de contratos Backend (`B1`–`B8`)
 - **B1 (`RF-13`, conectado)**: `GET /api/internal/watchlist` expone `latest_price_source` (`"api" | "csv" | "manual" | null`) y `latest_price_status` (`"updated" | "cached" | "local_file" | "unavailable"`).
 - **B2 (`RF-15–20`, conectado)**: `POST /api/internal/analysis/assets` con `series_aligned`, `effective_from`, `effective_to`, `aligned_observations`, `per_asset_metrics[]`, `correlation_matrix` y error `422 insufficient_data` (`required_sessions`, `observed_sessions`).
 - **B3 (`RF-27–33`, conectado)**: `PUT /api/internal/portfolios/{id}` (con `start_date`), `POST /api/internal/portfolios/{id}/duplicate` (`derived_from_id` sin alterar origen) y `GET /api/internal/portfolios/{id}/versions`.
 - **B4 (`RF-46`, conectado)**: `POST /api/internal/portfolios/{id}/stress` reutilizando `horizon`, `confidence` y `seed` con `return_shift`, `volatility_multiplier`, `correlation_shift` y respuesta `baseline` / `stressed` / `deltas`.
-- **B5 (`RF-34–40`)**: `POST /api/internal/portfolios/optimize` (`min_variance` / `max_sharpe`, límites por activo y `max_volatility?`) devolviendo `422 infeasible_constraints` con lista `conflicts[]`.
+- **B5 (`RF-34–40`, conectado)**: `POST` y `GET /api/internal/portfolios/{id}/optimizations` (`min_variance` / `max_sharpe`, cotas por activo, `max_volatility`, `risk_free_rate`, `lookback_years`, historial con insumos y error `422 optimization_infeasible` con `details.reason` y `details.minimum_volatility`).
 - **B6 (`RF-21–26`)**: `POST / GET /api/internal/forecasts` con `model_name`, `model_params`, `training_window`, `calculated_at`, `limitations[]`, banda de incertidumbre y contraste observado opcional.
 - **B7 (`RF-49–53`)**: `POST / GET /api/internal/backtests` diferenciando `config_from..config_to` y `eval_from..eval_to` (error `400 overlapping_windows`), benchmark opcional, métricas fuera de muestra e historial persistido.
 - **B8 (`RF-54–58`)**: `GET /api/internal/reports/summary` y descarga `GET /api/internal/reports/{id}/export?format=csv` controlada por capacidad real `can_export_csv`.

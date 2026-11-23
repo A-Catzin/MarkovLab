@@ -88,6 +88,9 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
           <Link href={`/app/carteras/${portfolio.id}/editar`} className="button button--small button--quiet">
             Editar y versiones
           </Link>
+          <Link href={`/app/optimizacion?cartera=${portfolio.id}`} className="button button--small button--quiet">
+            Optimizar
+          </Link>
           <Link href={`/app/carteras/${portfolio.id}/estres`} className="button button--small button--quiet">
             Escenarios de estrés
           </Link>

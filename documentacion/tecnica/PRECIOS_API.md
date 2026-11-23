@@ -129,4 +129,4 @@ Para valuar cada cartera en su moneda ([CARTERAS.md](CARTERAS.md#moneda)) se gua
 
 ## Siguiente paso
 
-Programar la actualización diaria (`--catalogo`) después del cierre del mercado. Por ejemplo, un cron en Railway.
+La actualización diaria ya está diseñada como un Cron Job de Railway (`0 6 * * 2-6`, de martes a sábado a las 06:00 UTC); configuración en [DESPLIEGUE.md](DESPLIEGUE.md#5-actualización-diaria-de-precios-cron-job-en-railway). El 2026-11-19 se puso el catálogo al día hasta el 18 de noviembre.
