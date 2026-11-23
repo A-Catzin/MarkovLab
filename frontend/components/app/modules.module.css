@@ -1,0 +1,698 @@
+/* Estilos compartidos para las vistas operativas F1–F7.
+   Todos los colores, tipografías y radios heredan de globals.css y experience.css. */
+
+.pageHeadMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.pageLead {
+  margin-top: 8px;
+  max-width: 72ch;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.exampleBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid #8a6b29;
+  border-radius: 6px;
+  background: #171510;
+  color: var(--ink);
+  font-size: 0.875rem;
+}
+
+.exampleBannerTitle {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.provenanceBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 16px;
+  padding: 10px 16px;
+  border: 1px solid var(--surface-2);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.provenanceItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.provenanceItem strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 10px;
+  border: 1px solid var(--surface-2);
+  border-radius: 999px;
+  background: var(--field);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pillFresh {
+  border-color: rgb(95 196 154 / 45%);
+  background: rgb(95 196 154 / 14%);
+  color: #5fc49a;
+}
+
+.pillWarning {
+  border-color: rgb(230 184 92 / 45%);
+  background: rgb(230 184 92 / 14%);
+  color: #e6b85c;
+}
+
+.pillDanger {
+  border-color: rgb(240 122 106 / 45%);
+  background: rgb(240 122 106 / 14%);
+  color: #f07a6a;
+}
+
+.pillMuted {
+  border-color: var(--surface-2);
+  background: var(--bg);
+  color: var(--muted);
+}
+
+/* Tira única dividida por líneas de 1 px (sin tarjetas KPI con icono ni sparklines). */
+.kpiStrip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  margin: 24px 0 0;
+  border: 1px solid var(--surface-2);
+  border-radius: 8px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.kpiCell {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 16px 20px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.kpiLabel {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.kpiValue {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-text), Georgia, serif;
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.kpiLeadValue {
+  margin: 0;
+  color: var(--accent);
+  font-family: var(--font-text), Georgia, serif;
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.kpiSub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.positiveText {
+  color: #5fc49a;
+}
+
+.negativeText {
+  color: #f07a6a;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.toolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.chipGroup {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--surface-2);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.chipButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.chipButton:hover {
+  color: var(--ink);
+}
+
+.chipButtonActive {
+  background: var(--surface-2);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.assetChecklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.assetCheckLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--surface-2);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.assetCheckLabel input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.panelHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+
+.panelMeta {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.splitGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+  align-items: start;
+}
+
+.splitGridEqual {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+  align-items: start;
+}
+
+.panelCard {
+  padding: 20px 24px;
+  border: 1px solid var(--surface-2);
+  border-radius: 8px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.panelCard h2,
+.panelCard h3 {
+  font-family: var(--font-text), Georgia, serif;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.errorSummary {
+  margin-top: 20px;
+  padding: 16px 20px;
+  border: 1px solid rgb(240 122 106 / 50%);
+  border-radius: 8px;
+  background: rgb(240 122 106 / 10%);
+  color: var(--ink);
+}
+
+.errorSummary:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.errorSummary h2 {
+  font-family: var(--font-text), Georgia, serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f07a6a;
+  margin: 0 0 8px;
+}
+
+.errorSummary ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.875rem;
+}
+
+.errorSummary a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.stateBox {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px dashed var(--surface-2);
+  border-radius: 8px;
+  background: var(--surface);
+  max-width: 72ch;
+}
+
+.stateBoxError {
+  border-style: solid;
+  border-color: rgb(240 122 106 / 45%);
+  background: rgb(240 122 106 / 10%);
+}
+
+.stateBoxWarning {
+  border-style: solid;
+  border-color: rgb(230 184 92 / 45%);
+  background: rgb(230 184 92 / 8%);
+}
+
+.stateBox h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-text), Georgia, serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.stateBox p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.stateBox p + p,
+.stateBox ul {
+  margin-top: 10px;
+}
+
+.stateBox ul {
+  padding-left: 18px;
+  color: var(--ink);
+  font-size: 0.875rem;
+  display: grid;
+  gap: 4px;
+}
+
+.stateActions {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Skeleton de carga plano sin gradientes ni desplazamiento vertical. */
+.skeletonStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.skeletonBar {
+  height: 24px;
+  border-radius: 4px;
+  background: var(--surface-2);
+}
+
+.skeletonChart {
+  height: 220px;
+  margin-top: 20px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+}
+
+/* Gráficos SVG */
+.chartFrame {
+  margin: 12px 0 0;
+}
+
+.chartLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-bottom: 10px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendSwatch {
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+}
+
+.legendDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.chartSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chartCaption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.chartDetails {
+  margin-top: 12px;
+  font-size: 0.875rem;
+}
+
+.chartDetails summary {
+  color: var(--muted);
+  cursor: pointer;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.matrixTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.matrixTable th,
+.matrixTable td {
+  padding: 10px 12px;
+  border: 1px solid var(--surface-2);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.matrixTable thead th {
+  color: var(--muted);
+  font-weight: 400;
+  text-align: right;
+  background: var(--bg);
+}
+
+.matrixTable tbody th {
+  color: var(--ink);
+  font-weight: 600;
+  text-align: left;
+  background: var(--bg);
+}
+
+.matrixCell {
+  text-align: right;
+}
+
+.matrixCellStrongPos {
+  background: rgb(95 196 154 / 16%);
+  color: var(--ink);
+}
+
+.matrixCellModPos {
+  background: rgb(45 79 140 / 26%);
+  color: var(--ink);
+}
+
+.matrixCellNeutral {
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.matrixCellNeg {
+  background: rgb(240 122 106 / 16%);
+  color: var(--ink);
+}
+
+.matrixCellDiag {
+  background: var(--field);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.matrixStrength {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.scenarioBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--surface-2);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.scenarioBarLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.scenarioLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--surface-2);
+  background: var(--bg);
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+}
+
+.scenarioLink:hover {
+  color: var(--ink);
+  border-color: var(--field-accent);
+}
+
+.scenarioLinkActive {
+  border-color: var(--accent);
+  background: var(--field);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.modalDialog {
+  max-width: 520px;
+  width: calc(100% - 32px);
+  margin: auto;
+  padding: 24px;
+  border: 1px solid var(--surface-2);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.75);
+}
+
+.modalDialog::backdrop {
+  background: rgba(8, 13, 25, 0.78);
+}
+
+.modalDialog h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-text), Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modalBody {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.formulaGrid {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.formulaItem {
+  padding: 16px;
+  border: 1px solid var(--surface-2);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.formulaHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.formulaCode {
+  display: block;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--surface-2);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875rem;
+  overflow-x: auto;
+}
+
+.subNavTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--surface-2);
+}
+
+.subNavTab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--surface-2);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.subNavTab:hover {
+  background: var(--surface-2);
+}
+
+@media (max-width: 1100px) {
+  .splitGrid,
+  .splitGridEqual {
+    grid-template-columns: 1fr;
+  }
+
+  .skeletonStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .kpiStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panelCard {
+    padding: 16px;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .skeletonStrip {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chipButton {
+    transition: none;
+  }
+}
