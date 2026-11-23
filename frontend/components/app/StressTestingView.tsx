@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { formatInteger, formatMoney, formatPercent, formatRatio } from "@/lib/formatters";
 import type { AdapterResult, ValidationIssue, ViewScenario } from "@/lib/modules/runtime";
 import type { StressRunSummary, StressTestingData } from "@/lib/modules/types";
@@ -171,6 +171,7 @@ export function StressTestingView({
   currentScenario: ViewScenario;
 }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const initialPreset =
     result.status === "ok"
       ? result.data.presets.find((p) => p.presetId === result.data.activePresetId) ?? result.data.presets[0]
@@ -232,7 +233,9 @@ export function StressTestingView({
       q.set("vol", String(volatilityMultiplier));
       q.set("corr", String(correlationShift));
       setCustomNotice(null);
-      router.push(`${basePath}?${q.toString()}`);
+      startTransition(() => {
+        router.push(`${basePath}?${q.toString()}`);
+      });
       return;
     }
     setCustomNotice(
@@ -324,8 +327,12 @@ export function StressTestingView({
                 />
               </label>
               <div className={styles.toolbarActions}>
-                <button type="submit" className="button button--small">
-                  {result.status === "ok" && !result.provenance.isExample ? "Simular choque" : "Validar choque"}
+                <button type="submit" className="button button--small" disabled={isPending} aria-busy={isPending}>
+                  {isPending
+                    ? "Simulando…"
+                    : result.status === "ok" && !result.provenance.isExample
+                      ? "Simular choque"
+                      : "Validar choque"}
                 </button>
               </div>
             </form>

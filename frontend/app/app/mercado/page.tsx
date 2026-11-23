@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SubmitButton } from "@/components/app/SubmitButton";
 import { backendFetch } from "@/lib/backend";
 import { requireUser } from "@/lib/guards";
 import { formatMoney, getCatalogAssets } from "@/lib/portfolios";
@@ -137,7 +138,9 @@ export default async function MarketPage({ searchParams }: {
           )}
           {list.value.can_request_refresh && assets.length > 0 && (
             <form action={requestMarketRefresh} className={styles.refresh}>
-              <button type="submit" className="button button--small button--quiet">Solicitar actualización</button>
+              <SubmitButton pendingLabel="Solicitando…" className="button button--small button--quiet">
+                Solicitar actualización
+              </SubmitButton>
               <p className="panel__help">La actualización se procesa en segundo plano.</p>
             </form>
           )}
@@ -153,7 +156,9 @@ export default async function MarketPage({ searchParams }: {
                     ))}
                   </select>
                 </label>
-                <button type="submit" className="button button--small">Seguir activo</button>
+                <SubmitButton pendingLabel="Agregando…" className="button button--small">
+                  Seguir activo
+                </SubmitButton>
               </form>
             )}
           {assets.length === 0 ? <p>Aún no sigues activos. Agrega uno del catálogo para consultar sus cierres.</p> : (
@@ -192,8 +197,13 @@ export default async function MarketPage({ searchParams }: {
                     <td>
                       <form action={updateWatchlist.bind(null, "DELETE")}>
                         <input type="hidden" name="asset_id" value={item.id} />
-                        <button type="submit" className="button button--small button--quiet"
-                          aria-label={`Dejar de seguir ${item.symbol}`}>Quitar</button>
+                        <SubmitButton
+                          pendingLabel="Quitando…"
+                          className="button button--small button--quiet"
+                          aria-label={`Dejar de seguir ${item.symbol}`}
+                        >
+                          Quitar
+                        </SubmitButton>
                       </form>
                     </td>
                   </tr>

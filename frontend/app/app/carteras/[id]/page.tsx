@@ -5,6 +5,7 @@ import { BackendError } from "@/lib/backend";
 import { requireUser } from "@/lib/guards";
 import { PortfolioHistoryChart } from "@/components/app/PortfolioHistoryChart";
 import { PortfolioSimulation } from "@/components/app/PortfolioSimulation";
+import { SubmitButton } from "@/components/app/SubmitButton";
 import {
   STATUS_LABELS,
   currencyNote,
@@ -180,9 +181,9 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
 
       <form action={deletePortfolio} className="pf-delete">
         <input type="hidden" name="id" value={portfolio.id} />
-        <button type="submit" className="button button--small button--quiet">
+        <SubmitButton pendingLabel="Borrando…" className="button button--small button--quiet">
           Borrar cartera
-        </button>
+        </SubmitButton>
       </form>
     </>
   );

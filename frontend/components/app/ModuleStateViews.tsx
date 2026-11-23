@@ -101,18 +101,20 @@ export function ErrorSummary({
 
 export function LoadingSkeletonPanel({ title }: { title: string }) {
   return (
-    <section className={styles.panelCard} aria-busy="true" aria-label={`Cargando ${title}`}>
+    <section className={styles.panelCard} role="status" aria-busy="true" aria-label={`Cargando ${title}`}>
       <div className={styles.panelHeader}>
         <h2>{title}</h2>
         <span className={styles.panelMeta}>Cargando resultados…</span>
       </div>
       <div className={styles.skeletonStrip} aria-hidden="true">
-        <div className={styles.skeletonBar} />
-        <div className={styles.skeletonBar} />
-        <div className={styles.skeletonBar} />
-        <div className={styles.skeletonBar} />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className={styles.skeletonKpiCell}>
+            <div className={`${styles.skeletonBlock} ${styles.skeletonBarShort}`} />
+            <div className={`${styles.skeletonBlock} ${styles.skeletonBar}`} />
+          </div>
+        ))}
       </div>
-      <div className={styles.skeletonChart} aria-hidden="true" />
+      <div className={`${styles.skeletonBlock} ${styles.skeletonChart}`} aria-hidden="true" />
     </section>
   );
 }

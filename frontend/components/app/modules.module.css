@@ -3,6 +3,7 @@
 
 .viewRoot {
   min-width: 0;
+  animation: moduleFadeIn 220ms var(--ease-expo) both;
 }
 
 .viewRoot h1.pageTitle {
@@ -127,6 +128,7 @@
   border-radius: 8px;
   background: var(--surface-2);
   overflow: hidden;
+  animation: moduleFadeIn 220ms var(--ease-expo) both;
 }
 
 .kpiCell {
@@ -216,17 +218,30 @@
   font: inherit;
   font-size: 0.875rem;
   cursor: pointer;
-  transition: background-color 160ms ease, color 160ms ease;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 120ms var(--ease-out);
 }
 
 .chipButton:hover {
   color: var(--ink);
+  background: rgb(255 255 255 / 4%);
+}
+
+.chipButton:active {
+  transform: scale(0.98);
 }
 
 .chipButtonActive {
   background: var(--surface-2);
   color: var(--accent);
   font-weight: 600;
+}
+
+.chipButtonActive:hover {
+  background: var(--surface-2);
+  color: var(--accent);
 }
 
 .assetChecklist {
@@ -248,6 +263,19 @@
   color: var(--ink);
   font-size: 0.875rem;
   cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 120ms var(--ease-out);
+}
+
+.assetCheckLabel:hover {
+  border-color: var(--field-accent);
+  background: var(--surface);
+}
+
+.assetCheckLabel:active {
+  transform: scale(0.98);
 }
 
 .assetCheckLabel input {
@@ -311,6 +339,7 @@
   border-radius: 8px;
   background: rgb(240 122 106 / 10%);
   color: var(--ink);
+  animation: moduleFadeIn 200ms var(--ease-expo) both;
 }
 
 .errorSummary:focus {
@@ -347,6 +376,7 @@
   border-radius: 8px;
   background: var(--surface);
   max-width: 72ch;
+  animation: moduleFadeIn 220ms var(--ease-expo) both;
 }
 
 .stateBoxError {
@@ -396,25 +426,184 @@
   gap: 12px;
 }
 
-/* Skeleton de carga plano sin gradientes ni desplazamiento vertical. */
+/* Skeletons estructurales con shimmer GPU sobre paleta del proyecto. */
+@keyframes moduleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes moduleFadeOnly {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.skeletonBlock {
+  border-radius: 6px;
+  background-color: var(--surface-2);
+  background-image: linear-gradient(90deg, var(--surface-2) 0%, var(--field) 50%, var(--surface-2) 100%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1600ms ease-in-out infinite;
+}
+
+.skeletonHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.skeletonHeadText {
+  display: grid;
+  gap: 10px;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.skeletonTitle {
+  width: min(360px, 72%);
+  height: 30px;
+}
+
+.skeletonSubtitle {
+  width: min(540px, 90%);
+  height: 16px;
+}
+
+.skeletonActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.skeletonButton {
+  width: 132px;
+  height: 40px;
+  border-radius: 999px;
+}
+
+.skeletonPanelTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.skeletonProvenance {
+  height: 40px;
+  margin-top: 16px;
+}
+
+.skeletonKpiGrid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 24px;
+  border: 1px solid var(--surface-2);
+  border-radius: 8px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.skeletonKpiGrid4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 24px;
+  border: 1px solid var(--surface-2);
+  border-radius: 8px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.skeletonKpiCell {
+  display: grid;
+  gap: 10px;
+  padding: 16px 20px;
+  background: var(--surface);
+}
+
+.skeletonKpiNum {
+  width: 56%;
+  height: 28px;
+}
+
+.skeletonToolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  align-items: center;
+}
+
+.skeletonControl {
+  height: 40px;
+}
+
+.skeletonTable {
+  display: grid;
+  gap: 12px;
+}
+
+.skeletonTableRow {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 0.7fr;
+  gap: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--surface-2);
+}
+
 .skeletonStrip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 .skeletonBar {
-  height: 24px;
+  height: 18px;
   border-radius: 4px;
-  background: var(--surface-2);
+}
+
+.skeletonBarShort {
+  width: 96px;
+  height: 14px;
+  border-radius: 4px;
 }
 
 .skeletonChart {
   height: 220px;
   margin-top: 20px;
   border-radius: 8px;
-  background: var(--surface);
+  border: 1px solid var(--surface-2);
+}
+
+.skeletonChartTall {
+  height: 240px;
+  margin-top: 12px;
+  border-radius: 8px;
   border: 1px solid var(--surface-2);
 }
 
@@ -475,6 +664,11 @@
   min-height: 36px;
   display: inline-flex;
   align-items: center;
+  transition: color 160ms ease;
+}
+
+.chartDetails summary:hover {
+  color: var(--ink);
 }
 
 .matrixTable {
@@ -551,6 +745,18 @@
   font: inherit;
   text-align: right;
   cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 120ms var(--ease-out);
+}
+
+.matrixButton:hover {
+  border-color: var(--field-accent);
+}
+
+.matrixButton:active {
+  transform: scale(0.98);
 }
 
 .matrixButtonSelected {
@@ -588,11 +794,20 @@
   color: var(--muted);
   text-decoration: none;
   font-size: 0.8125rem;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 120ms var(--ease-out);
 }
 
 .scenarioLink:hover {
   color: var(--ink);
   border-color: var(--field-accent);
+}
+
+.scenarioLink:active {
+  transform: scale(0.98);
 }
 
 .scenarioLinkActive {
@@ -614,8 +829,16 @@
   box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.75);
 }
 
+.modalDialog[open] {
+  animation: modalEnter 200ms var(--ease-expo) both;
+}
+
 .modalDialog::backdrop {
   background: rgba(8, 13, 25, 0.78);
+}
+
+.modalDialog[open]::backdrop {
+  animation: moduleFadeOnly 180ms ease both;
 }
 
 .modalDialog h2 {
@@ -687,10 +910,19 @@
   color: var(--ink);
   text-decoration: none;
   font-size: 0.875rem;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 120ms var(--ease-out);
 }
 
 .subNavTab:hover {
   background: var(--surface-2);
+  border-color: var(--field-accent);
+}
+
+.subNavTab:active {
+  transform: scale(0.98);
 }
 
 @media (max-width: 1100px) {
@@ -699,13 +931,16 @@
     grid-template-columns: 1fr;
   }
 
-  .skeletonStrip {
+  .skeletonStrip,
+  .skeletonKpiGrid4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 760px) {
-  .kpiStrip {
+  .kpiStrip,
+  .skeletonKpiGrid3,
+  .skeletonKpiGrid4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -713,17 +948,48 @@
     padding: 16px;
   }
 
-  .toolbar {
+  .toolbar,
+  .skeletonToolbar {
     grid-template-columns: 1fr;
   }
 
   .skeletonStrip {
     grid-template-columns: 1fr;
   }
+
+  .skeletonTableRow {
+    grid-template-columns: 1fr 0.8fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chipButton {
+  .viewRoot,
+  .kpiStrip,
+  .errorSummary,
+  .stateBox,
+  .modalDialog[open] {
+    animation: moduleFadeOnly 120ms ease both;
+  }
+
+  .skeletonBlock {
+    animation: none;
+    background-image: none;
+  }
+
+  .chipButton,
+  .assetCheckLabel,
+  .matrixButton,
+  .scenarioLink,
+  .subNavTab,
+  .chartDetails summary {
     transition: none;
+  }
+
+  .chipButton:active,
+  .assetCheckLabel:active,
+  .matrixButton:active,
+  .scenarioLink:active,
+  .subNavTab:active {
+    transform: none;
   }
 }

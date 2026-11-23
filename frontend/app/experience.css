@@ -21,9 +21,36 @@
 :focus-visible { outline: 2px solid #e2b04a; outline-offset: 3px; }
 html { scrollbar-color: #2d4f8c #080d19; }
 
-.button { border-radius: 999px; }
-.button:hover { transform: translateY(-2px); }
-.button:active { transform: translateY(0); }
+.button {
+  gap: 8px;
+  border-radius: 999px;
+  transition:
+    transform 120ms var(--ease-out),
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease;
+}
+.button:hover:not(:disabled) { transform: translateY(-1px); }
+.button:active:not(:disabled) { transform: translateY(0.5px) scale(0.98); }
+.button:disabled { transform: none; opacity: 0.72; }
+.button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.button[aria-busy="true"] { cursor: progress; }
+.button[aria-busy="true"]::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  animation: ml-spin 700ms linear infinite;
+  flex: none;
+}
+
+button.link {
+  transition: color 180ms ease, text-decoration-color 180ms ease, transform 120ms var(--ease-out);
+}
+button.link:active:not(:disabled) { transform: scale(0.98); }
 
 /* La portada es un solo campo marino continuo: la moneda queda delante de las
    trayectorias simuladas, no dentro de una tarjeta aparte. Un resplandor azul detrás
@@ -111,10 +138,23 @@ html { scrollbar-color: #2d4f8c #080d19; }
 /* Working surfaces retain their familiar layout and emphasize states. */
 .shell { background: var(--bg); }
 .shell__top { padding-bottom: 20px; border-color: #1f2c47; }
-.shell__link { border-radius: 999px; transition: color 180ms ease, background-color 180ms ease; }
+.shell__link {
+  border-radius: 999px;
+  transition: color 180ms ease, background-color 180ms ease, transform 120ms var(--ease-out);
+}
+.shell__link:active { transform: scale(0.98); }
 .shell__link[aria-current="page"] { color: #f3d58f; background: #1c2a47; }
 .shell__main { max-width: 1240px; }
-.shell__main input, .shell__main select, .shell__main textarea { border-radius: 6px; }
+.shell__main input, .shell__main select, .shell__main textarea {
+  border-radius: 6px;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+.shell__main .panel,
+.notice,
+.sim-result,
+.empty {
+  animation: ml-fade-in-up 220ms var(--ease-expo) both;
+}
 
 @media (max-width: 760px) {
   .hero { display: grid; min-height: auto; padding-inline: 20px; }
@@ -149,8 +189,51 @@ html { scrollbar-color: #2d4f8c #080d19; }
   }
 }
 
+@keyframes ml-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ml-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ml-fade-only {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ml-pulse-opacity {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .button, .photo, .shell__link { transition: none; }
-  .button:hover, .tile--photo:hover .photo { transform: none; }
+  .button, .photo, .shell__link, button.link, .shell__main input, .shell__main select, .shell__main textarea {
+    transition: none;
+  }
+  .button:hover:not(:disabled),
+  .button:active:not(:disabled),
+  .shell__link:active,
+  button.link:active:not(:disabled),
+  .tile--photo:hover .photo {
+    transform: none;
+  }
+  .button[aria-busy="true"]::before {
+    animation: ml-pulse-opacity 1200ms ease-in-out infinite;
+    border-right-color: currentColor;
+  }
+  .shell__main .panel,
+  .notice,
+  .sim-result,
+  .empty {
+    animation: ml-fade-only 120ms ease both;
+  }
 }
