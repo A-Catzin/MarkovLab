@@ -2,6 +2,11 @@ FROM julia:1.12.7
 
 WORKDIR /app
 
+# SCIP loads libformw.so.6 from the operating system during Julia precompilation.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libncursesw6 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Código precompilado para cualquier procesador x86-64, no solo para el de la máquina que
 # construye la imagen. Railway construye en una máquina y corre en otra: sin esto, Julia
 # descarta el caché al arrancar y recompila todo (varios minutos y mucha memoria), y el

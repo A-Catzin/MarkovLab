@@ -14,6 +14,7 @@ Guarda la cadena de conexión de PostgreSQL como `DATABASE_URL` en Railway. Seg�
 
 1. Crea un proyecto y un servicio desde el repositorio. Selecciona la rama y configura **Root Directory** como `/backend`.
 2. Railway debe detectar `backend/Dockerfile`. El contenedor instala las dependencias, precompila el paquete y arranca `scripts/serve.jl`. La imagen pesa unos 2 GB y se construyó en 1 min 38 s en local (2026-11-19).
+   - **SCIP:** la imagen instala `libncursesw6` antes de precompilar Julia. Si un build limpio falla al cargar `libformw.so.6`, comprueba que Railway esté construyendo el commit que contiene ese paso. Para validar el arreglo, reconstruye sin caché y prueba `/health` y una optimización de máximo Sharpe.
    - **Procesador:** el Dockerfile fija `JULIA_CPU_TARGET` para que el código precompilado sirva en cualquier procesador x86-64. Railway construye la imagen en una máquina y la corre en otra; sin esto, Julia descartaba el caché y recompilaba todo al arrancar (`Precompiling packages...` en los Deploy Logs), el servidor no llegaba a escuchar y Railway respondía **502 en milisegundos** (2026-11-19). Si vuelve a aparecer `Precompiling packages...` al arrancar, el caché no se está usando.
    - **Arranque en frío:** al precompilar, `src/precompile.jl` recorre una vez las rutas principales con datos en memoria, y el código compilado queda en la imagen. Al arrancar, después de conectarse a la base, el servidor corre una vez las lecturas de PostgreSQL (`warm_database`). Medido en local con Supabase, la primera petición tras arrancar bajó de 2.7 s a 1.2 s en la historia y de 2.4 s a 1.3 s al simular; el frontend corta a los 10 s.
 3. Agrega estas variables al servicio:
@@ -56,7 +57,36 @@ Las URLs de preview pueden diferir de la URL de producción: configúralas expl�
 - [ ] Las rutas y funciones públicas se han revisado antes de exponer el backend. CORS no es autenticación ni impide llamadas directas a la API.
 - [ ] Hay respaldos, controles de acceso y presupuesto de consumo para Vercel, Railway, Supabase y Google.
 
-La actualización de precios desde Apify es una tarea separada; desplegar la API no programa su ejecución. Consulta `PRECIOS_API.md` para configurar la sincronización.
+La actualización de precios desde Apify es una tarea separada; desplegar la API no programa su ejecución. Se configura en la sección 5.
+
+## 5. Actualización diaria de precios (Cron Job en Railway)
+
+Un **segundo servicio** de Railway, separado de la API, construido con el mismo repositorio y la misma imagen. No queda encendido: Railway lo arranca a la hora indicada, corre `sync_prices.jl --catalogo` (precios de todo el catálogo y tipos de cambio) y se apaga. Si falla, la API no se entera.
+
+1. En el proyecto de Railway: **New → GitHub Repo** → el mismo repositorio. Ponle un nombre como `markovlab-actualizacion`.
+2. **Settings** del servicio nuevo:
+
+   | Opción | Valor |
+   |---|---|
+   | Root Directory | `/backend` (usa el mismo `Dockerfile`) |
+   | Custom Start Command | `julia --project=. scripts/sync_prices.jl --catalogo` |
+   | Cron Schedule | `0 6 * * 2-6` |
+   | Restart Policy | Never |
+   | Networking | Sin dominio público: no recibe peticiones. |
+
+3. **Variables:** solo `DATABASE_URL` y `APIFY_TOKEN`. Plantilla en `despliegue/railway-cron.env.plantilla`.
+
+**Por qué ese horario.** `0 6 * * 2-6` es de martes a sábado a las 06:00 UTC (medianoche en la Ciudad de México). El script nunca guarda el día en curso y trae hasta "ayer" en UTC; después de medianoche UTC, el día que acaba de cerrar en EE. UU. y en la BMV ya es "ayer". De martes a sábado cubre los cierres de lunes a viernes. Un feriado no rompe nada: ese día simplemente no trae precios.
+
+**El horario no va en un `railway.json`:** la API y la actualización usan la misma carpeta `/backend`, y el archivo aplicaría el cron y el comando a los dos servicios.
+
+**Cómo saber si funcionó.** En el historial de ejecuciones del servicio, cada corrida termina con código 0 (todo guardado o al día) o 1 (algún símbolo falló; el motivo queda en `/admin/importaciones`). La salida lista cada símbolo (`AAPL completa 1 nuevos…`) y los tipos de cambio.
+
+**Costo.** 31 activos y 2 divisas son unos $0.017 por corrida, cerca de **$0.37 al mes**, dentro de los $5 gratis de Apify. Una corrida sin nada nuevo no consulta Apify.
+
+Comprobado el 2026-11-19:
+- **Puesta al día desde local:** `--catalogo` trajo 9 días nuevos de cada activo de EE. UU. y 8 de la BMV (el 16 de noviembre es feriado en México), más el tipo de cambio del 18. Todo quedó al 2026-11-18. Tardó 2 min y salió con código 0.
+- **Dentro de la imagen de Docker,** como lo corre el cron: todo "al día", ninguna consulta a Apify, código 0, en 13 s y sin recompilar (cero líneas `Precompiling`).
 
 ## Probar el contenedor localmente
 
