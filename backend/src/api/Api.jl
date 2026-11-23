@@ -7,6 +7,7 @@ module Api
 
 using Oxygen; @oxidize
 using HTTP
+using Dates: Date, @dateformat_str, year
 import LibPQ
 using ..MarkovLabBackend: MarkovLabBackend, InsufficientDataError, MissingExchangeRateError, Portfolio, analyze_prices, run_monte_carlo,
                           DEFAULT_SIMULATIONS, DEFAULT_HORIZON, DEFAULT_CONFIDENCE,
@@ -19,7 +20,7 @@ using ..MarkovLabBackend: MarkovLabBackend, InsufficientDataError, MissingExchan
                           require_user, user_portfolio_history, SimulationRepository, SavedSimulation,
                           PostgresSimulationRepository, simulate_user_portfolio, list_user_simulations,
                           WatchlistRepository, PostgresWatchlist, watched_assets, follow_asset, unfollow_asset,
-                          is_followed, price_history, queue_market_refresh!
+                          is_followed, price_history, queue_market_refresh!, analyze_assets
 
 const SERVICE_NAME = "markovlab-backend"
 const DEFAULT_ALLOWED_ORIGINS = "http://localhost:3000"
@@ -60,6 +61,7 @@ include("errors.jl")
 include("cors.jl")
 include("routes.jl")
 include("watchlist.jl")
+include("asset_analysis.jl")
 
 """
     warm_database(users, prices, portfolios, simulations)

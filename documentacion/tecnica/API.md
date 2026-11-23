@@ -90,6 +90,74 @@ Métricas principales de una serie de precios (RF-15, RF-16, RF-20).
 
 `annualized_volatility` es `null` si no se envía `periods_per_year`. Definiciones en [`METRICAS_DOMINIO.md`](METRICAS_DOMINIO.md).
 
+### `POST /api/internal/analysis/assets` (B2, RF-15 a RF-20)
+
+Requiere `X-Internal-Key` y `X-Actor-Id`. No usa query ni acepta precios del
+cliente: consulta los cierres almacenados del catálogo (`GET /api/internal/assets`).
+Cuerpo JSON:
+
+```json
+{
+  "symbols": ["AAPL", "MSFT"],
+  "period": "custom",
+  "from": "2024-06-03",
+  "to": "2024-06-07",
+  "return_kind": "simple"
+}
+```
+
+- `symbols` contiene de 1 a 12 símbolos de catálogo distintos, de hasta 64 caracteres;
+  se normalizan a mayúsculas y se conserva el orden. No se acepta un símbolo que
+  identifique varios mercados.
+- `period`: `3M`, `6M`, `1A` (por defecto), `3A` o `custom`. Para
+  `custom`, `from` y `to` son fechas ISO inclusivas; `from < to` y máximo
+  20 años. Los preajustes omiten ambas fechas y terminan el día anterior en UTC.
+- `return_kind`: `simple` (por defecto) o `log`. Determina la media,
+  volatilidad y correlación. Los rendimientos totales se devuelven en ambas
+  convenciones; el acumulado compuesto siempre usa rendimientos simples.
+
+**200:** ejemplo para una consulta de un activo con dos cierres comunes:
+
+```json
+{
+  "selected_symbols": ["AAPL"],
+  "period_preset": "custom",
+  "return_kind": "simple",
+  "requested_from": "2024-06-03",
+  "requested_to": "2024-06-04",
+  "effective_from": "2024-06-03",
+  "effective_to": "2024-06-04",
+  "aligned_observations": 2,
+  "annualization_factor": 252,
+  "per_asset_metrics": [{
+    "asset_id": 1, "symbol": "AAPL", "name": "Apple", "currency": "USD",
+    "observations": 2, "effective_from": "2024-06-03", "effective_to": "2024-06-04",
+    "simple_return": 0.10, "log_return": 0.09531018, "cumulative_return": 0.10,
+    "mean_return_daily": 0.10, "volatility_daily": null, "volatility_annualized": null,
+    "max_drawdown": 0, "peak_date": "2024-06-03", "trough_date": "2024-06-03"
+  }],
+  "series_aligned": [{"symbol": "AAPL", "points": [["2024-06-03", 100], ["2024-06-04", 110]]}],
+  "correlation_symbols": ["AAPL"],
+  "correlation_matrix": [[null]]
+}
+```
+
+Se usan solo fechas con cierre de todos los símbolos, sin interpolar ni arrastrar
+cierres. Las series están en base 100 y los rendimientos se calculan en la moneda
+de cotización, sin conversión. Los campos `*_daily` miden intervalos entre
+cierres comunes; esos intervalos pueden abarcar varios días. La anualización
+usa `sqrt(252)` como aproximación. Con solo dos cierres comunes hay un retorno:
+volatilidad y Pearson son nulos. La matriz también usa `null` para pares sin
+varianza; las correlaciones definidas tienen diagonal 1. Si no hubo caída,
+las fechas de pico y valle coinciden.
+
+- **400** `invalid_input` o `invalid_json`: parámetros, fechas o símbolos inválidos.
+- **401** `unauthorized`: clave interna ausente o incorrecta.
+- **403** `forbidden`: actor ausente o desconocido.
+- **422** `insufficient_data`: menos de dos cierres comunes. Incluye
+  `required_sessions: 2` y `observed_sessions`, además de `error` y `message`.
+- **503** `not_configured` o `database_unavailable`: servicio o base no disponibles.
+
 ### `POST /api/risk/monte-carlo`
 
 Simulación Monte Carlo de una cartera con VaR y CVaR (RF-41 a RF-44, RF-48). Estima rendimientos esperados y covarianza a partir de los precios enviados.
