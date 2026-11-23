@@ -4,16 +4,18 @@ import { AppShell } from "@/components/app/AppShell";
 import { AssetAnalysisView } from "@/components/app/AssetAnalysisView";
 import { MarketOriginPreview } from "@/components/app/MarketOriginPreview";
 import { ExampleDataBanner, LoadingSkeletonPanel, ModuleStatePanel, ScenarioBar } from "@/components/app/ModuleStateViews";
+import { OptimizationView } from "@/components/app/OptimizationView";
 import { PortfolioForm } from "@/components/app/PortfolioForm";
 import { PortfolioVersionsPanel } from "@/components/app/PortfolioVersionsPanel";
 import { StressTestingView } from "@/components/app/StressTestingView";
 import styles from "@/components/app/modules.module.css";
 import { loadAssetAnalysisView } from "@/lib/modules/adapters/asset-analysis.server";
+import { loadOptimizationView } from "@/lib/modules/adapters/optimization.server";
 import { loadPortfolioEditView } from "@/lib/modules/adapters/portfolio-edit.server";
 import { loadStressTestingView } from "@/lib/modules/adapters/stress.server";
 import { buildMarketOriginFixture } from "@/lib/modules/fixtures/market-origin.fixture";
 import { isLocalFixturesEnabled, MODULE_REGISTRY, parseScenario, type ViewScenario } from "@/lib/modules/runtime";
-import type { PeriodPreset, ReturnKind } from "@/lib/modules/types";
+import type { OptimizationObjective, PeriodPreset, ReturnKind } from "@/lib/modules/types";
 import { DEV_PREVIEW_NAV } from "../page";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +44,7 @@ export default async function DevModulePreviewPage({
     retorno?: string;
     desde?: string;
     hasta?: string;
+    objetivo?: string;
   }>;
 }) {
   if (process.env.NODE_ENV === "production" || !isLocalFixturesEnabled()) {
@@ -143,6 +146,21 @@ export default async function DevModulePreviewPage({
         result={stressResult}
         basePath="/dev/vistas/estres"
         currentScenario={scenario}
+      />
+    );
+  } else if (modulo === "optimizacion") {
+    const objective: OptimizationObjective = q.objetivo === "min_variance" ? "min_variance" : "max_sharpe";
+    const optResult = await loadOptimizationView({
+      actorId: "dev-preview",
+      objective,
+      scenario,
+    });
+    content = (
+      <OptimizationView
+        result={optResult}
+        basePath="/dev/vistas/optimizacion"
+        currentScenario={scenario}
+        initialObjective={objective}
       />
     );
   } else {
