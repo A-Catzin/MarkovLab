@@ -211,14 +211,11 @@ export const MODULE_REGISTRY: readonly ModuleRegistryItem[] = [
     srsRefs: "RF-49 a RF-53",
     appHref: "/app/backtesting",
     devHref: "/dev/vistas/backtesting",
-    deliveryState: "pantalla con datos de prueba",
-    backendDependency: "B7 · pendiente de API",
+    deliveryState: "integrado con API",
+    backendDependency: "B7 · conectado (POST y GET /api/internal/portfolios/{id}/backtests)",
     summary: "Evaluación histórica fuera de muestra separada de la configuración, benchmark opcional e historial guardado.",
     pendingFields: [
-      "POST / GET /api/internal/backtests",
-      "request: { strategy_id, config_from, config_to, eval_from, eval_to, rebalance, benchmark_symbol? }",
-      "response: { run_id, assumptions, eval_metrics, benchmark_metrics?, curve_points[], history[] }",
-      "error 400 overlapping_windows cuando config_to >= eval_from",
+      "POST y GET /api/internal/portfolios/{id}/backtests conectados en backtesting.server.ts y acciones",
     ],
   },
   {

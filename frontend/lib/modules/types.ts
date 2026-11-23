@@ -257,6 +257,10 @@ export interface PredictionData {
   series: PredictionSeriesPoint[];
 }
 
+export type BacktestStrategyId = "manual" | "min_variance" | "max_sharpe";
+
+export type BacktestRebalanceFrequency = "none" | "monthly" | "quarterly" | "semiannual";
+
 export interface BacktestCurvePoint {
   date: string;
   phase: "config" | "evaluation";
@@ -269,19 +273,40 @@ export interface BacktestMetricsBlock {
   annualizedReturn: number;
   annualizedVolatility: number;
   maxDrawdown: number;
-  sharpeRatio: number;
+  sharpeRatio: number | null;
+}
+
+export interface BacktestWeightRow {
+  assetId: number;
+  symbol: string;
+  market: string;
+  manualWeight: number;
+  targetWeight: number;
 }
 
 export interface BacktestRunRecord {
   id: string;
+  portfolioId?: string;
+  portfolioVersion?: number;
+  portfolioName?: string;
+  currency?: string;
+  model?: string;
+  strategy?: BacktestStrategyId;
   strategyName: string;
+  rebalance?: BacktestRebalanceFrequency;
   rebalanceLabel: string;
+  benchmarkAssetId?: number | null;
   benchmarkSymbol: string | null;
+  benchmarkCurrency?: string | null;
   configFrom: string;
   configTo: string;
   evalFrom: string;
   evalTo: string;
+  configurationWindow?: { from: string; to: string; observations: number };
+  evaluationWindow?: { from: string; to: string; observations: number };
   transactionCostBps: number;
+  riskFreeRate?: number;
+  weights?: BacktestWeightRow[];
   strategyMetrics: BacktestMetricsBlock;
   benchmarkMetrics: BacktestMetricsBlock | null;
   executedAt: string;
@@ -289,10 +314,14 @@ export interface BacktestRunRecord {
 }
 
 export interface BacktestingData {
+  portfolioId?: string;
+  portfolioName?: string;
+  portfolioCurrency?: string;
+  availablePortfolios?: { id: string; name: string; currency: string }[];
   strategies: { id: string; name: string; description: string }[];
-  benchmarks: { symbol: string; label: string }[];
+  benchmarks: { id?: number | null; symbol: string; label: string }[];
   runs: BacktestRunRecord[];
-  activeRunId: string;
+  activeRunId: string | null;
 }
 
 export interface DashboardModuleSummary {

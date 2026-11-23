@@ -91,7 +91,7 @@ export async function loadDashboardOverview(params: {
       freshness: "fresh",
       isExample: false,
       calculatedAt: new Date().toISOString().slice(0, 10),
-      assumptions: "Módulos F1–F5 integrados con API B1–B6; F6–F7 muestran estado honesto hasta completar B7–B8",
+      assumptions: "Módulos F1–F6 integrados con API B1–B7; F7 muestra estado honesto hasta completar B8",
     },
   };
 }
