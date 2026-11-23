@@ -11,13 +11,14 @@ struct InMemoryPortfolioRepository <: PortfolioRepository
     versions::Dict{String,Vector{Dict{String,Any}}}
     parents::Dict{String,String}
     version_dates::Dict{String,String}
+    optimizations::Dict{String,Vector{NamedTuple}}
     lock::ReentrantLock
 end
 
 InMemoryPortfolioRepository(prices::InMemoryPriceRepository) =
     InMemoryPortfolioRepository(prices, Dict{String,String}(), SavedPortfolio[],
                                 Dict{String,Vector{Dict{String,Any}}}(), Dict{String,String}(),
-                                Dict{String,String}(), ReentrantLock())
+                                Dict{String,String}(), Dict{String,Vector{NamedTuple}}(), ReentrantLock())
 
 function memory_portfolio_positions(portfolios, draft)
     catalog = Dict(asset.id => (symbol=symbol, market=market, name=asset.details.name,
@@ -63,6 +64,7 @@ function delete_portfolio(portfolios::InMemoryPortfolioRepository, user_id, id)
         delete!(portfolios.versions, id)
         delete!(portfolios.parents, id)
         delete!(portfolios.version_dates, id)
+        delete!(portfolios.optimizations, id)
         deleteat!(portfolios.saved, index)
         return true
     end

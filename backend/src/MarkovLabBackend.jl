@@ -5,11 +5,15 @@ import HTTP
 import JSON
 import LibPQ
 import Random
+import HiGHS
+import JuMP
+import SCIP
 
 include("domain/errors.jl")
 include("domain/metrics.jl")
 include("domain/prices.jl")
 include("domain/portfolio.jl")
+include("domain/portfolio_optimization.jl")
 include("domain/simulation.jl")
 include("domain/users.jl")
 include("domain/assets.jl")
@@ -30,6 +34,7 @@ include("infrastructure/postgres_prices.jl")
 include("infrastructure/postgres_portfolios.jl")
 include("infrastructure/portfolio_versions.jl")
 include("infrastructure/postgres_simulations.jl")
+include("infrastructure/portfolio_optimizations.jl")
 include("infrastructure/watchlist.jl")
 include("infrastructure/watchlist_refresh.jl")
 include("infrastructure/apify_market_data.jl")
@@ -44,6 +49,7 @@ include("services/market_sync.jl")
 include("services/watchlist_refresh.jl")
 include("services/portfolio_simulations.jl")
 include("services/portfolio_stress.jl")
+include("services/portfolio_optimizations.jl")
 include("api/Api.jl")
 
 export InsufficientDataError

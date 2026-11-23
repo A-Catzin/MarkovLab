@@ -21,7 +21,8 @@ Sin el `.env` cargado, el servidor arranca igual pero con `database = false` e `
 ## Interface
 
 - **Manifiesto del paquete (`Project.toml`)**:
-  - Paquete `MarkovLabBackend` (`uuid = "a52f9f0b-3d56-471b-a712-a3e35b4c8cf2"`, `version = "0.1.0"`) con dependencias `Dates`, `HTTP`, `JSON`, `LibPQ`, `Oxygen` y `Random` (`[Project.toml:name]`, `[Project.toml:deps]`).
+  - Paquete `MarkovLabBackend` (`uuid = "a52f9f0b-3d56-471b-a712-a3e35b4c8cf2"`, `version = "0.1.0"`) con dependencias `Dates`, `HTTP`, `HiGHS`, `JSON`, `JuMP`, `LibPQ`, `Oxygen`, `Random` y `SCIP` (`[Project.toml:name]`, `[Project.toml:deps]`).
+- **Optimización (B5, motor interno)**: JuMP y HiGHS resuelven la mínima varianza con pesos no negativos, cotas por activo y suma igual a 1. SCIP maximiza el ratio de Sharpe con signo, con el mismo tope opcional. Si la mínima volatilidad alcanzable es cero, el cálculo de Sharpe excluye volatilidades por debajo del 0,01 % de la menor entre la máxima volatilidad individual y el tope, para no dividir por cero; no se devuelve una solución si el solver agota el límite de 10 segundos sin certificar el óptimo. El motor distingue cotas incompatibles de un fallo del solver e informa la volatilidad mínima si un tope no puede cumplirse. Esta unidad no expone una ruta HTTP ni escribe en la base de datos.
 - **Contenedor (`Dockerfile`)**:
   - Imagen basada en `julia:1.12.7` que instala dependencias, ejecuta la precompilación (`src/precompile.jl`) e inicia `scripts/serve.jl`.
 - **Subdirectorios y contratos**:

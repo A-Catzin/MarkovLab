@@ -296,6 +296,79 @@ o `database_unavailable`. Las escrituras fallidas no crean versiones parciales.
 Aplicar la migración `0006_versiones_cartera.sql` antes de usar estas rutas
 en producción; la migración agrega una tabla y no reescribe carteras existentes.
 
+### Optimización de carteras (B5, RF-34 a RF-40)
+
+Requiere `X-Internal-Key`, `X-Actor-Id` de un usuario existente y la migración
+`0007_optimizaciones_cartera.sql`. Solo el propietario puede crear y consultar
+optimizaciones. Ninguna operación modifica los pesos de la cartera.
+
+| Método y ruta | Entrada | Resultado |
+|---|---|---|
+| `POST /api/internal/portfolios/{id}/optimizations` | JSON que se describe abajo. No usa query. | **201**, ejecución nueva guardada. |
+| `GET /api/internal/portfolios/{id}/optimizations` | Sin cuerpo ni query. | **200**, `{"optimizations":[ejecución, ...]}`, hasta 20, más nuevas primero. |
+
+Ejemplo de solicitud:
+
+```json
+{
+  "objective": "min_variance",
+  "bounds": [{"asset_id": 17, "min_weight": 0.1, "max_weight": 0.6}],
+  "lookback_years": 5,
+  "risk_free_rate": 0.02,
+  "max_volatility": 0.30
+}
+```
+
+- `objective` es obligatorio: `"min_variance"` o `"max_sharpe"`.
+- Los límites son fracciones entre 0 y 1; solo se admiten activos de la cartera,
+  sin repetidos. Si un activo no aparece en `bounds`, se aplica [0, 1].
+  Los pesos optimizados suman 1. `lookback_years` va de 1 a 20, por defecto 5.
+- La tasa libre de riesgo efectiva del modelo es una fracción anual entre −1 y 1,
+  por defecto 0. `max_volatility` es una fracción anual no negativa; se puede omitir.
+- Se usan hasta los años solicitados desde la última fecha común, con un mínimo de
+  60 cierres comunes, sin rellenar. Los precios se convierten a la moneda de la
+  cartera. Las medias aritméticas y la covarianza muestral de rendimientos simples
+  diarios se multiplican por 252 para anualizarlas.
+
+Ejemplo de ejecución (un activo):
+
+```json
+{
+  "id": "1bd7c2c0-a264-4fa0-8325-c31e7aaf2b4b",
+  "created_at": "2026-11-22T18:00:00Z",
+  "portfolio_id": "25e0791a-5c39-43af-b0c6-c715b344fd8c",
+  "portfolio_version": 1, "portfolio_name": "Ejemplo",
+  "capital": 1000.0, "currency": "USD", "start_date": "2024-01-02",
+  "objective": "min_variance", "objective_value": 0.04,
+  "return_model": "daily_simple_arithmetic_v1", "periods_per_year": 252,
+  "risk_free_rate": 0.02, "lookback_years": 5, "max_volatility": null,
+  "feasible_min_volatility": 0.2,
+  "window": {"from": "2024-01-02", "to": "2024-04-02"}, "observations": 63,
+  "weights": [{"asset_id":17,"symbol":"AAA","name":"AAA","market":"NYSE","asset_currency":"USD",
+               "manual_weight":1.0,"optimized_weight":1.0,"min_weight":0.0,"max_weight":1.0}],
+  "manual_stats": {"expected_annual_return":0.1,"annualized_volatility":0.2,"sharpe_ratio":0.4},
+  "optimized_stats": {"expected_annual_return":0.1,"annualized_volatility":0.2,"sharpe_ratio":0.4},
+  "inputs": {"annual_mean_returns":[0.1],"annual_covariance":[[0.04]]},
+  "solver": "HiGHS", "solver_wrapper_version": "1.27.0"
+}
+```
+
+`objective_value` es varianza anual o Sharpe con signo, según el objetivo.
+Las medias y filas y columnas de la covarianza siguen el orden de `weights`. La
+versión y sus pesos se capturan juntos; los insumos y el resultado no cambian cuando
+se actualiza la cartera o se cargan precios nuevos. Borrar la cartera borra sus ejecuciones.
+El Sharpe individual de una asignación sin volatilidad es `null`.
+
+| HTTP | Código y significado |
+|---|---|
+| 400 | `invalid_json` o `invalid_input`: cuerpo o parámetros inválidos. |
+| 401 / 403 | `unauthorized` o `forbidden`: clave inválida o actor inexistente. |
+| 404 | `not_found`: cartera inexistente o de otro actor. |
+| 422 | `optimization_infeasible`: `details.reason` es `minimum_weights_exceed_one`, `maximum_weights_below_one` o `volatility_cap_below_minimum`; `details.minimum_volatility` es el mínimo alcanzable cuando se calcula, o `null`. |
+| 422 | `insufficient_data` o `missing_exchange_rate`: no se pueden estimar los insumos. |
+| 422 | `undefined_sharpe`: no hay volatilidad utilizable para calcular Sharpe. Si el mínimo es cero, se excluyen riesgos inferiores al 0,01 % de la menor entre la máxima volatilidad individual y el tope. |
+| 503 | `optimization_unavailable`, `not_configured` o `database_unavailable`: no se certificó una solución (por ejemplo, al agotar 10 s), no hay configuración o la base de datos no está disponible. |
+
 ### `POST /api/internal/portfolios/{id}/stress` (B4, RF-46)
 
 Requiere `X-Internal-Key` y `X-Actor-Id`. Usa el UUID de una cartera propia; no
