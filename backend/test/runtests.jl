@@ -23,6 +23,7 @@ using MarkovLabBackend
     include("domain/metrics_tests.jl")
     include("domain/prices_tests.jl")
     include("domain/portfolio_tests.jl")
+    include("domain/portfolio_optimization_tests.jl")
     include("domain/simulation_tests.jl")
     include("domain/portfolio_history_tests.jl")
     include("domain/exchange_rates_tests.jl")

@@ -21,7 +21,8 @@ Sin el `.env` cargado, el servidor arranca igual pero con `database = false` e `
 ## Interface
 
 - **Manifiesto del paquete (`Project.toml`)**:
-  - Paquete `MarkovLabBackend` (`uuid = "a52f9f0b-3d56-471b-a712-a3e35b4c8cf2"`, `version = "0.1.0"`) con dependencias `Dates`, `HTTP`, `JSON`, `LibPQ`, `Oxygen` y `Random` (`[Project.toml:name]`, `[Project.toml:deps]`).
+  - Paquete `MarkovLabBackend` (`uuid = "a52f9f0b-3d56-471b-a712-a3e35b4c8cf2"`, `version = "0.1.0"`) con dependencias `Dates`, `HTTP`, `HiGHS`, `JSON`, `JuMP`, `LibPQ`, `Oxygen` y `Random` (`[Project.toml:name]`, `[Project.toml:deps]`).
+- **Optimización (B5, motor interno)**: JuMP y HiGHS resuelven la mínima varianza con pesos no negativos, cotas por activo y suma igual a 1. El motor distingue cotas incompatibles de un fallo del solver. Esta unidad no expone una ruta HTTP ni escribe en la base de datos.
 - **Contenedor (`Dockerfile`)**:
   - Imagen basada en `julia:1.12.7` que instala dependencias, ejecuta la precompilación (`src/precompile.jl`) e inicia `scripts/serve.jl`.
 - **Subdirectorios y contratos**:

@@ -5,11 +5,14 @@ import HTTP
 import JSON
 import LibPQ
 import Random
+import HiGHS
+import JuMP
 
 include("domain/errors.jl")
 include("domain/metrics.jl")
 include("domain/prices.jl")
 include("domain/portfolio.jl")
+include("domain/portfolio_optimization.jl")
 include("domain/simulation.jl")
 include("domain/users.jl")
 include("domain/assets.jl")
