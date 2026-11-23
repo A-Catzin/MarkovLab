@@ -9,7 +9,7 @@ using MarkovLabBackend
         # guardado en la imagen. Va primero, antes de que otra prueba llame a `configure!`.
         api = MarkovLabBackend.Api
         @test api.USERS[] === nothing && api.PRICES[] === nothing
-        @test api.PORTFOLIOS[] === nothing && api.SIMULATIONS[] === nothing
+        @test api.PORTFOLIOS[] === nothing && api.SIMULATIONS[] === nothing && api.PREDICTIONS[] === nothing
         @test api.INTERNAL_KEY[] == ""
     end
 
@@ -25,7 +25,9 @@ using MarkovLabBackend
     include("domain/portfolio_tests.jl")
     include("domain/portfolio_optimization_tests.jl")
     include("domain/simulation_tests.jl")
+    include("domain/prediction_tests.jl")
     include("domain/portfolio_history_tests.jl")
+    include("domain/backtesting_tests.jl")
     include("domain/exchange_rates_tests.jl")
     include("services/services_tests.jl")
     include("services/users_tests.jl")
@@ -42,6 +44,8 @@ using MarkovLabBackend
     include("api/simulations_api_tests.jl")
     include("api/portfolio_stress_api_tests.jl")
     include("api/portfolio_optimization_api_tests.jl")
+    include("api/backtesting_api_tests.jl")
+    include("api/prediction_api_tests.jl")
     include("api/watchlist_api_tests.jl")
     include("api/asset_analysis_api_tests.jl")
     include("infrastructure/csv_prices_tests.jl")

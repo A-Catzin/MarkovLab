@@ -4,11 +4,11 @@ Responsabilidad: verificar el comportamiento observable del paquete Julia. `runt
 
 Contenido permitido: pruebas deterministas del paquete y, cuando existan componentes, de sus límites. Límite: no alojar lógica de producción ni depender de servicios o credenciales reales. Ejecute `julia --project=backend backend/test/runtests.jl` desde la raíz.
 
-Las pruebas de integración con PostgreSQL (`infrastructure/postgres_*_tests.jl`) solo corren con `TEST_DATABASE_URL`, contra una base con el esquema oficial, [`database/migrations/esquema.sql`](../../database/migrations/esquema.sql) y sus migraciones `0002` a `0007`. Para levantarla con Docker:
+Las pruebas de integración con PostgreSQL (`infrastructure/postgres_*_tests.jl`) solo corren con `TEST_DATABASE_URL`, contra una base con el esquema oficial, [`database/migrations/esquema.sql`](../../database/migrations/esquema.sql) y sus migraciones `0002` a `0009`. Para levantarla con Docker:
 
 ```bash
 docker run -d --rm --name mlab-pg -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:15-alpine
-for f in database/migrations/esquema.sql database/migrations/000[2-7]_*.sql; do
+for f in database/migrations/esquema.sql database/migrations/000[2-9]_*.sql; do
   psql "postgresql://postgres:test@localhost:55432/postgres" -v ON_ERROR_STOP=1 -f "$f"
 done
 TEST_DATABASE_URL="postgresql://postgres:test@localhost:55432/postgres" julia --project=backend backend/test/runtests.jl

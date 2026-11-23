@@ -33,11 +33,12 @@ const PRICES = Ref{Union{Nothing,PriceRepository}}(nothing)
 const PORTFOLIOS = Ref{Union{Nothing,PortfolioRepository}}(nothing)
 const SIMULATIONS = Ref{Union{Nothing,SimulationRepository}}(nothing)
 const WATCHLIST = Ref{Union{Nothing,WatchlistRepository}}(nothing)
+const PREDICTIONS = Ref{Union{Nothing,MarkovLabBackend.PredictionRepository}}(nothing)
 const REFRESH_ENABLED = Ref(false)
 const INTERNAL_KEY = Ref{String}("")
 
 """
-    configure!(; users, prices=nothing, portfolios=nothing, simulations=nothing, watchlist=nothing, refresh_enabled=false, internal_key)
+    configure!(; users, prices=nothing, portfolios=nothing, simulations=nothing, watchlist=nothing, predictions=nothing, refresh_enabled=false, internal_key)
 
 Fija los repositorios de usuarios, precios y carteras, y la clave que deben enviar los
 llamados internos del servidor de Next.js (`X-Internal-Key`). Con `internal_key` vacío,
@@ -47,12 +48,14 @@ function configure!(; users::Union{Nothing,UserRepository}, prices::Union{Nothin
                     portfolios::Union{Nothing,PortfolioRepository}=nothing,
                     simulations::Union{Nothing,SimulationRepository}=nothing,
                     watchlist::Union{Nothing,WatchlistRepository}=nothing, refresh_enabled::Bool=false,
+                    predictions::Union{Nothing,MarkovLabBackend.PredictionRepository}=nothing,
                     internal_key::AbstractString)
     USERS[] = users
     PRICES[] = prices
     PORTFOLIOS[] = portfolios
     SIMULATIONS[] = simulations
     WATCHLIST[] = watchlist
+    PREDICTIONS[] = predictions
     REFRESH_ENABLED[] = refresh_enabled
     INTERNAL_KEY[] = String(internal_key)
     return nothing
@@ -66,6 +69,8 @@ include("asset_analysis.jl")
 include("portfolio_versions.jl")
 include("portfolio_stress.jl")
 include("portfolio_optimizations.jl")
+include("portfolio_backtests.jl")
+include("predictions.jl")
 
 """
     warm_database(users, prices, portfolios, simulations)
@@ -118,6 +123,7 @@ function start(; host::AbstractString=Base.get(ENV, "HOST", "0.0.0.0"),
     portfolios = nothing
     simulations = nothing
     watchlist = nothing
+    predictions = nothing
     if !isempty(database_url)
         try
             users = PostgresUserRepository(database_url)
@@ -125,6 +131,7 @@ function start(; host::AbstractString=Base.get(ENV, "HOST", "0.0.0.0"),
             portfolios = PostgresPortfolioRepository(database_url)
             simulations = PostgresSimulationRepository(database_url)
             watchlist = PostgresWatchlist(prices.db)
+            predictions = MarkovLabBackend.PostgresPredictionRepository(database_url)
         catch err
             err isa ArgumentError || rethrow()
             # Se registra solo el motivo: la URL lleva la contraseña.
@@ -132,7 +139,7 @@ function start(; host::AbstractString=Base.get(ENV, "HOST", "0.0.0.0"),
         end
     end
     configure!(users=users, prices=prices, portfolios=portfolios, simulations=simulations,
-               watchlist=watchlist, refresh_enabled=Base.get(ENV, "MARKET_REFRESH_REQUESTS_ENABLED", "") == "true",
+               watchlist=watchlist, predictions=predictions, refresh_enabled=Base.get(ENV, "MARKET_REFRESH_REQUESTS_ENABLED", "") == "true",
                internal_key=internal_key)
     # Abre la conexión en segundo plano al arrancar: así el primer inicio de sesión no paga
     # la conexión al pooler ni la compilación de LibPQ, y un problema de la base se ve enseguida.
