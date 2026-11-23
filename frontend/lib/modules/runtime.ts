@@ -9,7 +9,7 @@ export type ModuleCode = "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "F7";
 
 export type DataOrigin = "fixtures" | "api" | "csv" | "mixed";
 
-export type DataFreshness = "fresh" | "cached" | "local" | "example";
+export type DataFreshness = "fresh" | "cached" | "local" | "example" | "unknown";
 
 export type ViewScenario =
   | "normal"
@@ -225,13 +225,11 @@ export const MODULE_REGISTRY: readonly ModuleRegistryItem[] = [
     srsRefs: "RF-54 a RF-58",
     appHref: "/app/reportes",
     devHref: "/dev/vistas/reportes",
-    deliveryState: "pantalla con datos de prueba",
-    backendDependency: "B8 · pendiente de API",
+    deliveryState: "integrado con API",
+    backendDependency: "B8 · conectado (GET /api/internal/reports/summary y GET /api/internal/reports/{id}/export?format=csv)",
     summary: "Resumen consolidado con fecha/período/fuente, glosario matemático inspeccionable y exportación CSV controlada.",
     pendingFields: [
-      "GET /api/internal/reports/summary -> runs consolidados con source, freshness, period_from, period_to",
-      "GET /api/internal/reports/{id}/export?format=csv (actor-scoped, descarga real solo cuando B8 responda)",
-      "can_export_csv?: boolean para habilitar el botón únicamente en producción integrada",
+      "GET /api/internal/reports/summary y GET /api/internal/reports/{id}/export?format=csv conectados en reports.server.ts y /api/reports/[id]/export",
     ],
   },
 ];

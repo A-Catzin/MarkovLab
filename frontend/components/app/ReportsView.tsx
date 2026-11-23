@@ -12,6 +12,7 @@ const FRESHNESS_LABELS = {
   cached: "En caché",
   local: "CSV local",
   example: "Datos de ejemplo",
+  unknown: "Histórico guardado",
 } as const;
 
 export function ReportsView({
@@ -21,8 +22,22 @@ export function ReportsView({
   result: AdapterResult<ReportsData>;
   currentScenario: ViewScenario;
 }) {
+  const isExampleMode = result.status === "ok" && result.provenance.isExample;
   const [moduleFilter, setModuleFilter] = useState<ModuleCode | "ALL">("ALL");
-  const [selectedFormulaId, setSelectedFormulaId] = useState("simple-log-return");
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(
+    result.status === "ok" ? result.data.reports[0]?.id ?? null : null,
+  );
+  const [selectedFormulaId, setSelectedFormulaId] = useState(
+    result.status === "ok" ? result.data.formulas[0]?.id ?? "simple-log-return" : "simple-log-return",
+  );
+
+  const filterCodes = useMemo(() => {
+    if (result.status !== "ok" || result.data.reports.length === 0) {
+      return ["ALL", "F2", "F4", "F5", "F6"] as const;
+    }
+    const present = Array.from(new Set(result.data.reports.map((item) => item.moduleCode))).sort();
+    return ["ALL", ...present] as (ModuleCode | "ALL")[];
+  }, [result]);
 
   const filteredReports = useMemo(() => {
     if (result.status !== "ok") return [];
@@ -43,6 +58,12 @@ export function ReportsView({
     result.status === "ok"
       ? result.data.formulas.find((f) => f.id === selectedFormulaId) ?? result.data.formulas[0]
       : null;
+
+  const selectedReport =
+    filteredReports.find((r) => r.id === selectedReportId) ?? filteredReports[0] ?? null;
+
+  const canExportRealCsv =
+    result.status === "ok" && result.data.exportCapabilities.csvAvailable && !isExampleMode;
 
   return (
     <div className={styles.viewRoot}>
@@ -80,7 +101,7 @@ export function ReportsView({
             <div className={styles.kpiCell}>
               <dt className={styles.kpiLabel}>Exportación CSV (RF-58)</dt>
               <dd className={styles.kpiValue}>
-                {result.data.exportCapabilities.csvAvailable ? "Disponible" : "Pendiente B8"}
+                {canExportRealCsv ? "Disponible" : isExampleMode ? "Desactivada (ejemplo)" : "No disponible"}
               </dd>
               <dd className={styles.kpiSub}>Nunca genera archivos falsos con datos de prueba</dd>
             </div>
@@ -90,7 +111,7 @@ export function ReportsView({
             <div className={styles.panelHeader}>
               <h2 id="reports-list-title">Análisis consolidados (RF-54 y RF-57)</h2>
               <div className={styles.chipGroup} role="group" aria-label="Filtrar reportes por módulo">
-                {(["ALL", "F1", "F3", "F4", "F5", "F6"] as const).map((code) => (
+                {filterCodes.map((code) => (
                   <button
                     key={code}
                     type="button"
@@ -104,7 +125,12 @@ export function ReportsView({
               </div>
             </div>
 
-            {filteredReports.length === 0 ? (
+            {result.data.reports.length === 0 ? (
+              <p className={styles.panelMeta}>
+                Todavía no tienes simulaciones, optimizaciones, predicciones ni backtests guardados. Cuando ejecutes
+                alguno, aparecerá aquí listo para inspeccionar y exportar a CSV.
+              </p>
+            ) : filteredReports.length === 0 ? (
               <p className={styles.panelMeta}>No hay reportes para el módulo {moduleFilter}.</p>
             ) : (
               <div className="table-wrap">
@@ -117,45 +143,110 @@ export function ReportsView({
                       <th scope="col">Origen y frescura</th>
                       <th scope="col" className="num">Métrica 1</th>
                       <th scope="col" className="num">Métrica 2</th>
+                      <th scope="col" className="data-table__action">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredReports.map((row) => (
-                      <tr key={row.id}>
-                        <th scope="row">{row.moduleCode}</th>
-                        <td>
-                          <strong>{row.title}</strong>
-                          <span className="data-table__hint" style={{ display: "block" }}>
-                            {row.subject} · {row.currency}
-                          </span>
-                        </td>
-                        <td>
-                          {row.periodFrom} a {row.periodTo}
-                          <span className="data-table__hint" style={{ display: "block" }}>
-                            Calculado: {row.calculatedAt} · {row.frequency}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`${styles.pill} ${styles.pillWarning}`}>
-                            {FRESHNESS_LABELS[row.freshness]}
-                          </span>
-                        </td>
-                        <td className="num">
-                          {row.primaryMetricValue}
-                          <span className="data-table__hint" style={{ display: "block" }}>
-                            {row.primaryMetricLabel}
-                          </span>
-                        </td>
-                        <td className="num">
-                          {row.secondaryMetricValue}
-                          <span className="data-table__hint" style={{ display: "block" }}>
-                            {row.secondaryMetricLabel}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredReports.map((row) => {
+                      const isSelected = selectedReport?.id === row.id;
+                      return (
+                        <tr key={row.id}>
+                          <th scope="row">{row.moduleCode}</th>
+                          <td>
+                            <strong>{row.title}</strong>
+                            <span className="data-table__hint" style={{ display: "block" }}>
+                              {row.subject} · {row.currency}
+                            </span>
+                          </td>
+                          <td>
+                            {row.periodFrom === "—" && row.periodTo === "—"
+                              ? "Ventana histórica guardada"
+                              : `${row.periodFrom} a ${row.periodTo}`}
+                            <span className="data-table__hint" style={{ display: "block" }}>
+                              Calculado: {row.calculatedAt} · {row.frequency}
+                            </span>
+                          </td>
+                          <td>
+                            <span
+                              className={`${styles.pill} ${
+                                row.freshness === "fresh"
+                                  ? styles.pillFresh
+                                  : row.freshness === "unknown"
+                                    ? styles.pillMuted
+                                    : styles.pillWarning
+                              }`}
+                            >
+                              {FRESHNESS_LABELS[row.freshness]}
+                            </span>
+                          </td>
+                          <td className="num">
+                            {row.primaryMetricValue}
+                            <span className="data-table__hint" style={{ display: "block" }}>
+                              {row.primaryMetricLabel}
+                            </span>
+                          </td>
+                          <td className="num">
+                            {row.secondaryMetricValue}
+                            <span className="data-table__hint" style={{ display: "block" }}>
+                              {row.secondaryMetricLabel}
+                            </span>
+                          </td>
+                          <td className="data-table__action">
+                            <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                              <button
+                                type="button"
+                                className="button button--small button--quiet"
+                                aria-pressed={isSelected}
+                                onClick={() => setSelectedReportId(row.id)}
+                              >
+                                {isSelected ? "Activo" : "Detalle"}
+                              </button>
+                              {canExportRealCsv && (
+                                <a
+                                  href={`/api/reports/${encodeURIComponent(row.id)}/export?format=csv`}
+                                  download
+                                  className="button button--small button--quiet"
+                                >
+                                  CSV
+                                </a>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {selectedReport && selectedReport.metrics && selectedReport.metrics.length > 0 && (
+              <div
+                style={{
+                  marginTop: 16,
+                  paddingTop: 14,
+                  borderTop: "1px solid var(--surface-2)",
+                }}
+              >
+                <p className={styles.panelMeta} style={{ marginTop: 0 }}>
+                  <strong>{selectedReport.title}</strong> · {selectedReport.subject} · ID{" "}
+                  <code>{selectedReport.id}</code>
+                  {selectedReport.model ? ` · modelo ${selectedReport.model}` : ""}
+                  {selectedReport.sourceStorage ? ` · almacenamiento ${selectedReport.sourceStorage}` : ""}
+                  {selectedReport.sourcePriceMethod ? ` (${selectedReport.sourcePriceMethod})` : ""}
+                </p>
+                <div className={styles.chipGroup} style={{ marginTop: 8 }}>
+                  {selectedReport.metrics.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      className={`${styles.chipButton} ${activeFormula?.id === m.id ? styles.chipButtonActive : ""}`}
+                      onClick={() => setSelectedFormulaId(m.id)}
+                    >
+                      {m.label}: {m.formattedValue}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </section>
@@ -197,24 +288,34 @@ export function ReportsView({
             <section className={styles.panelCard} aria-labelledby="export-title">
               <div className={styles.panelHeader}>
                 <h2 id="export-title">Exportación a CSV (RF-58)</h2>
-                <span className={`${styles.pill} ${styles.pillWarning}`}>
-                  {result.data.exportCapabilities.csvAvailable ? "Listo" : "Pendiente backend B8"}
+                <span className={`${styles.pill} ${canExportRealCsv ? styles.pillFresh : styles.pillWarning}`}>
+                  {canExportRealCsv ? "Listo" : isExampleMode ? "Solo ejemplo" : "No disponible"}
                 </span>
               </div>
               <p className={styles.pageLead}>{result.data.exportCapabilities.reasonWhenUnavailable}</p>
               <p className={styles.panelMeta} style={{ marginTop: 12 }}>
-                Columnas previstas del archivo CSV:
+                Columnas del archivo CSV:
               </p>
               <code className={styles.formulaCode}>{result.data.exportCapabilities.expectedColumns.join(", ")}</code>
               <div className={styles.actionRow} style={{ marginTop: 14 }}>
-                <button
-                  type="button"
-                  className="button button--small button--quiet"
-                  disabled={!result.data.exportCapabilities.csvAvailable}
-                  aria-disabled={!result.data.exportCapabilities.csvAvailable}
-                >
-                  Exportar CSV (requiere B8)
-                </button>
+                {canExportRealCsv && selectedReport ? (
+                  <a
+                    href={`/api/reports/${encodeURIComponent(selectedReport.id)}/export?format=csv`}
+                    download
+                    className="button button--small"
+                  >
+                    Descargar CSV ({selectedReport.moduleCode} · {selectedReport.subject})
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    className="button button--small button--quiet"
+                    disabled
+                    aria-disabled="true"
+                  >
+                    {isExampleMode ? "Exportar CSV (requiere B8)" : "Selecciona un reporte para exportar"}
+                  </button>
+                )}
               </div>
             </section>
           </div>

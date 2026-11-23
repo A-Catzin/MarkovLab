@@ -16,7 +16,7 @@ export function DashboardOverview({ result }: { result: AdapterResult<DashboardO
   }
 
   const firstName = result.data.userName?.split(" ")[0];
-  const publishedCount = result.data.modules.filter((m) => m.deliveryState === "publicado").length;
+  const availableCount = result.data.modules.filter((m) => m.available).length;
 
   return (
     <div className={styles.viewRoot}>
@@ -52,9 +52,9 @@ export function DashboardOverview({ result }: { result: AdapterResult<DashboardO
           <dd className={styles.kpiSub}>Monitoreo diario y variación por período</dd>
         </div>
         <div className={styles.kpiCell}>
-          <dt className={styles.kpiLabel}>Módulos publicados en API</dt>
+          <dt className={styles.kpiLabel}>Módulos disponibles</dt>
           <dd className={styles.kpiValue}>
-            {publishedCount} / {result.data.modules.length}
+            {availableCount} / {result.data.modules.length}
           </dd>
           <dd className={styles.kpiSub}>{result.data.latestOriginSummary}</dd>
         </div>
@@ -135,7 +135,7 @@ export function DashboardOverview({ result }: { result: AdapterResult<DashboardO
                   <td>
                     <span
                       className={`${styles.pill} ${
-                        mod.deliveryState === "publicado" ? styles.pillFresh : styles.pillWarning
+                        mod.available ? styles.pillFresh : styles.pillWarning
                       }`}
                     >
                       {mod.backendStatusLabel}
