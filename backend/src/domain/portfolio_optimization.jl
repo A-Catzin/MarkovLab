@@ -29,11 +29,21 @@ function optimization_model()
     return model
 end
 
-"""Solve the convex, long-only quadratic program for a sample covariance matrix."""
-function minimum_variance_weights(covariance, lower, upper)
+"""
+Solve the convex, long-only quadratic program for a sample covariance matrix.
+
+When `max_volatility` is set, it must use the covariance matrix's time scale.
+If the minimum exceeds the cap, no allocation within the bounds can meet it.
+"""
+function minimum_variance_weights(covariance, lower, upper; max_volatility=nothing)
     n, cols = size(covariance)
     n > 0 && n == cols || throw(ArgumentError("covariance matrix must be nonempty and square"))
     check_optimization_bounds(lower, upper, n)
+    if max_volatility !== nothing
+        (max_volatility isa Real && !(max_volatility isa Bool) &&
+         isfinite(max_volatility) && max_volatility >= 0) ||
+            throw(ArgumentError("max_volatility must be a finite, nonnegative number"))
+    end
     validate_finite(vec(covariance), "covariance")
     # Scaling preserves the minimizer and avoids a nearly flat QP for low-volatility assets.
     scale = maximum(abs, covariance)
@@ -48,5 +58,12 @@ function minimum_variance_weights(covariance, lower, upper)
     status = JuMP.termination_status(model)
     status == JuMP.MOI.OPTIMAL && JuMP.primal_status(model) == JuMP.MOI.FEASIBLE_POINT ||
         throw(OptimizationSolverError(string(status)))
-    return JuMP.value.(weight)
+    weights = JuMP.value.(weight)
+    if max_volatility !== nothing
+        min_volatility = portfolio_volatility(weights, covariance)
+        if min_volatility > max_volatility && !isapprox(min_volatility, max_volatility; rtol=1e-8, atol=1e-12)
+            throw(OptimizationInfeasibleError(:volatility_cap_below_minimum, min_volatility))
+        end
+    end
+    return weights
 end
