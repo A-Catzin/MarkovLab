@@ -141,7 +141,16 @@ portfolio_json(p::SavedPortfolio) = Dict(
     "positions" => [Dict("asset_id" => x.asset_id, "symbol" => x.symbol, "market" => x.market,
                          "name" => x.name, "weight" => x.weight, "currency" => x.currency) for x in p.positions])
 
-"""Lee el cuerpo de `POST /api/internal/portfolios` y lo valida como `PortfolioDraft`."""
+function optional_iso_date(body, field)
+    raw = optional_string(body, field)
+    raw === nothing && return nothing
+    occursin(r"^\d{4}-\d{2}-\d{2}$", raw) || throw(invalid_input("$field must be a YYYY-MM-DD date"))
+    parsed = tryparse(Date, raw, dateformat"yyyy-mm-dd")
+    (parsed === nothing || year(parsed) < 1) && throw(invalid_input("$field must be a valid YYYY-MM-DD date"))
+    return parsed
+end
+
+"""Lee el cuerpo de la cartera y lo valida como `PortfolioDraft`."""
 function portfolio_draft(body)
     positions = required_field(body, "positions")
     positions isa AbstractVector || throw(invalid_input("\"positions\" must be an array"))
@@ -149,7 +158,8 @@ function portfolio_draft(body)
                             number_value(required_field(p, "weight"), "weight")) for p in positions]
     return PortfolioDraft(string_value(required_field(body, "name"), "name"),
                           number_value(required_field(body, "capital"), "capital"),
-                          string_value(required_field(body, "currency"), "currency"), drafts)
+                          string_value(required_field(body, "currency"), "currency"), drafts;
+                          start_date=optional_iso_date(body, "start_date"))
 end
 
 # Tope del CSV que se puede subir desde /admin (en caracteres): unos 20 años de datos diarios caben de sobra.

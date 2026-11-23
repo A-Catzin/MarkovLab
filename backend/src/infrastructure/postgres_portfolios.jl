@@ -20,7 +20,7 @@ const EXISTING_ASSETS_SQL = "SELECT id FROM activos WHERE id = ANY(\$1::bigint[]
 
 const INSERT_PORTFOLIO_SQL = """
     INSERT INTO carteras (id, usuario_id, nombre, capital_inicial, moneda, fecha_inicio, estado, creado_en, actualizado_en)
-    VALUES (gen_random_uuid(), \$1::uuid, \$2, \$3::numeric, \$4, current_date, 'borrador', now(), now())
+    VALUES (gen_random_uuid(), \$1::uuid, \$2, \$3::numeric, \$4, coalesce(\$5::date, current_date), 'borrador', now(), now())
     RETURNING id::text AS id
     """
 
@@ -73,26 +73,45 @@ function portfolios_with_positions(conn, user_id, rows)
                            Base.get(by_portfolio, r.id, SavedPosition[])) for r in rows]
 end
 
-function create_portfolio(portfolios::PostgresPortfolioRepository, user_id, draft::PortfolioDraft)
+function position_parameters(conn, draft::PortfolioDraft)
     ids = [p.asset_id for p in draft.positions]
-    # Los pesos se guardan con 8 decimales (numeric(9, 8)).
+    existing = rows_from(run_query(conn, EXISTING_ASSETS_SQL, [pg_array(ids)]))
+    unknown = setdiff(ids, [Int(row.id) for row in existing])
+    isempty(unknown) || throw(ArgumentError("unknown asset ids: $(join(sort(unknown), ", "))"))
+    # La base guarda hasta ocho decimales.
     weights = [string(round(p.weight; digits=8)) for p in draft.positions]
+    return pg_array(ids), pg_array(weights)
+end
+
+portfolio_date_parameter(date) = date === nothing ? missing : string(date)
+
+function create_portfolio(portfolios::PostgresPortfolioRepository, user_id, draft::PortfolioDraft)
     id = with_connection(portfolios.db) do conn
         in_transaction(conn) do
-            existing = rows_from(run_query(conn, EXISTING_ASSETS_SQL, [pg_array(ids)]))
-            unknown = setdiff(ids, [Int(row.id) for row in existing])
-            isempty(unknown) || throw(ArgumentError("unknown asset ids: $(join(sort(unknown), ", "))"))
+            ids, weights = position_parameters(conn, draft)
             created = only(rows_from(run_query(conn, INSERT_PORTFOLIO_SQL,
-                [user_id, draft.name, string(round(draft.capital; digits=2)), draft.currency])))
-            close(run_query(conn, INSERT_POSITIONS_SQL, [created.id, pg_array(ids), pg_array(weights)]))
+                [user_id, draft.name, string(round(draft.capital; digits=2)), draft.currency,
+                 portfolio_date_parameter(draft.start_date)])))
+            close(run_query(conn, INSERT_POSITIONS_SQL, [created.id, ids, weights]))
             created.id
         end
     end
     return get_portfolio(portfolios, user_id, id)
 end
 
-function list_portfolios(portfolios::PostgresPortfolioRepository, user_id)
+# Cada cartera se lee como una unidad: no mezclar nuevos pesos con metadatos
+# anteriores si se confirma una edición entre las dos consultas.
+function portfolio_consistent_read(f, portfolios::PostgresPortfolioRepository)
     with_connection(portfolios.db) do conn
+        in_transaction(conn) do
+            close(run_query(conn, "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY"))
+            f(conn)
+        end
+    end
+end
+
+function list_portfolios(portfolios::PostgresPortfolioRepository, user_id)
+    portfolio_consistent_read(portfolios) do conn
         rows = rows_from(run_query(conn, LIST_PORTFOLIOS_SQL, [user_id]))
         portfolios_with_positions(conn, user_id, rows)
     end
@@ -100,7 +119,7 @@ end
 
 function get_portfolio(portfolios::PostgresPortfolioRepository, user_id, id)
     is_uuid(id) || return nothing
-    with_connection(portfolios.db) do conn
+    portfolio_consistent_read(portfolios) do conn
         rows = rows_from(run_query(conn, GET_PORTFOLIO_SQL, [id, user_id]))
         found = portfolios_with_positions(conn, user_id, rows)
         isempty(found) ? nothing : only(found)

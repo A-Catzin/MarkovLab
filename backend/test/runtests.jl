@@ -37,6 +37,7 @@ using MarkovLabBackend
     include("api/users_api_tests.jl")
     include("api/admin_api_tests.jl")
     include("api/portfolios_api_tests.jl")
+    include("api/portfolio_versions_api_tests.jl")
     include("api/simulations_api_tests.jl")
     include("api/watchlist_api_tests.jl")
     include("api/asset_analysis_api_tests.jl")

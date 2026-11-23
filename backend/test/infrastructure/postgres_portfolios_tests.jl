@@ -42,6 +42,42 @@ using MarkovLabBackend
             @test_throws ArgumentError create_user_portfolio(users, portfolios, ana.id, bad)
             @test length(list_user_portfolios(users, portfolios, ana.id)) == 1
 
+            @testset "version snapshot and position failures are atomic" begin
+                M = MarkovLabBackend
+                conn = M.connection!(portfolios)
+                sql(statement) = close(M.run_query(conn, statement))
+                sql(raw"""
+                    CREATE FUNCTION pg_temp.b3_reject_position() RETURNS trigger LANGUAGE plpgsql AS $$
+                    BEGIN RAISE EXCEPTION 'b3 test: position write failed'; END;
+                    $$
+                    """)
+                sql("CREATE TRIGGER b3_reject_position BEFORE INSERT ON posiciones_cartera " *
+                    "FOR EACH ROW WHEN (NEW.activo_id = $aapl) EXECUTE FUNCTION pg_temp.b3_reject_position()")
+                before = M.list_portfolio_versions(portfolios, ana.id, created.id)
+                edit = PortfolioDraft("Editada", 100, "usd", [PositionDraft(aapl, 0.2), PositionDraft(msft, 0.8)])
+                try
+                    @test_throws "b3 test: position write failed" M.update_portfolio(portfolios, ana.id, created.id, edit)
+                    @test_throws "b3 test: position write failed" M.duplicate_portfolio(portfolios, ana.id, created.id, "Copia")
+                    @test get_user_portfolio(users, portfolios, ana.id, created.id) == created
+                    @test M.list_portfolio_versions(portfolios, ana.id, created.id) == before
+                    @test [p.id for p in list_user_portfolios(users, portfolios, ana.id)] == [created.id]
+                finally
+                    sql("DROP TRIGGER b3_reject_position ON posiciones_cartera")
+                    sql("DROP FUNCTION pg_temp.b3_reject_position()")
+                end
+                second = PostgresPortfolioRepository(url)
+                try
+                    t1 = @async M.update_portfolio(portfolios, ana.id, created.id, edit)
+                    t2 = @async M.update_portfolio(second, ana.id, created.id, draft)
+                    @test all(p !== nothing for p in (fetch(t1), fetch(t2)))
+                    versions = M.list_portfolio_versions(portfolios, ana.id, created.id)
+                    @test [v["version_number"] for v in versions] == [3, 2, 1]
+                    @test sort([v["name"] for v in versions]) == ["Editada", "Mixta", "Mixta"]
+                finally
+                    close(second)
+                end
+            end
+
             # Un activo con carteras no se puede borrar (ON DELETE RESTRICT); borrar la cartera borra sus posiciones.
             @test delete_user_portfolio(users, portfolios, ana.id, created.id) == true
             @test get_user_portfolio(users, portfolios, ana.id, created.id) === nothing

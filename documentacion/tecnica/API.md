@@ -252,7 +252,7 @@ Exigen `X-Internal-Key` y `X-Actor-Id` con el id de un usuario que exista en la 
 |---|---|
 | `GET /api/internal/assets` | `{ assets: [...] }` con el mismo formato que la ruta de admin: el catálogo para elegir activos. |
 | `GET /api/internal/portfolios` | `{ portfolios: [cartera, ...] }`, de la más nueva a la más vieja. |
-| `POST /api/internal/portfolios` | Cuerpo `{ name, capital, currency, positions: [{ asset_id, weight }] }`, con pesos como fracciones que suman 1. Responde **201** con la cartera. Errores: 400 `invalid_input` (nombre, capital, moneda, pesos, activos repetidos o inexistentes). |
+| `POST /api/internal/portfolios` | Cuerpo `{ name, capital, currency, start_date?, positions: [{ asset_id, weight }] }`, con pesos como fracciones que suman 1. Responde **201** con la cartera. Errores: 400 `invalid_input` (nombre, capital, moneda, pesos, activos repetidos o inexistentes). |
 | `GET /api/internal/portfolios/{id}` | La cartera, o 404 si no existe o es de otro usuario. |
 | `POST /api/internal/portfolios/{id}/simulations` | Simula la cartera con los precios de la base y guarda el resultado. Cuerpo: `{ horizon, simulations?, confidence?, lookback_years?, seed? }` (`horizon` en días hábiles; por defecto 10,000 escenarios, 95 % y 5 años). Responde 201 con `{ id, portfolio_id, model, simulations, horizon, confidence, seed, observations, symbols, weights, window: { from, to }, expected_return, expected_volatility, value_at_risk, conditional_value_at_risk, summary, created_at }`. 400 con parámetros fuera de rango, 404 si la cartera no es del usuario, 422 `insufficient_data` si no hay 60 días de precios en común, o `missing_exchange_rate` si falta un tipo de cambio. Los precios se convierten a la moneda de la cartera ([CARTERAS.md](CARTERAS.md#moneda)). |
 | `GET /api/internal/portfolios/{id}/simulations` | `{ simulations: [...] }`, las 20 más recientes de la cartera, con la misma forma. 404 si la cartera no es del usuario. |
@@ -266,6 +266,35 @@ Cada cartera tiene esta forma:
   "status": "draft", "created_at": "2026-11-05T18:26:01Z",
   "positions": [{ "asset_id": 1, "symbol": "AAPL", "market": "NASDAQ", "name": "Apple", "weight": 0.6, "currency": "USD" }] }
 ```
+
+### Edición, versiones y duplicación de carteras (B3)
+
+Usa `X-Internal-Key` y `X-Actor-Id`; no hay parámetros query. El objeto cartera
+es el mismo del alta y el detalle: `id`, `name`, `capital`, `currency`,
+`start_date`, `status`, `created_at`, `positions[]`. En el alta,
+`start_date` es ISO `YYYY-MM-DD` y opcional; si falta o es `null`, se conserva
+el comportamiento de usar la fecha actual de la base.
+
+| Método y ruta | Cuerpo JSON | Respuesta |
+|---|---|---|
+| `PUT /api/internal/portfolios/{id}` | `{ "name": "Mi cartera", "capital": 1000, "currency": "USD", "start_date": "2024-06-01", "positions": [{"asset_id": 1, "weight": 1}] }`. Solo `start_date` es opcional; omitido o `null` mantiene la fecha actual de la cartera. Reemplaza todas las posiciones. | **200** objeto cartera actualizado, mismo `id`. La versión previa se conserva en la misma transacción. |
+| `GET /api/internal/portfolios/{id}/versions` | Sin cuerpo. | **200** `{ "versions": [...] }`: versión actual seguida de anteriores, de mayor a menor número. |
+| `POST /api/internal/portfolios/{id}/duplicate` | `{}` o `{"name":"Nuevo nombre"}`. Sin nombre usa el nombre original con sufijo « (copia)». | **201** objeto cartera nueva con `derived_from_id` igual al original. Copia fecha, capital, moneda y pesos, empieza como borrador y versión 1. El original queda intacto. |
+
+Cada elemento de `versions` incluye `id` (texto estable `cartera_uuid:número`),
+`version_number` (entero desde 1), `is_current` (booleano), `name`, `capital`,
+`currency`, `start_date`, `created_at` (ISO UTC, fecha de la versión),
+`derived_from_id`, `derived_from_name` (nulos si no aplica),
+`estimated_annual_return` y `estimated_annual_volatility` (nulos, no se
+recalculan aquí), y `positions: [{asset_id,symbol,name,weight}]`.
+Las simulaciones ya guardadas conservan sus propios parámetros y pesos.
+
+Errores: **400** `invalid_input` o `invalid_json` para cuerpo, pesos, fechas o
+activos inválidos; **401** `unauthorized`; **403** `forbidden`;
+**404** `not_found` si la cartera no existe o es ajena; **503** `not_configured`
+o `database_unavailable`. Las escrituras fallidas no crean versiones parciales.
+Aplicar la migración `0006_versiones_cartera.sql` antes de usar estas rutas
+en producción; la migración agrega una tabla y no reescribe carteras existentes.
 
 ### Seguimiento de mercado (RF-08 a RF-11, RF-13)
 
@@ -348,7 +377,7 @@ El middleware de `backend/src/api/cors.jl` solo devuelve `Access-Control-Allow-O
 ## Límites actuales
 
 - Los endpoints públicos de cálculo (`/api/analysis/metrics` y `/api/risk/monte-carlo`) no exigen sesión ni persisten resultados; las simulaciones persistidas asociadas a una cartera guardada (RF-47) se ejecutan a través de `POST /api/internal/portfolios/{id}/simulations`.
-- Todavía no hay endpoints para editar carteras existentes, optimización matemática (`JuMP`/`HiGHS`), modelos predictivos, backtesting ni escenarios de estrés.
+- Todavía no hay endpoints para optimización matemática (`JuMP`/`HiGHS`), modelos predictivos, backtesting ni escenarios de estrés.
 - Sin progreso de simulaciones largas (RNF-02); con los límites actuales una solicitud tarda milisegundos.
 
 ## Pruebas

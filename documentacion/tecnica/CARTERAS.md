@@ -115,6 +115,15 @@ Crear una cartera es **atómico**: si algún activo no existe, no se guarda nada
 - `backend/test/infrastructure/postgres_portfolios_tests.jl`: lo mismo contra PostgreSQL real, más la atomicidad (un activo inexistente no deja nada) y el borrado en cascada de las posiciones.
 - De punta a punta (manual, 2026-11-05): crear una cartera desde el formulario (suma en vivo, "repartir en partes iguales", guardar), verla, comprobar que otro usuario recibe 404, y borrarla.
 
+## Edición y versiones
+
+La API permite configurar la fecha de inicio, editar la composición y duplicar una
+cartera sin cambiar el original. Cada edición guarda la configuración anterior en
+la misma transacción. Los contratos y la migración requerida están en
+[API.md](API.md#edición-versiones-y-duplicación-de-carteras-b3). La pantalla de
+edición se integra por separado.
+
 ## Siguiente paso
 
-Incorporar edición de carteras existentes, optimización de carteras con restricciones (`JuMP`/`HiGHS`) y backtesting con comparación contra un índice de referencia.
+Incorporar escenarios de estrés, optimización de carteras con restricciones y
+backtesting con comparación contra un índice de referencia.

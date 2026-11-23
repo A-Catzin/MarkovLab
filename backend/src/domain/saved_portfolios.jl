@@ -19,7 +19,7 @@ struct PositionDraft
 end
 
 """
-    PortfolioDraft(name, capital, currency, positions)
+    PortfolioDraft(name, capital, currency, positions; start_date=nothing)
 
 Cartera que un usuario quiere guardar. El constructor recorta el nombre y pasa la moneda
 a mayúsculas, y lanza `ArgumentError` si:
@@ -36,9 +36,10 @@ struct PortfolioDraft
     capital::Float64
     currency::String
     positions::Vector{PositionDraft}
+    start_date::Union{Nothing,Date}
 
     function PortfolioDraft(name::AbstractString, capital::Real, currency::AbstractString,
-                            positions::AbstractVector{PositionDraft})
+                            positions::AbstractVector{PositionDraft}; start_date::Union{Nothing,Date}=nothing)
         any(iscntrl, name) && throw(ArgumentError("name must not contain control characters"))
         name = strip(name)
         isempty(name) && throw(ArgumentError("name must not be empty"))
@@ -63,7 +64,7 @@ struct PortfolioDraft
         total = sum(position.weight for position in positions)
         abs(total - 1) <= PORTFOLIO_WEIGHT_TOLERANCE ||
             throw(ArgumentError("weights must sum to 1 (100 %), got $(round(total; digits=6))"))
-        return new(String(name), Float64(capital), String(currency), collect(positions))
+        return new(String(name), Float64(capital), String(currency), collect(positions), start_date)
     end
 end
 
