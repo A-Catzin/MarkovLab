@@ -28,12 +28,12 @@ export default async function MarketAssetAnalysisPage({
 }) {
   const user = await requireUser();
   const q = await searchParams;
-  const symbols = q.activos
+  const parsedSymbols = q.activos
     ? q.activos
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean)
-    : ["AAPL", "MSFT", "JPM", "WALMEX.MX"];
+    : undefined;
   const period: PeriodPreset = VALID_PERIODS.has(q.periodo as PeriodPreset) ? (q.periodo as PeriodPreset) : "1A";
   const returnKind: ReturnKind = q.retorno === "log" ? "log" : "simple";
   const from = q.desde ?? "2026-01-05";
@@ -42,7 +42,7 @@ export default async function MarketAssetAnalysisPage({
 
   const result = await loadAssetAnalysisView({
     actorId: user.id,
-    symbols,
+    symbols: parsedSymbols,
     period,
     from,
     to,
@@ -62,7 +62,7 @@ export default async function MarketAssetAnalysisPage({
         result={result}
         basePath="/app/mercado/analisis"
         currentScenario={scenario}
-        initialSymbols={symbols}
+        initialSymbols={result.status === "ok" ? result.data.selectedSymbols : (parsedSymbols ?? ["AAPL", "MSFT"])}
         initialPeriod={period}
         initialReturnKind={returnKind}
         initialFrom={from}

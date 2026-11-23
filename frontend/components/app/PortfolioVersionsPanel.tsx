@@ -1,30 +1,35 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { duplicatePortfolioAction } from "@/app/app/carteras/actions";
 import { formatMoney, formatPercent, formatWeightPercent } from "@/lib/formatters";
-import type { PortfolioEditData } from "@/lib/modules/types";
 import type { ValidationIssue } from "@/lib/modules/runtime";
+import type { PortfolioEditData } from "@/lib/modules/types";
 import { validateDuplicationName } from "@/lib/modules/validators";
 import { ErrorSummary } from "./ModuleStateViews";
 import styles from "./modules.module.css";
 
 export function PortfolioVersionsPanel({ data }: { data: PortfolioEditData }) {
+  const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [sourceName, setSourceName] = useState(data.portfolioName);
   const [duplicateName, setDuplicateName] = useState(`${data.portfolioName} (copia)`);
   const [dupIssues, setDupIssues] = useState<ValidationIssue[]>([]);
   const [focusKey, setFocusKey] = useState(0);
-  const [dupStatus, setDupStatus] = useState<string | null>(null);
+  const [duplicating, setDuplicating] = useState(false);
+  const [dupStatus, setDupStatus] = useState<{ text: string; newId?: string } | null>(null);
 
   function openDuplicateDialog(versionName: string) {
     setSourceName(versionName);
-    setDuplicateName(`${versionName} · copia`);
+    setDuplicateName(`${versionName} (copia)`);
     setDupIssues([]);
     setDupStatus(null);
     dialogRef.current?.showModal();
   }
 
-  function handleConfirmDuplicate(event: React.FormEvent) {
+  async function handleConfirmDuplicate(event: React.FormEvent) {
     event.preventDefault();
     const existing = data.versions.map((v) => v.name);
     const issues = validateDuplicationName(duplicateName, existing);
@@ -34,10 +39,29 @@ export function PortfolioVersionsPanel({ data }: { data: PortfolioEditData }) {
       return;
     }
     setDupIssues([]);
+
+    if (data.pendingBackend) {
+      dialogRef.current?.close();
+      setDupStatus({
+        text: `Copia "${duplicateName.trim()}" validada sin alterar "${sourceName}". La creación persistida depende de la entrega B3 del backend; no se simuló escritura.`,
+      });
+      return;
+    }
+
+    setDuplicating(true);
+    const res = await duplicatePortfolioAction(data.portfolioId, duplicateName.trim());
+    setDuplicating(false);
+    if (!res.ok) {
+      setDupIssues([{ field: "duplicate-name", message: res.error ?? "No se pudo duplicar la cartera." }]);
+      setFocusKey((k) => k + 1);
+      return;
+    }
     dialogRef.current?.close();
-    setDupStatus(
-      `Copia "${duplicateName.trim()}" validada sin alterar "${sourceName}". La creación persistida depende de la entrega B3 del backend; no se simuló escritura.`,
-    );
+    setDupStatus({
+      text: `Se creó la cartera independiente "${res.newName ?? duplicateName.trim()}" sin modificar "${sourceName}".`,
+      newId: res.newPortfolioId,
+    });
+    router.refresh();
   }
 
   return (
@@ -61,7 +85,12 @@ export function PortfolioVersionsPanel({ data }: { data: PortfolioEditData }) {
 
       {dupStatus && (
         <p className="notice" role="status">
-          {dupStatus}
+          {dupStatus.text}{" "}
+          {dupStatus.newId && (
+            <Link href={`/app/carteras/${dupStatus.newId}`} className="link">
+              Abrir copia
+            </Link>
+          )}
         </p>
       )}
 
@@ -84,7 +113,8 @@ export function PortfolioVersionsPanel({ data }: { data: PortfolioEditData }) {
                 <th scope="row">
                   {version.name}
                   <span className="data-table__hint" style={{ display: "block" }}>
-                    {version.createdAt} · ref. {version.startDate}
+                    v{version.versionNumber}
+                    {version.isCurrent ? " (actual)" : ""} · {version.createdAt} · ref. {version.startDate}
                   </span>
                 </th>
                 <td>
@@ -102,7 +132,7 @@ export function PortfolioVersionsPanel({ data }: { data: PortfolioEditData }) {
                   <button
                     type="button"
                     className="button button--small button--quiet"
-                    onClick={() => openDuplicateDialog(version.name)}
+                    onClick={() => openDuplicateDialog(data.portfolioName)}
                   >
                     Duplicar v{version.versionNumber}
                   </button>
@@ -131,8 +161,12 @@ export function PortfolioVersionsPanel({ data }: { data: PortfolioEditData }) {
           </label>
           <ErrorSummary issues={dupIssues} focusKey={focusKey} />
           <div className={styles.actionRow}>
-            <button type="submit" className="button button--small">
-              Validar duplicación
+            <button type="submit" className="button button--small" disabled={duplicating} aria-busy={duplicating}>
+              {duplicating
+                ? "Duplicando…"
+                : data.pendingBackend
+                  ? "Validar duplicación"
+                  : "Confirmar duplicación"}
             </button>
             <button
               type="button"

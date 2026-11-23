@@ -25,9 +25,15 @@ function StressRangeComparisonChart({
     stressed.p5FinalValue,
     stressed.p95FinalValue,
   ];
-  const minVal = Math.floor((Math.min(...values) * 0.9) / 10000) * 10000;
-  const maxVal = Math.ceil((Math.max(...values) * 1.05) / 10000) * 10000;
-  const span = Math.max(10000, maxVal - minVal);
+  const step =
+    data.capital >= 50000
+      ? 10000
+      : data.capital >= 5000
+        ? 1000
+        : Math.max(10, Math.pow(10, Math.floor(Math.log10(Math.max(10, data.capital))) - 1));
+  const minVal = Math.floor((Math.min(...values) * 0.95) / step) * step;
+  const maxVal = Math.ceil((Math.max(...values) * 1.05) / step) * step;
+  const span = Math.max(step, maxVal - minVal);
 
   const w = 720;
   const h = 190;
@@ -38,7 +44,9 @@ function StressRangeComparisonChart({
   const innerW = w - padL - padR;
 
   const toX = (val: number) => padL + ((val - minVal) / span) * innerW;
-  const ticks = [0, 0.33, 0.67, 1].map((f) => Math.round((minVal + span * f) / 1000) * 1000);
+  const ticks = [0, 0.33, 0.67, 1].map((f) => Math.round((minVal + span * f) / (step / 10)) * (step / 10));
+  const formatTick = (val: number) =>
+    Math.abs(val) >= 1000 ? `${(val / 1000).toFixed(Math.abs(val) >= 10000 ? 0 : 1)}k` : `${Math.round(val)}`;
   const capitalX = toX(data.capital);
 
   const rows = [
@@ -75,7 +83,7 @@ function StressRangeComparisonChart({
               <g key={tick}>
                 <line x1={x} x2={x} y1={padT} y2={h - padB} stroke="var(--surface-2)" strokeWidth={1} />
                 <text x={x} y={h - 12} textAnchor="middle" fontSize="12" fill="var(--muted)">
-                  {(tick / 1000).toFixed(0)}k
+                  {formatTick(tick)}
                 </text>
               </g>
             );
@@ -201,10 +209,13 @@ export function StressTestingView({
 
   function handleValidateCustom(e: React.FormEvent) {
     e.preventDefault();
+    const returnShift = Number(returnShiftPct) / 100;
+    const volatilityMultiplier = Number(volMult);
+    const correlationShift = Number(corrShift);
     const validation = validateStressParams({
-      returnShift: Number(returnShiftPct) / 100,
-      volatilityMultiplier: Number(volMult),
-      correlationShift: Number(corrShift),
+      returnShift,
+      volatilityMultiplier,
+      correlationShift,
     });
     if (validation.length > 0) {
       setIssues(validation);
@@ -213,6 +224,17 @@ export function StressTestingView({
       return;
     }
     setIssues([]);
+    if (result.status === "ok" && !result.provenance.isExample) {
+      const q = new URLSearchParams();
+      if (currentScenario !== "normal") q.set("escenario", currentScenario);
+      q.set("preset", "personalizado");
+      q.set("retorno", String(returnShift));
+      q.set("vol", String(volatilityMultiplier));
+      q.set("corr", String(correlationShift));
+      setCustomNotice(null);
+      router.push(`${basePath}?${q.toString()}`);
+      return;
+    }
     setCustomNotice(
       "Parámetros matemáticamente válidos. La ejecución de choques personalizados sobre el motor Julia depende de B4; la comparación mostrada corresponde al escenario seleccionado sin alterar la cartera ni sus simulaciones previas.",
     );
@@ -303,7 +325,7 @@ export function StressTestingView({
               </label>
               <div className={styles.toolbarActions}>
                 <button type="submit" className="button button--small">
-                  Validar choque
+                  {result.status === "ok" && !result.provenance.isExample ? "Simular choque" : "Validar choque"}
                 </button>
               </div>
             </form>

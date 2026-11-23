@@ -100,6 +100,30 @@ export function isLocalFixturesEnabled(env: Record<string, string | undefined> =
   return env.NODE_ENV !== "production" && env.MARKOVLAB_USE_LOCAL_FIXTURES === "1";
 }
 
+/** Mapea fallos transversales del backend (autenticación, configuración o disponibilidad). */
+export function mapCommonBackendFailure<T>(
+  error: unknown,
+  unavailableTitle: string,
+  unavailableMessage: string,
+): AdapterResult<T> | null {
+  const status = typeof (error as { status?: unknown })?.status === "number" ? (error as { status: number }).status : null;
+  if (status === 401 || status === 403) {
+    return {
+      status: "forbidden",
+      title: "Acceso no autorizado",
+      message: "Tu sesión actual no tiene permisos o no pudo validarse en el servidor.",
+    };
+  }
+  if (status === null || status === 0 || status === 503 || status >= 500) {
+    return {
+      status: "unavailable",
+      title: unavailableTitle,
+      message: unavailableMessage,
+    };
+  }
+  return null;
+}
+
 export function parseScenario(raw?: string | string[] | null): ViewScenario {
   const value = Array.isArray(raw) ? raw[0] : raw;
   if (value && VALID_SCENARIOS.has(value as ViewScenario)) {
@@ -116,15 +140,11 @@ export const MODULE_REGISTRY: readonly ModuleRegistryItem[] = [
     srsRefs: "RF-15 a RF-20",
     appHref: "/app/mercado/analisis",
     devHref: "/dev/vistas/analisis",
-    deliveryState: "pantalla con datos de prueba",
-    backendDependency: "B2 · pendiente de API",
+    deliveryState: "integrado con API",
+    backendDependency: "B2 · conectado (POST /api/internal/analysis/assets)",
     summary: "Rendimientos simples y logarítmicos, volatilidad, drawdown, matriz de correlación N×N y fechas efectivas.",
     pendingFields: [
-      "GET /api/internal/assets/analysis o POST /api/internal/analysis/assets",
-      "series_aligned, effective_from, effective_to, aligned_observations",
-      "per_asset_metrics[].{simple_return,log_return,cumulative_return,mean_return,volatility_daily,volatility_annual,max_drawdown,peak_date,trough_date}",
-      "correlation_matrix.symbols y correlation_matrix.values[][]",
-      "error 422 insufficient_data con min_observations y missing_symbols",
+      "POST /api/internal/analysis/assets conectado en asset-analysis.server.ts",
     ],
   },
   {
@@ -134,14 +154,12 @@ export const MODULE_REGISTRY: readonly ModuleRegistryItem[] = [
     srsRefs: "RF-13, RF-27 a RF-33",
     appHref: "/app/carteras",
     devHref: "/dev/vistas/cartera-editar",
-    deliveryState: "pantalla con datos de prueba",
-    backendDependency: "B1 y B3 · pendiente de API",
+    deliveryState: "integrado con API",
+    backendDependency: "B1 y B3 · conectado (watchlist RF-13, PUT, versions, duplicate)",
     summary: "Etiquetas de origen/frescura en Mercado, edición de carteras con fecha de referencia, versiones y duplicación.",
     pendingFields: [
-      "GET /api/internal/watchlist -> price_source ('api'|'csv'|null), data_freshness ('fresh'|'cached'|'local'|null), updated_at",
-      "PATCH / PUT /api/internal/portfolios/{id} con start_date y positions[]",
-      "POST /api/internal/portfolios/{id}/duplicate -> nueva cartera derivada_de_id sin alterar origen",
-      "GET /api/internal/portfolios/{id}/versions -> lista de versiones con rendimiento/riesgo estimado",
+      "GET /api/internal/watchlist (latest_price_source, latest_price_status) conectado en /app/mercado",
+      "PUT /api/internal/portfolios/{id}, GET .../versions y POST .../duplicate conectados en portfolio-edit.server.ts y actions.ts",
     ],
   },
   {
@@ -151,14 +169,11 @@ export const MODULE_REGISTRY: readonly ModuleRegistryItem[] = [
     srsRefs: "RF-46",
     appHref: "/app/carteras",
     devHref: "/dev/vistas/estres",
-    deliveryState: "pantalla con datos de prueba",
-    backendDependency: "B4 · pendiente de API",
+    deliveryState: "integrado con API",
+    backendDependency: "B4 · conectado (POST /api/internal/portfolios/{id}/stress)",
     summary: "Comparación Base vs Estrés compartiendo horizonte, nivel de confianza y semilla reproducible.",
     pendingFields: [
-      "POST /api/internal/portfolios/{id}/stress",
-      "request: { horizon, confidence, seed, shocks: { return_shift, volatility_multiplier, correlation_shift } }",
-      "response: { baseline, stressed, deltas, effective_window, invariant_note }",
-      "error 400 invalid_stress_params / 422 insufficient_data",
+      "POST /api/internal/portfolios/{id}/stress conectado en stress.server.ts",
     ],
   },
   {

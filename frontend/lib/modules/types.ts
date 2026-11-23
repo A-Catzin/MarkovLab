@@ -57,6 +57,8 @@ export interface MarketOriginPreviewRow {
   currency: string;
   latestPrice: number | null;
   latestDate: string | null;
+  latestPriceSource?: "api" | "csv" | "manual" | null;
+  latestPriceStatus?: "updated" | "cached" | "local_file" | "unavailable";
   priceSource: "api" | "csv" | null;
   dataFreshness: "fresh" | "cached" | "local" | null;
   updatedAt: string | null;

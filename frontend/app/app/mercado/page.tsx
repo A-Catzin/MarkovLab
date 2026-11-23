@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { backendFetch } from "@/lib/backend";
 import { requireUser } from "@/lib/guards";
-import { isLocalFixturesEnabled } from "@/lib/modules/runtime";
 import { formatMoney, getCatalogAssets } from "@/lib/portfolios";
 import { requestMarketRefresh, updateWatchlist } from "./actions";
 import styles from "./market.module.css";
@@ -15,6 +14,8 @@ type WatchedAsset = {
   currency: string;
   latest_price: number | null;
   latest_date: string | null;
+  latest_price_source?: "api" | "csv" | "manual" | null;
+  latest_price_status?: "local_file" | "updated" | "cached" | "unavailable" | null;
   price_source?: "api" | "csv" | null;
   data_freshness?: "fresh" | "cached" | "local" | null;
   updated_at?: string | null;
@@ -22,21 +23,30 @@ type WatchedAsset = {
 };
 type Point = [date: string, price: number];
 
-const SOURCE_LABELS: Record<"api" | "csv", string> = {
+const SOURCE_LABELS: Record<"api" | "csv" | "manual", string> = {
   api: "API",
   csv: "Archivo CSV",
+  manual: "Manual",
 };
 
-const FRESHNESS_LABELS: Record<"fresh" | "cached" | "local", string> = {
+const FRESHNESS_LABELS: Record<"updated" | "cached" | "local_file" | "unavailable" | "fresh" | "local", string> = {
+  updated: "Actualizado",
   fresh: "Actualizado",
   cached: "En caché",
+  local_file: "Archivo local",
   local: "Archivo local",
+  unavailable: "Sin cierre disponible",
 };
 
 function provenanceSummary(item: WatchedAsset): string | null {
-  if (!item.price_source && !item.data_freshness) return null;
-  const source = item.price_source ? SOURCE_LABELS[item.price_source] : null;
-  const freshness = item.data_freshness ? FRESHNESS_LABELS[item.data_freshness] : null;
+  const rawSource = item.latest_price_source ?? item.price_source ?? null;
+  const rawStatus = item.latest_price_status ?? item.data_freshness ?? null;
+  if (!rawSource && !rawStatus) return null;
+  if (!rawSource && rawStatus === "unavailable" && item.latest_price === null) {
+    return null;
+  }
+  const source = rawSource ? SOURCE_LABELS[rawSource] : null;
+  const freshness = rawStatus ? FRESHNESS_LABELS[rawStatus] : null;
   if (source && freshness) return `${source} · ${freshness}`;
   return source ?? freshness;
 }
@@ -84,7 +94,6 @@ export default async function MarketPage({ searchParams }: {
   searchParams: Promise<{ asset?: string; error?: string; refresh?: string }>;
 }) {
   const user = await requireUser();
-  const showPreviewLinks = isLocalFixturesEnabled();
   const { asset, error, refresh } = await searchParams;
   const [list, catalog] = await Promise.allSettled([
     backendFetch<{ assets: WatchedAsset[]; can_request_refresh?: boolean }>(
@@ -107,11 +116,9 @@ export default async function MarketPage({ searchParams }: {
     <>
       <div className="page-head">
         <h1>Seguimiento de mercado</h1>
-        {showPreviewLinks && (
-          <Link href="/app/mercado/analisis" className="button button--small button--quiet">
-            Análisis y correlación
-          </Link>
-        )}
+        <Link href="/app/mercado/analisis" className="button button--small button--quiet">
+          Análisis y correlación
+        </Link>
       </div>
       {error && <p className="notice notice--error" role="alert">No se pudo actualizar la lista. Inténtalo de nuevo.</p>}
       {list.status === "rejected" ? (
