@@ -7,15 +7,17 @@ import { ExampleDataBanner, LoadingSkeletonPanel, ModuleStatePanel, ScenarioBar 
 import { OptimizationView } from "@/components/app/OptimizationView";
 import { PortfolioForm } from "@/components/app/PortfolioForm";
 import { PortfolioVersionsPanel } from "@/components/app/PortfolioVersionsPanel";
+import { PredictionView } from "@/components/app/PredictionView";
 import { StressTestingView } from "@/components/app/StressTestingView";
 import styles from "@/components/app/modules.module.css";
 import { loadAssetAnalysisView } from "@/lib/modules/adapters/asset-analysis.server";
 import { loadOptimizationView } from "@/lib/modules/adapters/optimization.server";
 import { loadPortfolioEditView } from "@/lib/modules/adapters/portfolio-edit.server";
+import { loadPredictionView } from "@/lib/modules/adapters/prediction.server";
 import { loadStressTestingView } from "@/lib/modules/adapters/stress.server";
 import { buildMarketOriginFixture } from "@/lib/modules/fixtures/market-origin.fixture";
 import { isLocalFixturesEnabled, MODULE_REGISTRY, parseScenario, type ViewScenario } from "@/lib/modules/runtime";
-import type { OptimizationObjective, PeriodPreset, ReturnKind } from "@/lib/modules/types";
+import type { OptimizationObjective, PeriodPreset, PredictionMetricKind, ReturnKind } from "@/lib/modules/types";
 import { DEV_PREVIEW_NAV } from "../page";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +47,10 @@ export default async function DevModulePreviewPage({
     desde?: string;
     hasta?: string;
     objetivo?: string;
+    activo?: string;
+    metrica?: string;
+    horizonte?: string;
+    contraste?: string;
   }>;
 }) {
   if (process.env.NODE_ENV === "production" || !isLocalFixturesEnabled()) {
@@ -161,6 +167,31 @@ export default async function DevModulePreviewPage({
         basePath="/dev/vistas/optimizacion"
         currentScenario={scenario}
         initialObjective={objective}
+      />
+    );
+  } else if (modulo === "prediccion") {
+    const symbol = q.activo ?? "AAPL";
+    const metric: PredictionMetricKind = q.metrica === "volatility" ? "volatility" : "return";
+    const parsedHorizon = Number(q.horizonte);
+    const horizonDays: 21 | 63 | 126 = parsedHorizon === 21 || parsedHorizon === 126 ? parsedHorizon : 63;
+    const withObserved = q.contraste !== "0";
+    const predResult = await loadPredictionView({
+      actorId: "dev-preview",
+      symbol,
+      metric,
+      horizonDays,
+      withObserved,
+      scenario,
+    });
+    content = (
+      <PredictionView
+        result={predResult}
+        basePath="/dev/vistas/prediccion"
+        currentScenario={scenario}
+        initialSymbol={symbol}
+        initialMetric={metric}
+        initialHorizon={horizonDays}
+        initialWithObserved={withObserved}
       />
     );
   } else {
