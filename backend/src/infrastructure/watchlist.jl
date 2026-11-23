@@ -7,7 +7,7 @@ end
 
 # Selecciona el cierre de una fecha: el mismo criterio de `price_history`.
 watchlist_close_sql(condition) = """
-    SELECT coalesce(cierre_ajustado, cierre) AS price, fecha_operacion AS date
+    SELECT coalesce(cierre_ajustado, cierre) AS price, fecha_operacion AS date, origen::text AS source
     FROM precios_historicos
     WHERE activo_id = a.id AND $condition
     ORDER BY fecha_operacion DESC, (origen = 'api') DESC
@@ -17,7 +17,7 @@ watchlist_close_sql(condition) = """
 # La lista trae solo los cierres de referencia, no las series completas.
 const WATCHLIST_SQL = """
     SELECT a.id, a.simbolo AS symbol, a.nombre AS name, a.mercado AS market, a.moneda AS currency,
-           p.price AS latest_price, p.date::text AS latest_date,
+           p.price AS latest_price, p.date::text AS latest_date, p.source AS latest_price_source,
            d.price AS daily_price, w.price AS weekly_price, m.price AS monthly_price
     FROM lista_seguimiento l JOIN activos a ON a.id = l.activo_id
     LEFT JOIN LATERAL ($(watchlist_close_sql("true"))) p ON true
@@ -42,10 +42,35 @@ function watchlist_changes(latest, daily, weekly, monthly)
     return (; daily=change(daily), weekly=change(weekly), monthly=change(monthly))
 end
 
+# Referencia conservadora para bolsas que negocian de lunes a viernes.
+# No intenta inferir feriados ni el horario de cierre de la sesión actual.
+const WATCHLIST_WEEKDAY_MARKETS = ("NASDAQ", "NYSE", "NYSEARCA", "NYSEAMERICAN", "CBOE", "BMV")
+
+function watchlist_reference_date()
+    date = Date(now(Dates.UTC)) - Day(1)
+    while dayofweek(date) > 5
+        date -= Day(1)
+    end
+    return string(date)
+end
+
+function watchlist_price_status(source, close_date, market, reference)
+    close_date === nothing && return "unavailable"
+    source == "csv" && return "local_file"
+    if source == "api" && market in WATCHLIST_WEEKDAY_MARKETS && close_date == reference
+        return "updated"
+    end
+    return "cached"
+end
+
 function watched_assets(repo::PostgresWatchlist, user_id)
     rows = with_connection(conn -> rows_from(run_query(conn, WATCHLIST_SQL, [user_id])), repo.db)
+    reference = watchlist_reference_date()
     return [(; id=Int(r.id), r.symbol, r.name, r.market, currency=strip(r.currency),
               latest_price=orelse(r.latest_price), latest_date=orelse(r.latest_date),
+              latest_price_source=orelse(r.latest_price_source),
+              latest_price_status=watchlist_price_status(orelse(r.latest_price_source), orelse(r.latest_date),
+                                                         r.market, reference),
               changes=watchlist_changes(orelse(r.latest_price), orelse(r.daily_price),
                                         orelse(r.weekly_price), orelse(r.monthly_price))) for r in rows]
 end
@@ -67,10 +92,10 @@ const UNFOLLOW_ASSET_SQL = """
 unfollow_asset(repo::PostgresWatchlist, user_id, asset_id) = watchlist_value(repo, UNFOLLOW_ASSET_SQL, user_id, asset_id)
 
 struct InMemoryWatchlist <: WatchlistRepository
-    prices::PriceRepository
+    prices::InMemoryPriceRepository
     entries::Set{Tuple{String,Int}}
 end
-InMemoryWatchlist(prices::PriceRepository) = InMemoryWatchlist(prices, Set{Tuple{String,Int}}())
+InMemoryWatchlist(prices::InMemoryPriceRepository) = InMemoryWatchlist(prices, Set{Tuple{String,Int}}())
 
 is_followed(repo::InMemoryWatchlist, user_id, asset_id) = (user_id, asset_id) in repo.entries
 function follow_asset(repo::InMemoryWatchlist, user_id, asset_id)
@@ -84,8 +109,14 @@ function unfollow_asset(repo::InMemoryWatchlist, user_id, asset_id)
     return true
 end
 function watched_assets(repo::InMemoryWatchlist, user_id)
+    reference_date = watchlist_reference_date()
     map(filter(a -> is_followed(repo, user_id, a.id), list_assets(repo.prices))) do a
-        history = price_history(repo.prices, a.id)
+        history, source = lock(repo.prices.lock) do
+            series = price_history(repo.prices, a.id)
+            isempty(series) && return series, nothing
+            date = last(series)[1]
+            return series, haskey(repo.prices.bars, (a.id, date, :api)) ? "api" : "csv"
+        end
         date, price = isempty(history) ? (nothing, nothing) : last(history)
         daily = length(history) < 2 ? nothing : history[end - 1][2]
         dates = first.(history)
@@ -95,8 +126,10 @@ function watched_assets(repo::InMemoryWatchlist, user_id)
         end
         weekly = date === nothing ? nothing : reference(date - Day(7))
         monthly = date === nothing ? nothing : reference(date - Month(1))
-        (; a.id, a.symbol, a.name, a.market, a.currency, latest_price=price,
-           latest_date=date === nothing ? nothing : string(date),
+        latest_date = date === nothing ? nothing : string(date)
+        (; a.id, a.symbol, a.name, a.market, a.currency, latest_price=price, latest_date,
+           latest_price_source=source,
+           latest_price_status=watchlist_price_status(source, latest_date, a.market, reference_date),
            changes=watchlist_changes(price, daily, weekly, monthly))
     end
 end

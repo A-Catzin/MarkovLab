@@ -18,7 +18,7 @@ PostgreSQL administrado por Supabase. Los nombres de tablas, columnas y tipos es
 | `tipos_cambio` | Sí: conversión de moneda en historia y simulaciones de carteras | Migración [`0004_tipos_cambio.sql`](./migrations/0004_tipos_cambio.sql); ver [PRECIOS_API.md](../documentacion/tecnica/PRECIOS_API.md#tipos-de-cambio) y [CARTERAS.md](../documentacion/tecnica/CARTERAS.md#moneda). |
 | `carteras`, `posiciones_cartera` | Sí: "Mis carteras" | Ver [CARTERAS.md](../documentacion/tecnica/CARTERAS.md). |
 | `simulaciones` | Sí: el panel "Simular" de cada cartera | Ver [CARTERAS.md](../documentacion/tecnica/CARTERAS.md#simular). |
-| `lista_seguimiento` | Sí: seguimiento de mercado por usuario | Ver [API.md](../documentacion/tecnica/API.md#seguimiento-de-mercado-rf-08-a-rf-11). |
+| `lista_seguimiento` | Sí: seguimiento de mercado por usuario | Ver [API.md](../documentacion/tecnica/API.md#seguimiento-de-mercado-rf-08-a-rf-11-rf-13). |
 
 ## Reglas
 

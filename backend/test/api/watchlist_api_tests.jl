@@ -1,4 +1,5 @@
 using Test
+using Dates
 using MarkovLabBackend
 using MarkovLabBackend.Api: configure!
 
@@ -60,6 +61,34 @@ using MarkovLabBackend.Api: configure!
             updated = only(a for a in response_json(call("GET"))["assets"] if a["id"] == varied)
             @test updated["changes"]["monthly"] ≈ 0.32
             @test call("DELETE", "$root/$varied").status == 200
+        end
+        @testset "RF-13: provenance and conservative close freshness" begin
+            cached = only(response_json(call("GET"))["assets"])
+            @test cached["latest_price_source"] == "api"
+            @test cached["latest_price_status"] == "cached"
+            @test cached["latest_date"] == "2024-06-11"
+            reference = Date(now(Dates.UTC)) - Day(1)
+            while dayofweek(reference) > 5
+                reference -= Day(1)
+            end
+            function follow_quote(symbol, source, market)
+                quote_details = AssetDetails(symbol, market, "Acción", "USD")
+                quote_bar = PriceBar(symbol, reference, 10, 10, 10, 10, 10)
+                saved = save_price_import(prices, symbol, quote_details, [quote_bar], :success, 0, ""; source)
+                @test call("PUT", "$root/$(saved[1])").status == 200
+                return saved[1]
+            end
+            live = follow_quote("RECENTAPI", :api, "NASDAQ")
+            file = follow_quote("RECENTCSV", :csv, "NASDAQ")
+            unverified = follow_quote("OTHERAPI", :api, "TEST-OTHER")
+            listed = Dict(asset["id"] => asset for asset in response_json(call("GET"))["assets"])
+            @test listed[live]["latest_price_source"] == "api" && listed[live]["latest_price_status"] == "updated"
+            @test listed[file]["latest_price_source"] == "csv" && listed[file]["latest_price_status"] == "local_file"
+            @test listed[unverified]["latest_price_source"] == "api" && listed[unverified]["latest_price_status"] == "cached"
+            @test isempty(response_json(call("GET"; actor=beto.id))["assets"])
+            for quote_id in (live, file, unverified)
+                @test call("DELETE", "$root/$quote_id").status == 200
+            end
         end
         @testset "RF-11: chronological series, restricted to watched assets" begin
             @test call("GET", "$root/$id/history"; actor=beto.id).status == 404

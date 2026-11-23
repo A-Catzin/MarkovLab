@@ -199,7 +199,7 @@ Cada cartera tiene esta forma:
   "positions": [{ "asset_id": 1, "symbol": "AAPL", "market": "NASDAQ", "name": "Apple", "weight": 0.6, "currency": "USD" }] }
 ```
 
-### Seguimiento de mercado (RF-08 a RF-11)
+### Seguimiento de mercado (RF-08 a RF-11, RF-13)
 
 Requiere la clave interna y un actor de usuario válido. La pertenencia a la lista se
 determina exclusivamente por el actor autenticado; no se acepta un ID de usuario
@@ -207,7 +207,7 @@ en la URL ni en el cuerpo.
 
 | Ruta | Resultado |
 |---|---|
-| `GET /api/internal/watchlist` | `{ assets: [...] }`. Cada activo incluye `id`, `symbol`, `name`, `market`, `currency`, `latest_price`, `latest_date` y `changes: { daily, weekly, monthly }`. |
+| `GET /api/internal/watchlist` | `{ assets: [...] }`. Cada activo incluye `id`, `symbol`, `name`, `market`, `currency`, `latest_price`, `latest_date`, `latest_price_source`, `latest_price_status` y `changes: { daily, weekly, monthly }`. |
 | `PUT /api/internal/watchlist/{id}` | Agrega un activo del catálogo a la lista y devuelve `{ asset_id }`. Si ya lo sigue, devuelve el mismo resultado sin duplicarlo. |
 | `DELETE /api/internal/watchlist/{id}` | Retira el activo de la lista del actor y devuelve `{ asset_id }`. |
 | `GET /api/internal/watchlist/{id}/history` | `{ points: [[fecha, cierre], …] }`, ordenados por fecha. |
@@ -222,6 +222,22 @@ Las variaciones son fracciones: `0.02` equivale a 2 %. Se calculan desde el
 mensual usan el último cierre en o antes de la fecha de referencia (siete días
 naturales y un mes calendario antes, respectivamente). Sin cierre de referencia
 la variación es nula; sin precios también son nulos el último cierre y su fecha.
+
+**Origen y vigencia (RF-13).** `latest_price_source` es el origen del cierre
+que se mostró: `api`, `csv`, `manual` o `null`. `latest_price_status` toma
+uno de estos valores:
+
+| Estado | Significado |
+|---|---|
+| `local_file` | El cierre proviene de un CSV, independientemente de su fecha. |
+| `updated` | El cierre de API coincide con el último día de lunes a viernes anterior a la fecha UTC actual. Se aplica a NASDAQ, NYSE, NYSEARCA, NYSEAMERICAN, CBOE y BMV. |
+| `cached` | Hay un dato almacenado, pero la regla anterior no confirma que sea el cierre de referencia. No significa que esté obsoleto: puede haber un feriado o un mercado sin regla disponible. |
+| `unavailable` | No hay un cierre guardado; origen, fecha y precio son `null`. |
+
+La referencia no incluye la sesión en curso ni promete cotizaciones en tiempo
+real; por ejemplo, el sábado, domingo y lunes UTC usan el viernes anterior.
+El estado depende de la fecha del cierre, no de cuándo se importó. Los dos
+campos son aditivos; la forma de `points` no cambia.
 
 ### Solicitud manual de actualización (RF-12)
 
