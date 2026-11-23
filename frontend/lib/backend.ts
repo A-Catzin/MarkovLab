@@ -20,13 +20,21 @@ export interface BackendUser {
 
 /** Error de un llamado al backend: `status` es el HTTP (0 si no hubo respuesta) y `code` el campo `error`. */
 export class BackendError extends Error {
+  readonly status: number;
+  readonly code: string;
+  readonly details?: Record<string, unknown>;
+
   constructor(
-    readonly status: number,
-    readonly code: string,
+    status: number,
+    code: string,
     message: string,
+    details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = "BackendError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
   }
 }
 
@@ -66,8 +74,15 @@ export async function backendFetch<T>(path: string, { method = "GET", body, acto
     throw new BackendError(0, "unreachable", `no se pudo contactar al backend: ${String(error)}`);
   }
   if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as { error?: string; message?: string } | null;
-    throw new BackendError(response.status, payload?.error ?? "http_error", payload?.message ?? `HTTP ${response.status}`);
+    const payload = (await response.json().catch(() => null)) as
+      | (Record<string, unknown> & { error?: string; message?: string })
+      | null;
+    throw new BackendError(
+      response.status,
+      payload?.error ?? "http_error",
+      payload?.message ?? `HTTP ${response.status}`,
+      payload ?? undefined,
+    );
   }
   return (await response.json()) as T;
 }

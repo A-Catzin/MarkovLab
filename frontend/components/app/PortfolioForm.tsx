@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState, useMemo, useState } from "react";
-import { createPortfolio, type PortfolioFormState } from "@/app/app/carteras/actions";
+import { createPortfolio, updatePortfolioAction, type PortfolioFormState } from "@/app/app/carteras/actions";
 import { type ValidationIssue } from "@/lib/modules/runtime";
 import { validatePortfolioEditInput } from "@/lib/modules/validators";
 import { ErrorSummary } from "./ModuleStateViews";
@@ -40,6 +41,7 @@ const MAX_ROWS = 50;
 export function PortfolioForm({
   assets,
   mode = "create",
+  portfolioId,
   initialValues,
   pendingBackend = false,
   submitLabel,
@@ -48,12 +50,14 @@ export function PortfolioForm({
 }: {
   assets: AssetOption[];
   mode?: "create" | "edit";
+  portfolioId?: string;
   initialValues?: PortfolioFormInitialValues;
   pendingBackend?: boolean;
   submitLabel?: string;
   cancelHref?: string;
   initialShowValidationDemo?: boolean;
 }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState<PortfolioFormState, FormData>(createPortfolio, { error: null });
   const initialRows: Row[] =
     initialValues && initialValues.positions.length > 0
@@ -70,6 +74,7 @@ export function PortfolioForm({
   const [startDate, setStartDate] = useState(initialValues?.startDate ?? "2026-01-05");
   const [rows, setRows] = useState<Row[]>(initialRows);
   const [nextKey, setNextKey] = useState(initialRows.length);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [editIssues, setEditIssues] = useState<ValidationIssue[]>(() =>
     initialShowValidationDemo
       ? validatePortfolioEditInput({
@@ -108,15 +113,16 @@ export function PortfolioForm({
       }));
     });
 
-  function handleEditSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleEditSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const parsedPositions = rows.map((row) => ({
       assetId: Number(row.assetId),
       percent: Number(row.percent.replace(",", ".")),
     }));
+    const numericCapital = Number(capital.replace(/,/g, ""));
     const issues = validatePortfolioEditInput({
       name,
-      capital: Number(capital.replace(/,/g, "")),
+      capital: numericCapital,
       currency,
       startDate,
       positions: parsedPositions,
@@ -128,12 +134,33 @@ export function PortfolioForm({
       return;
     }
     setEditIssues([]);
-    if (pendingBackend) {
+    if (pendingBackend || !portfolioId) {
       setEditNotice(
         "Validación correcta (suma 100 %, sin activos duplicados). El guardado definitivo de nuevas versiones espera el endpoint B3 del backend; no se simuló persistencia.",
       );
+      return;
     }
+
+    setSavingEdit(true);
+    setEditNotice(null);
+    const saved = await updatePortfolioAction(portfolioId, {
+      name,
+      capital: numericCapital,
+      currency,
+      startDate,
+      positions: parsedPositions,
+    });
+    setSavingEdit(false);
+    if (!saved.ok) {
+      setEditIssues([{ field: "portfolio-name", message: saved.error ?? "No pudimos actualizar la cartera." }]);
+      setFocusKey((k) => k + 1);
+      return;
+    }
+    setEditNotice("Nueva versión guardada en el historial de la cartera.");
+    router.refresh();
   }
+
+  const isBusy = mode === "create" ? pending : savingEdit;
 
   return (
     <form action={mode === "create" ? formAction : undefined} onSubmit={mode === "edit" ? handleEditSubmit : undefined} className="pf-form" noValidate={mode === "edit"}>
@@ -178,18 +205,17 @@ export function PortfolioForm({
             ))}
           </select>
         </label>
-        {mode === "edit" && (
-          <label className="field" htmlFor="portfolio-start-date">
-            <span>Fecha de referencia (RF-27)</span>
-            <input
-              id="portfolio-start-date"
-              name="start_date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </label>
-        )}
+        <label className="field" htmlFor="portfolio-start-date">
+          <span>{mode === "edit" ? "Fecha de referencia (RF-27)" : "Fecha de referencia (opcional, RF-27)"}</span>
+          <input
+            id="portfolio-start-date"
+            name="start_date"
+            type="date"
+            defaultValue={mode === "create" ? "" : undefined}
+            value={mode === "edit" ? startDate : undefined}
+            onChange={mode === "edit" ? (e) => setStartDate(e.target.value) : undefined}
+          />
+        </label>
       </div>
 
       <fieldset id="portfolio-positions" className="pf-form__positions">
@@ -273,10 +299,10 @@ export function PortfolioForm({
           type="submit"
           className="button pf-form__submit"
           style={{ marginTop: 0 }}
-          disabled={mode === "create" ? pending || !totalOk : pending}
-          aria-busy={pending}
+          disabled={mode === "create" ? pending || !totalOk : isBusy}
+          aria-busy={isBusy}
         >
-          {pending ? "Guardando…" : submitLabel ?? (mode === "edit" ? "Validar cambios" : "Guardar cartera")}
+          {isBusy ? "Guardando…" : submitLabel ?? (mode === "edit" ? "Guardar nueva versión" : "Guardar cartera")}
         </button>
         {cancelHref && (
           <Link href={cancelHref} className="button button--small button--quiet">

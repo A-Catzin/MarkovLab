@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BackendError } from "@/lib/backend";
 import { requireUser } from "@/lib/guards";
-import { isLocalFixturesEnabled } from "@/lib/modules/runtime";
 import { PortfolioHistoryChart } from "@/components/app/PortfolioHistoryChart";
 import { PortfolioSimulation } from "@/components/app/PortfolioSimulation";
 import {
@@ -70,7 +69,6 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
     );
   }
 
-  const showPreviewLinks = isLocalFixturesEnabled();
   const [history, simulations] = await Promise.all([loadHistory(user.id, id), loadSimulations(user.id, id)]);
   const note = currencyNote(portfolio);
   const historyMessage = {
@@ -86,16 +84,14 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
       </p>
       <div className="page-head">
         <h1>{portfolio.name}</h1>
-        {showPreviewLinks && (
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Link href={`/app/carteras/${portfolio.id}/editar`} className="button button--small button--quiet">
-              Editar y versiones
-            </Link>
-            <Link href={`/app/carteras/${portfolio.id}/estres`} className="button button--small button--quiet">
-              Escenarios de estrés
-            </Link>
-          </div>
-        )}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <Link href={`/app/carteras/${portfolio.id}/editar`} className="button button--small button--quiet">
+            Editar y versiones
+          </Link>
+          <Link href={`/app/carteras/${portfolio.id}/estres`} className="button button--small button--quiet">
+            Escenarios de estrés
+          </Link>
+        </div>
       </div>
       <dl className="metrics metrics--compact">
         <div>

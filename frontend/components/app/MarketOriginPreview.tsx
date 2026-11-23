@@ -7,15 +7,19 @@ import type { MarketOriginPreviewRow } from "@/lib/modules/types";
 import { LoadingSkeletonPanel, ModuleStatePanel, ProvenanceStrip } from "./ModuleStateViews";
 import styles from "./modules.module.css";
 
-const SOURCE_LABELS: Record<"api" | "csv", string> = {
+const SOURCE_LABELS: Record<"api" | "csv" | "manual", string> = {
   api: "API",
-  csv: "CSV local",
+  csv: "Archivo CSV",
+  manual: "Manual",
 };
 
-const FRESHNESS_LABELS: Record<"fresh" | "cached" | "local", string> = {
+const FRESHNESS_LABELS: Record<"updated" | "cached" | "local_file" | "unavailable" | "fresh" | "local", string> = {
+  updated: "Actualizado",
   fresh: "Actualizado",
   cached: "En caché",
+  local_file: "Archivo local",
   local: "Archivo local",
+  unavailable: "Sin cierre disponible",
 };
 
 export function MarketOriginPreview({
@@ -70,10 +74,12 @@ export function MarketOriginPreview({
                 </thead>
                 <tbody>
                   {result.data.map((row) => {
+                    const source = row.latestPriceSource ?? row.priceSource;
+                    const status = row.latestPriceStatus ?? row.dataFreshness;
                     const pillClass =
-                      row.dataFreshness === "fresh"
+                      status === "updated" || status === "fresh"
                         ? `${styles.pill} ${styles.pillFresh}`
-                        : row.dataFreshness === "cached"
+                        : status === "cached"
                           ? `${styles.pill} ${styles.pillWarning}`
                           : `${styles.pill} ${styles.pillMuted}`;
 
@@ -86,12 +92,12 @@ export function MarketOriginPreview({
                           </span>
                         </th>
                         <td>
-                          {row.priceSource && row.dataFreshness ? (
+                          {source && status ? (
                             <span className={pillClass}>
-                              {SOURCE_LABELS[row.priceSource]} · {FRESHNESS_LABELS[row.dataFreshness]}
+                              {SOURCE_LABELS[source]} · {FRESHNESS_LABELS[status]}
                             </span>
                           ) : (
-                            <span className={`${styles.pill} ${styles.pillMuted}`}>Sin datos de origen</span>
+                            <span className={`${styles.pill} ${styles.pillMuted}`}>Sin cierre disponible</span>
                           )}
                           {row.latestDate && (
                             <span className="data-table__hint" style={{ display: "block", marginTop: 4 }}>

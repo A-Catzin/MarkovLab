@@ -59,16 +59,21 @@ export async function loadDashboardOverview(params: {
       description: "Sigue activos del catálogo, inspecciona variaciones de cierre y consulta sus series históricas.",
       available: true,
     },
-    ...MODULE_REGISTRY.filter((item) => item.code !== "F2").map((item) => ({
-      code: item.code,
-      name: item.name,
-      srsRefs: item.srsRefs,
-      href: item.appHref,
-      deliveryState: "pantalla con datos de prueba" as const,
-      backendStatusLabel: `Pendiente de API (${item.backendDependency.split("·")[0].trim()})`,
-      description: item.summary,
-      available: false,
-    })),
+    ...MODULE_REGISTRY.filter((item) => item.code !== "F2").map((item) => {
+      const available = item.deliveryState === "integrado con API" || item.deliveryState === "publicado";
+      return {
+        code: item.code,
+        name: item.name,
+        srsRefs: item.srsRefs,
+        href: item.appHref,
+        deliveryState: item.deliveryState,
+        backendStatusLabel: available
+          ? "Disponible"
+          : `Pendiente de API (${item.backendDependency.split("·")[0].trim()})`,
+        description: item.summary,
+        available,
+      };
+    }),
   ];
 
   return {
@@ -86,7 +91,7 @@ export async function loadDashboardOverview(params: {
       freshness: "fresh",
       isExample: false,
       calculatedAt: new Date().toISOString().slice(0, 10),
-      assumptions: "Módulos F1 y F3–F7 muestran estado honesto hasta completar su API en el backend",
+      assumptions: "Módulos F1–F3 integrados con API B1–B4; F4–F7 muestran estado honesto hasta completar B5–B8",
     },
   };
 }

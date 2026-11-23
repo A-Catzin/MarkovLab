@@ -53,6 +53,7 @@ export default async function EditPortfolioPage({
           <PortfolioForm
             assets={result.data.catalog}
             mode="edit"
+            portfolioId={result.data.portfolioId}
             initialValues={{
               name: result.data.portfolioName,
               capital: result.data.capital,
@@ -61,7 +62,7 @@ export default async function EditPortfolioPage({
               positions: result.data.positions,
             }}
             pendingBackend={result.data.pendingBackend}
-            submitLabel="Validar cambios (pendiente B3)"
+            submitLabel={result.data.pendingBackend ? "Validar cambios (pendiente B3)" : "Guardar nueva versión"}
             cancelHref={`/app/carteras/${id}`}
           />
           <PortfolioVersionsPanel data={result.data} />
