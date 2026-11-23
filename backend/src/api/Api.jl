@@ -19,7 +19,7 @@ using ..MarkovLabBackend: MarkovLabBackend, InsufficientDataError, MissingExchan
                           require_user, user_portfolio_history, SimulationRepository, SavedSimulation,
                           PostgresSimulationRepository, simulate_user_portfolio, list_user_simulations,
                           WatchlistRepository, PostgresWatchlist, watched_assets, follow_asset, unfollow_asset,
-                          is_followed, price_history
+                          is_followed, price_history, queue_market_refresh!
 
 const SERVICE_NAME = "markovlab-backend"
 const DEFAULT_ALLOWED_ORIGINS = "http://localhost:3000"
@@ -31,10 +31,11 @@ const PRICES = Ref{Union{Nothing,PriceRepository}}(nothing)
 const PORTFOLIOS = Ref{Union{Nothing,PortfolioRepository}}(nothing)
 const SIMULATIONS = Ref{Union{Nothing,SimulationRepository}}(nothing)
 const WATCHLIST = Ref{Union{Nothing,WatchlistRepository}}(nothing)
+const REFRESH_ENABLED = Ref(false)
 const INTERNAL_KEY = Ref{String}("")
 
 """
-    configure!(; users, prices=nothing, portfolios=nothing, simulations=nothing, watchlist=nothing, internal_key)
+    configure!(; users, prices=nothing, portfolios=nothing, simulations=nothing, watchlist=nothing, refresh_enabled=false, internal_key)
 
 Fija los repositorios de usuarios, precios y carteras, y la clave que deben enviar los
 llamados internos del servidor de Next.js (`X-Internal-Key`). Con `internal_key` vacío,
@@ -43,12 +44,14 @@ las rutas internas responden 503; sin un repositorio, también las rutas que lo 
 function configure!(; users::Union{Nothing,UserRepository}, prices::Union{Nothing,PriceRepository}=nothing,
                     portfolios::Union{Nothing,PortfolioRepository}=nothing,
                     simulations::Union{Nothing,SimulationRepository}=nothing,
-                    watchlist::Union{Nothing,WatchlistRepository}=nothing, internal_key::AbstractString)
+                    watchlist::Union{Nothing,WatchlistRepository}=nothing, refresh_enabled::Bool=false,
+                    internal_key::AbstractString)
     USERS[] = users
     PRICES[] = prices
     PORTFOLIOS[] = portfolios
     SIMULATIONS[] = simulations
     WATCHLIST[] = watchlist
+    REFRESH_ENABLED[] = refresh_enabled
     INTERNAL_KEY[] = String(internal_key)
     return nothing
 end
@@ -123,7 +126,8 @@ function start(; host::AbstractString=Base.get(ENV, "HOST", "0.0.0.0"),
         end
     end
     configure!(users=users, prices=prices, portfolios=portfolios, simulations=simulations,
-               watchlist=watchlist, internal_key=internal_key)
+               watchlist=watchlist, refresh_enabled=Base.get(ENV, "MARKET_REFRESH_REQUESTS_ENABLED", "") == "true",
+               internal_key=internal_key)
     # Abre la conexión en segundo plano al arrancar: así el primer inicio de sesión no paga
     # la conexión al pooler ni la compilación de LibPQ, y un problema de la base se ve enseguida.
     if users !== nothing

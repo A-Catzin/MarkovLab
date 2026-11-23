@@ -46,4 +46,5 @@ using MarkovLabBackend
     include("infrastructure/postgres_prices_tests.jl")
     include("infrastructure/postgres_portfolios_tests.jl")
     include("infrastructure/postgres_simulations_tests.jl")
+    include("infrastructure/watchlist_refresh_tests.jl")
 end

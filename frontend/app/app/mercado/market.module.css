@@ -10,3 +10,5 @@
 .changes div { display: flex; justify-content: space-between; gap: 6px; }
 .changes dt { color: var(--muted); }
 .changes dd { margin: 0; white-space: nowrap; }
+.refresh { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 12px; }
+.refresh p { margin: 0; }

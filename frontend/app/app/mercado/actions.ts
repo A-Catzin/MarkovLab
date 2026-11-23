@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { backendFetch } from "@/lib/backend";
+import { BackendError, backendFetch } from "@/lib/backend";
 import { requireUser } from "@/lib/guards";
 
 export async function updateWatchlist(method: "PUT" | "DELETE", data: FormData) {
@@ -17,4 +17,17 @@ export async function updateWatchlist(method: "PUT" | "DELETE", data: FormData) 
   }
   revalidatePath(route);
   redirect(method === "PUT" ? `${route}?asset=${id}` : route);
+}
+
+export async function requestMarketRefresh() {
+  const user = await requireUser();
+  const route = "/app/mercado";
+  let outcome = "accepted";
+  try {
+    await backendFetch("/api/internal/watchlist/refresh", { method: "POST", actorId: user.id });
+  } catch (error) {
+    outcome = error instanceof BackendError && error.code === "no_refreshable_assets"
+      ? "no-assets" : "unavailable";
+  }
+  redirect(`${route}?refresh=${outcome}`);
 }

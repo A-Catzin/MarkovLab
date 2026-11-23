@@ -223,6 +223,18 @@ mensual usan el último cierre en o antes de la fecha de referencia (siete días
 naturales y un mes calendario antes, respectivamente). Sin cierre de referencia
 la variación es nula; sin precios también son nulos el último cierre y su fecha.
 
+### Solicitud manual de actualización (RF-12)
+
+`POST /api/internal/watchlist/refresh` usa el actor autenticado, no acepta símbolos del
+cliente y devuelve `202 {"accepted":true}` si hay activos elegibles en su lista. Una
+solicitud repetida el mismo día UTC se agrupa y no vuelve a consultar al proveedor.
+Devuelve `422 no_refreshable_assets` si la lista está vacía o solo contiene símbolos
+ambiguos, y `503 refresh_disabled` cuando la función está apagada. Si está habilitada,
+`GET /api/internal/watchlist` incluye `can_request_refresh: true`.
+
+La API solo registra la solicitud; no usa Apify. El consumidor y los pasos de puesta
+en marcha están en [ACTUALIZACION_MERCADO.md](ACTUALIZACION_MERCADO.md).
+
 ### Rutas internas de admin
 
 Además de `X-Internal-Key`, exigen `X-Actor-Id` con el id del usuario que navega. El backend verifica **en la base** que ese usuario sea admin y, si no, responde 403 `forbidden` sin datos. Detalle en [ROLES.md](ROLES.md).

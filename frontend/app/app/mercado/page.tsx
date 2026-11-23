@@ -3,7 +3,7 @@ import Link from "next/link";
 import { backendFetch } from "@/lib/backend";
 import { requireUser } from "@/lib/guards";
 import { formatMoney, getCatalogAssets } from "@/lib/portfolios";
-import { updateWatchlist } from "./actions";
+import { requestMarketRefresh, updateWatchlist } from "./actions";
 import styles from "./market.module.css";
 
 type WatchedAsset = {
@@ -58,12 +58,14 @@ function ClosingChart({ asset, points }: { asset: WatchedAsset; points: Point[] 
 }
 
 export default async function MarketPage({ searchParams }: {
-  searchParams: Promise<{ asset?: string; error?: string }>;
+  searchParams: Promise<{ asset?: string; error?: string; refresh?: string }>;
 }) {
   const user = await requireUser();
-  const { asset, error } = await searchParams;
+  const { asset, error, refresh } = await searchParams;
   const [list, catalog] = await Promise.allSettled([
-    backendFetch<{ assets: WatchedAsset[] }>("/api/internal/watchlist", { actorId: user.id }),
+    backendFetch<{ assets: WatchedAsset[]; can_request_refresh?: boolean }>(
+      "/api/internal/watchlist", { actorId: user.id },
+    ),
     getCatalogAssets(user.id),
   ]);
   const assets = list.status === "fulfilled" ? list.value.assets : [];
@@ -86,6 +88,21 @@ export default async function MarketPage({ searchParams }: {
       ) : (
         <section className="panel" aria-labelledby="watchlist-title">
           <h2 id="watchlist-title">Activos en seguimiento</h2>
+          {refresh === "accepted" && (
+            <p role="status" className="notice">Solicitud registrada. Los precios cambiarán cuando haya datos nuevos.</p>
+          )}
+          {refresh === "no-assets" && (
+            <p role="alert" className="notice notice--error">No hay activos en tu lista que puedan actualizarse.</p>
+          )}
+          {refresh === "unavailable" && (
+            <p role="alert" className="notice notice--error">No se pudo registrar la solicitud. Inténtalo más tarde.</p>
+          )}
+          {list.value.can_request_refresh && assets.length > 0 && (
+            <form action={requestMarketRefresh} className={styles.refresh}>
+              <button type="submit" className="button button--small button--quiet">Solicitar actualización</button>
+              <p className="panel__help">La actualización se procesa en segundo plano.</p>
+            </form>
+          )}
           {catalog.status === "rejected" ? <p role="status">El catálogo no está disponible por ahora.</p>
             : available.length > 0 && (
               <form action={updateWatchlist.bind(null, "PUT")} className={styles.form}>

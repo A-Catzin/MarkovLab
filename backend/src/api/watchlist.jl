@@ -15,7 +15,9 @@ end
 get("/api/internal/watchlist") do req
     handle(req) do req
         repo, user_id = watchlist_context(req)
-        json(Dict("assets" => watched_assets(repo, user_id)))
+        response = Dict{String,Any}("assets" => watched_assets(repo, user_id))
+        REFRESH_ENABLED[] && (response["can_request_refresh"] = true)
+        json(response)
     end
 end
 
@@ -44,5 +46,16 @@ get("/api/internal/watchlist/{id}/history") do req, id
         is_followed(repo, user_id, asset_id) || throw(not_found("followed asset not found"))
         points = price_history(configured_prices(), asset_id)
         json(Dict("points" => [[string(date), price] for (date, price) in points]))
+    end
+end
+
+post("/api/internal/watchlist/refresh") do req
+    handle(req) do req
+        repo, user_id = watchlist_context(req)
+        REFRESH_ENABLED[] && repo isa PostgresWatchlist ||
+            throw(RequestError(503, "refresh_disabled", "market refresh is disabled"))
+        queue_market_refresh!(repo, user_id) ||
+            throw(RequestError(422, "no_refreshable_assets", "no followed assets can be refreshed"))
+        json(Dict("accepted" => true); status=202)
     end
 end
