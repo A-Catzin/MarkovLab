@@ -210,6 +210,7 @@ export type PredictionMetricKind = "return" | "volatility";
 export interface PredictionSeriesPoint {
   date: string;
   phase: "historical" | "forecast";
+  dateEstimated?: boolean;
   historicalValue: number | null;
   forecastPoint: number | null;
   lowerBound: number | null;
@@ -224,8 +225,18 @@ export interface PredictionEvaluationSummary {
   intervalCoverage: number;
 }
 
+export interface PredictionAssetOption {
+  id: number;
+  symbol: string;
+  name: string;
+  market?: string;
+  lastDate?: string | null;
+  priceRows?: number;
+}
+
 export interface PredictionData {
-  assets: { id: number; symbol: string; name: string }[];
+  assets: PredictionAssetOption[];
+  selectedAssetId?: number | null;
   selectedSymbol: string;
   metric: PredictionMetricKind;
   horizonDays: 21 | 63 | 126;
@@ -234,11 +245,21 @@ export interface PredictionData {
   modelParameters: string;
   trainingWindow: { from: string; to: string; observations: number };
   calculatedAt: string;
+  asOf?: string | null;
+  activePredictionId?: string | null;
+  point?: number | null;
+  lowerBound?: number | null;
+  upperBound?: number | null;
+  predictionLoadError?: string | null;
   hasPostObservations: boolean;
   evaluation: PredictionEvaluationSummary | null;
   limitations: string[];
   series: PredictionSeriesPoint[];
 }
+
+export type BacktestStrategyId = "manual" | "min_variance" | "max_sharpe";
+
+export type BacktestRebalanceFrequency = "none" | "monthly" | "quarterly" | "semiannual";
 
 export interface BacktestCurvePoint {
   date: string;
@@ -252,19 +273,40 @@ export interface BacktestMetricsBlock {
   annualizedReturn: number;
   annualizedVolatility: number;
   maxDrawdown: number;
-  sharpeRatio: number;
+  sharpeRatio: number | null;
+}
+
+export interface BacktestWeightRow {
+  assetId: number;
+  symbol: string;
+  market: string;
+  manualWeight: number;
+  targetWeight: number;
 }
 
 export interface BacktestRunRecord {
   id: string;
+  portfolioId?: string;
+  portfolioVersion?: number;
+  portfolioName?: string;
+  currency?: string;
+  model?: string;
+  strategy?: BacktestStrategyId;
   strategyName: string;
+  rebalance?: BacktestRebalanceFrequency;
   rebalanceLabel: string;
+  benchmarkAssetId?: number | null;
   benchmarkSymbol: string | null;
+  benchmarkCurrency?: string | null;
   configFrom: string;
   configTo: string;
   evalFrom: string;
   evalTo: string;
+  configurationWindow?: { from: string; to: string; observations: number };
+  evaluationWindow?: { from: string; to: string; observations: number };
   transactionCostBps: number;
+  riskFreeRate?: number;
+  weights?: BacktestWeightRow[];
   strategyMetrics: BacktestMetricsBlock;
   benchmarkMetrics: BacktestMetricsBlock | null;
   executedAt: string;
@@ -272,10 +314,14 @@ export interface BacktestRunRecord {
 }
 
 export interface BacktestingData {
+  portfolioId?: string;
+  portfolioName?: string;
+  portfolioCurrency?: string;
+  availablePortfolios?: { id: string; name: string; currency: string }[];
   strategies: { id: string; name: string; description: string }[];
-  benchmarks: { symbol: string; label: string }[];
+  benchmarks: { id?: number | null; symbol: string; label: string }[];
   runs: BacktestRunRecord[];
-  activeRunId: string;
+  activeRunId: string | null;
 }
 
 export interface DashboardModuleSummary {

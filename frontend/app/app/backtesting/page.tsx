@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function BacktestingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ corrida?: string; escenario?: string }>;
+  searchParams: Promise<{ cartera?: string; corrida?: string; escenario?: string }>;
 }) {
   const user = await requireUser();
   const q = await searchParams;
@@ -22,9 +22,14 @@ export default async function BacktestingPage({
 
   const result = await loadBacktestingView({
     actorId: user.id,
+    portfolioId: q.cartera,
     runId: q.corrida,
     scenario,
   });
+
+  const resolvedPortfolioId = result.status === "ok" ? result.data.portfolioId ?? "" : q.cartera ?? "";
+  const resolvedRunId = result.status === "ok" ? result.data.activeRunId ?? "" : q.corrida ?? "";
+  const viewKey = `${resolvedPortfolioId}:${resolvedRunId}:${scenario}`;
 
   return (
     <>
@@ -34,7 +39,12 @@ export default async function BacktestingPage({
       {result.status === "ok" && result.provenance.isExample && (
         <ExampleDataBanner moduleName="Backtesting de estrategias (F6)" />
       )}
-      <BacktestingView result={result} basePath="/app/backtesting" currentScenario={scenario} />
+      <BacktestingView
+        key={viewKey}
+        result={result}
+        basePath="/app/backtesting"
+        currentScenario={scenario}
+      />
     </>
   );
 }
