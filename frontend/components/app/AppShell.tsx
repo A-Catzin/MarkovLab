@@ -6,6 +6,7 @@ import { NavLinks, type NavItem } from "./NavLinks";
 const USER_NAV: NavItem[] = [
   { href: "/app", label: "Inicio" },
   { href: "/app/carteras", label: "Mis carteras" },
+  { href: "/app/mercado", label: "Mercado" },
   { href: "/app/simulador", label: "Simulador" },
 ];
 

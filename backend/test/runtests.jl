@@ -38,6 +38,7 @@ using MarkovLabBackend
     include("api/admin_api_tests.jl")
     include("api/portfolios_api_tests.jl")
     include("api/simulations_api_tests.jl")
+    include("api/watchlist_api_tests.jl")
     include("infrastructure/csv_prices_tests.jl")
     include("infrastructure/apify_market_data_tests.jl")
     include("infrastructure/postgres_connection_tests.jl")

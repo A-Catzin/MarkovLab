@@ -199,6 +199,24 @@ Cada cartera tiene esta forma:
   "positions": [{ "asset_id": 1, "symbol": "AAPL", "market": "NASDAQ", "name": "Apple", "weight": 0.6, "currency": "USD" }] }
 ```
 
+### Seguimiento de mercado (RF-08, RF-09, RF-11)
+
+Requiere la clave interna y un actor de usuario válido. La pertenencia a la lista se
+determina exclusivamente por el actor autenticado; no se acepta un ID de usuario
+en la URL ni en el cuerpo.
+
+| Ruta | Resultado |
+|---|---|
+| `GET /api/internal/watchlist` | `{ assets: [...] }`. Cada activo incluye `id`, `symbol`, `name`, `market`, `currency`, `latest_price` y `latest_date`; los dos últimos son nulos si no hay precios. |
+| `PUT /api/internal/watchlist/{id}` | Agrega un activo del catálogo a la lista y devuelve `{ asset_id }`. Si ya lo sigue, devuelve el mismo resultado sin duplicarlo. |
+| `DELETE /api/internal/watchlist/{id}` | Retira el activo de la lista del actor y devuelve `{ asset_id }`. |
+| `GET /api/internal/watchlist/{id}/history` | `{ points: [[fecha, cierre], …] }`, ordenados por fecha. |
+
+Un ID inválido devuelve 400; un activo inexistente al agregarlo o ajeno a la lista
+al consultar o quitarlo devuelve 404. Se usa el cierre ajustado cuando existe y,
+si coinciden dos fuentes para la misma fecha, se prefiere API sobre CSV. La lista
+se guarda en la tabla existente `lista_seguimiento`.
+
 ### Rutas internas de admin
 
 Además de `X-Internal-Key`, exigen `X-Actor-Id` con el id del usuario que navega. El backend verifica **en la base** que ese usuario sea admin y, si no, responde 403 `forbidden` sin datos. Detalle en [ROLES.md](ROLES.md).

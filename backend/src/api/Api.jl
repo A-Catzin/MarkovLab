@@ -18,7 +18,8 @@ using ..MarkovLabBackend: MarkovLabBackend, InsufficientDataError, MissingExchan
                           create_user_portfolio, list_user_portfolios, get_user_portfolio, delete_user_portfolio,
                           require_user, user_portfolio_history, SimulationRepository, SavedSimulation,
                           PostgresSimulationRepository, simulate_user_portfolio, list_user_simulations,
-                          DEFAULT_SIMULATIONS
+                          WatchlistRepository, PostgresWatchlist, watched_assets, follow_asset, unfollow_asset,
+                          is_followed, price_history
 
 const SERVICE_NAME = "markovlab-backend"
 const DEFAULT_ALLOWED_ORIGINS = "http://localhost:3000"
@@ -29,10 +30,11 @@ const USERS = Ref{Union{Nothing,UserRepository}}(nothing)
 const PRICES = Ref{Union{Nothing,PriceRepository}}(nothing)
 const PORTFOLIOS = Ref{Union{Nothing,PortfolioRepository}}(nothing)
 const SIMULATIONS = Ref{Union{Nothing,SimulationRepository}}(nothing)
+const WATCHLIST = Ref{Union{Nothing,WatchlistRepository}}(nothing)
 const INTERNAL_KEY = Ref{String}("")
 
 """
-    configure!(; users, prices=nothing, portfolios=nothing, internal_key)
+    configure!(; users, prices=nothing, portfolios=nothing, simulations=nothing, watchlist=nothing, internal_key)
 
 Fija los repositorios de usuarios, precios y carteras, y la clave que deben enviar los
 llamados internos del servidor de Next.js (`X-Internal-Key`). Con `internal_key` vacío,
@@ -40,11 +42,13 @@ las rutas internas responden 503; sin un repositorio, también las rutas que lo 
 """
 function configure!(; users::Union{Nothing,UserRepository}, prices::Union{Nothing,PriceRepository}=nothing,
                     portfolios::Union{Nothing,PortfolioRepository}=nothing,
-                    simulations::Union{Nothing,SimulationRepository}=nothing, internal_key::AbstractString)
+                    simulations::Union{Nothing,SimulationRepository}=nothing,
+                    watchlist::Union{Nothing,WatchlistRepository}=nothing, internal_key::AbstractString)
     USERS[] = users
     PRICES[] = prices
     PORTFOLIOS[] = portfolios
     SIMULATIONS[] = simulations
+    WATCHLIST[] = watchlist
     INTERNAL_KEY[] = String(internal_key)
     return nothing
 end
@@ -52,6 +56,7 @@ end
 include("errors.jl")
 include("cors.jl")
 include("routes.jl")
+include("watchlist.jl")
 
 """
     warm_database(users, prices, portfolios, simulations)
@@ -103,19 +108,22 @@ function start(; host::AbstractString=Base.get(ENV, "HOST", "0.0.0.0"),
     prices = nothing
     portfolios = nothing
     simulations = nothing
+    watchlist = nothing
     if !isempty(database_url)
         try
             users = PostgresUserRepository(database_url)
             prices = PostgresPriceRepository(database_url)
             portfolios = PostgresPortfolioRepository(database_url)
             simulations = PostgresSimulationRepository(database_url)
+            watchlist = PostgresWatchlist(prices.db)
         catch err
             err isa ArgumentError || rethrow()
             # Se registra solo el motivo: la URL lleva la contraseña.
             @warn "DATABASE_URL is invalid; user routes stay disabled" reason = err.msg
         end
     end
-    configure!(users=users, prices=prices, portfolios=portfolios, simulations=simulations, internal_key=internal_key)
+    configure!(users=users, prices=prices, portfolios=portfolios, simulations=simulations,
+               watchlist=watchlist, internal_key=internal_key)
     # Abre la conexión en segundo plano al arrancar: así el primer inicio de sesión no paga
     # la conexión al pooler ni la compilación de LibPQ, y un problema de la base se ve enseguida.
     if users !== nothing
