@@ -90,6 +90,44 @@ Métricas principales de una serie de precios (RF-15, RF-16, RF-20).
 
 `annualized_volatility` es `null` si no se envía `periods_per_year`. Definiciones en [`METRICAS_DOMINIO.md`](METRICAS_DOMINIO.md).
 
+### Predicción de activos (B6, RF-21 a RF-26)
+
+Ambas rutas requieren `X-Internal-Key` y `X-Actor-Id`. Requieren la migración
+`0008_predicciones_activos.sql`. Solo el actor que generó el pronóstico puede consultarlo.
+
+| Método y ruta | Entrada | Resultado |
+|---|---|---|
+| `POST /api/internal/assets/{id}/predictions` | ID numérico del activo; cuerpo `{"metric":"return","horizon_days":21,"as_of":"2024-02-29"}`. Sin query. | **201**, pronóstico nuevo con UUID y fecha UTC. |
+| `GET /api/internal/predictions/{id}` | UUID devuelto por el POST; sin query ni cuerpo. | **200**, el mismo entrenamiento y pronóstico, con evaluación actualizada según los cierres disponibles. |
+
+`metric` admite `return` (fracción por sesión) o `volatility` (fracción anualizada).
+`horizon_days` admite 21, 63 o 126 **sesiones**. `as_of` es opcional (ISO
+`YYYY-MM-DD`): si se omite, se usa el último cierre disponible. No puede excederlo.
+El modelo y sus limitaciones están en [PREDICCION.md](PREDICCION.md).
+
+La respuesta contiene:
+
+- `id`, `asset_id`, `symbol`, `market`, `calculated_at`, `as_of`,
+  `metric`, `horizon_days` y `model` (`empirical_stationary_v1`).
+- `parameters: { confidence, max_training_closes, volatility_sessions, sessions_per_year }`;
+  `training_window: { from, to, observations }` (fechas ISO y número de valores de la métrica).
+- `point`, `lower_bound`, `upper_bound` y `limitations: string[]`.
+- `series: [{ date, phase, date_estimated, historical_value, forecast_point,
+  lower_bound, upper_bound, observed_after_value }]`. `phase` es `historical`
+  o `forecast`; los campos numéricos no aplicables son `null`. Las sesiones
+  aún no observadas se muestran como fechas hábiles estimadas (sin calendario
+  de feriados). Cuando hay un cierre real, se usa su fecha.
+- `evaluation: null` sin cierres posteriores o `{ observed_points, mae, rmse,
+  interval_coverage }`. Un GET no reentrena ni escribe.
+
+| Código HTTP | Error |
+|---|---|
+| 400 | `invalid_input` para ID de activo, fecha, métrica o horizonte inválidos; `invalid_json` para JSON malformado. |
+| 401 / 403 | `unauthorized` o `forbidden`: clave o actor inválidos. |
+| 404 | `not_found`: no existe el activo o la predicción no existe o es de otro actor. |
+| 422 | `insufficient_data`: menos de 60 cierres hasta el corte. |
+| 503 | `not_configured` o `database_unavailable`: falta configuración o falla la base. |
+
 ### `POST /api/internal/analysis/assets` (B2, RF-15 a RF-20)
 
 Requiere `X-Internal-Key` y `X-Actor-Id`. No usa query ni acepta precios del
