@@ -140,6 +140,8 @@ export interface OptimizationWeightRow {
   assetId: number;
   symbol: string;
   name: string;
+  market?: string;
+  assetCurrency?: string;
   manualWeight: number;
   optimizedWeight: number;
   minWeight: number;
@@ -149,19 +151,58 @@ export interface OptimizationWeightRow {
 export interface OptimizationPortfolioStats {
   expectedAnnualReturn: number;
   annualizedVolatility: number;
-  sharpeRatio: number;
+  sharpeRatio: number | null;
 }
 
-export interface OptimizationData {
+export interface OptimizationRunRecord {
+  id: string;
+  createdAt: string;
+  portfolioId: string;
+  portfolioVersion: number;
   portfolioName: string;
+  capital: number;
+  currency: string;
+  startDate: string;
   objective: OptimizationObjective;
-  frequencyLabel: string;
+  objectiveValue: number;
+  returnModel: string;
+  periodsPerYear: number;
   riskFreeRate: number;
+  lookbackYears: number;
   maxVolatilityCap: number | null;
   feasibleMinVolatility: number;
+  window: { from: string; to: string };
+  observations: number;
   weights: OptimizationWeightRow[];
   manualStats: OptimizationPortfolioStats;
   optimizedStats: OptimizationPortfolioStats;
+  solver: string;
+  solverWrapperVersion: string;
+}
+
+export interface OptimizationPortfolioOption {
+  id: string;
+  name: string;
+  currency: string;
+  positions: { assetId: number; symbol: string; name: string; manualWeight: number }[];
+}
+
+export interface OptimizationData {
+  portfolioId?: string;
+  portfolioName: string;
+  currency?: string;
+  availablePortfolios?: OptimizationPortfolioOption[];
+  objective: OptimizationObjective;
+  frequencyLabel: string;
+  riskFreeRate: number;
+  lookbackYears?: number;
+  maxVolatilityCap: number | null;
+  feasibleMinVolatility: number | null;
+  weights: OptimizationWeightRow[];
+  manualStats: OptimizationPortfolioStats | null;
+  optimizedStats: OptimizationPortfolioStats | null;
+  activeRun?: OptimizationRunRecord | null;
+  history?: OptimizationRunRecord[];
 }
 
 export type PredictionMetricKind = "return" | "volatility";

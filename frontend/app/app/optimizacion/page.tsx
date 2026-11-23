@@ -9,24 +9,31 @@ import type { OptimizationObjective } from "@/lib/modules/types";
 
 export const metadata: Metadata = {
   title: "Optimización de carteras · MarkovLab",
-  description: "Mínima varianza, máximo Sharpe y comparación de pesos bajo restricciones.",
+  description: "Mínima varianza, máximo Sharpe, cotas por activo, tope de volatilidad e historial auditable.",
 };
 
 export default async function OptimizationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ objetivo?: string; escenario?: string }>;
+  searchParams: Promise<{ cartera?: string; objetivo?: string; ejecucion?: string; escenario?: string }>;
 }) {
   const user = await requireUser();
   const q = await searchParams;
-  const objective: OptimizationObjective = q.objetivo === "min_variance" ? "min_variance" : "max_sharpe";
+  const objective: OptimizationObjective | undefined =
+    q.objetivo === "min_variance" || q.objetivo === "max_sharpe" ? q.objetivo : undefined;
   const scenario = parseScenario(q.escenario);
 
   const result = await loadOptimizationView({
     actorId: user.id,
+    portfolioId: q.cartera,
+    runId: q.ejecucion,
     objective,
     scenario,
   });
+
+  const resolvedObjective: OptimizationObjective =
+    objective ?? (result.status === "ok" ? result.data.objective : "min_variance");
+  const viewKey = `${q.cartera ?? "default"}-${q.ejecucion ?? "latest"}-${scenario}-${resolvedObjective}`;
 
   return (
     <>
@@ -37,10 +44,11 @@ export default async function OptimizationPage({
         <ExampleDataBanner moduleName="Optimización de carteras (F4)" />
       )}
       <OptimizationView
+        key={viewKey}
         result={result}
         basePath="/app/optimizacion"
         currentScenario={scenario}
-        initialObjective={objective}
+        initialObjective={resolvedObjective}
       />
     </>
   );

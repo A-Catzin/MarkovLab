@@ -183,14 +183,11 @@ export const MODULE_REGISTRY: readonly ModuleRegistryItem[] = [
     srsRefs: "RF-34 a RF-40",
     appHref: "/app/optimizacion",
     devHref: "/dev/vistas/optimizacion",
-    deliveryState: "pantalla con datos de prueba",
-    backendDependency: "B5 · pendiente de API",
-    summary: "Objetivos de mínima varianza y máximo Sharpe, cotas mín/máx por activo, tope de riesgo e inviabilidad.",
+    deliveryState: "integrado con API",
+    backendDependency: "B5 · conectado (POST y GET /api/internal/portfolios/{id}/optimizations)",
+    summary: "Objetivos de mínima varianza y máximo Sharpe, cotas mín/máx por activo, tope de riesgo e historial.",
     pendingFields: [
-      "POST /api/internal/portfolios/optimize",
-      "request: { portfolio_id?, asset_ids[], objective ('min_variance'|'max_sharpe'), constraints[], max_volatility?, risk_free_rate? }",
-      "response: { optimized_weights[], manual_weights[], metrics_manual, metrics_optimized, frequency, risk_free_rate }",
-      "error 422 infeasible_constraints con conflicts[]",
+      "POST y GET /api/internal/portfolios/{id}/optimizations conectados en optimization.server.ts y acciones",
     ],
   },
   {

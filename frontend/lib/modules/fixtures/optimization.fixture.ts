@@ -1,5 +1,10 @@
 import type { AdapterResult, ViewScenario } from "../runtime";
-import type { OptimizationData, OptimizationObjective, OptimizationWeightRow } from "../types";
+import type {
+  OptimizationData,
+  OptimizationObjective,
+  OptimizationPortfolioStats,
+  OptimizationWeightRow,
+} from "../types";
 import { validateOptimizationConstraints } from "../validators";
 
 const ASSETS_OPT: Omit<OptimizationWeightRow, "optimizedWeight">[] = [
@@ -15,7 +20,7 @@ const SOLVED_WEIGHTS: Record<OptimizationObjective, number[]> = {
   max_sharpe: [0.32, 0.35, 0.16, 0.11, 0.06],
 };
 
-const STATS: Record<OptimizationObjective, OptimizationData["optimizedStats"]> = {
+const STATS: Record<OptimizationObjective, OptimizationPortfolioStats> = {
   min_variance: {
     expectedAnnualReturn: 0.109,
     annualizedVolatility: 0.114,
@@ -122,23 +127,74 @@ export function buildOptimizationFixture(params: {
     ...row,
     optimizedWeight: solved[idx],
   }));
+  const manualStats = {
+    expectedAnnualReturn: 0.146,
+    annualizedVolatility: 0.168,
+    sharpeRatio: 0.6,
+  };
+  const optimizedStats = STATS[objective];
+  const activeRun = {
+    id: `demo-opt-${objective}`,
+    createdAt: "2026-10-30T16:25:00Z",
+    portfolioId: "pf-v3",
+    portfolioVersion: 3,
+    portfolioName: "Núcleo Académico · v3",
+    capital: 250000,
+    currency: "MXN",
+    startDate: "2025-11-03",
+    objective,
+    objectiveValue:
+      objective === "min_variance"
+        ? optimizedStats.annualizedVolatility ** 2
+        : (optimizedStats.sharpeRatio ?? 0),
+    returnModel: "daily_simple_arithmetic_v1",
+    periodsPerYear: 252,
+    riskFreeRate: 0.045,
+    lookbackYears: 5,
+    maxVolatilityCap,
+    feasibleMinVolatility: FEASIBLE_MIN_VOLATILITY,
+    window: { from: "2025-11-03", to: "2026-10-30" },
+    observations: 252,
+    weights,
+    manualStats,
+    optimizedStats,
+    solver: "HiGHS",
+    solverWrapperVersion: "1.27.0",
+  };
+  const altObjective: OptimizationObjective = objective === "min_variance" ? "max_sharpe" : "min_variance";
+  const altRun = {
+    ...activeRun,
+    id: `demo-opt-${altObjective}`,
+    createdAt: "2026-10-29T15:10:00Z",
+    objective: altObjective,
+    objectiveValue:
+      altObjective === "min_variance"
+        ? STATS[altObjective].annualizedVolatility ** 2
+        : (STATS[altObjective].sharpeRatio ?? 0),
+    weights: ASSETS_OPT.map((row, idx) => ({
+      ...row,
+      optimizedWeight: SOLVED_WEIGHTS[altObjective][idx],
+    })),
+    optimizedStats: STATS[altObjective],
+  };
 
   return {
     status: "ok",
     data: {
+      portfolioId: "pf-v3",
       portfolioName: "Núcleo Académico · v3",
+      currency: "MXN",
       objective,
       frequencyLabel: "Rendimientos diarios anualizados (252 días/año)",
       riskFreeRate: 0.045,
+      lookbackYears: 5,
       maxVolatilityCap,
       feasibleMinVolatility: FEASIBLE_MIN_VOLATILITY,
       weights,
-      manualStats: {
-        expectedAnnualReturn: 0.146,
-        annualizedVolatility: 0.168,
-        sharpeRatio: 0.6,
-      },
-      optimizedStats: STATS[objective],
+      manualStats,
+      optimizedStats,
+      activeRun,
+      history: [activeRun, altRun],
     },
     provenance: {
       origin: "fixtures",
