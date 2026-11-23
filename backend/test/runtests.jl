@@ -41,6 +41,7 @@ using MarkovLabBackend
     include("api/portfolio_versions_api_tests.jl")
     include("api/simulations_api_tests.jl")
     include("api/portfolio_stress_api_tests.jl")
+    include("api/portfolio_optimization_api_tests.jl")
     include("api/watchlist_api_tests.jl")
     include("api/asset_analysis_api_tests.jl")
     include("infrastructure/csv_prices_tests.jl")

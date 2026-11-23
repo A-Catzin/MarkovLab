@@ -8,6 +8,9 @@ Esquema de la base y sus cambios versionados. Se aplican en orden y **nunca se e
 | [`0002_cierre_ajustado.sql`](./0002_cierre_ajustado.sql) | Columna opcional `cierre_ajustado` en `precios_historicos` (el `Adj Close` de los CSV), con su CHECK. | Sí, 2026-11-04 (MCP de Supabase) |
 | [`0003_roles.sql`](./0003_roles.sql) | Tipo `rol_usuario` (`usuario`, `admin`) y columna `usuarios.rol`, por defecto `usuario`. | Sí, 2026-11-05 (MCP de Supabase) |
 | [`0004_tipos_cambio.sql`](./0004_tipos_cambio.sql) | Tabla `tipos_cambio` (moneda, fecha, origen, valor por 1 USD), con sus CHECK y RLS. Solo agrega. | Sí, 2026-11-18 (la aplicó el usuario; comprobado: RLS y las tres restricciones) |
+| [`0005_actualizacion_mercado.sql`](./0005_actualizacion_mercado.sql) | Cola para solicitar actualizaciones de mercado. | No verificada en esta entrega |
+| [`0006_versiones_cartera.sql`](./0006_versiones_cartera.sql) | Historial de versiones de carteras. | Sí, confirmada por el operador |
+| [`0007_optimizaciones_cartera.sql`](./0007_optimizaciones_cartera.sql) | Tabla con RLS para guardar ejecuciones de optimización y sus insumos, dependiente de la cartera. | Pendiente |
 
 ## Cómo se verificó que `esquema.sql` es igual a la base
 
@@ -15,7 +18,7 @@ El 2026-11-04 se leyó el catálogo de la base de Supabase y se reescribió `esq
 
 Después de aplicar `0002` se repitió la comparación entre `esquema.sql` + `0002` y la base: las seis huellas volvieron a coincidir (67 columnas, 43 restricciones). Lo mismo después de `0003` (68 columnas, 12 valores de enums).
 
-`esquema.sql` y las primeras migraciones se aplicaron en parte fuera de un registro automático único en Supabase (`supabase_migrations`); la fuente de verdad del orden aplicado en la base es la tabla de arriba (`esquema.sql` + `0002` + `0003` + `0004`).
+`esquema.sql` y las primeras migraciones se aplicaron en parte fuera de un registro automático único en Supabase (`supabase_migrations`); la fuente de verdad del orden aplicado en la base es el estado de cada migración en la tabla de arriba.
 
 Para repetir la comprobación después de un cambio, la consulta de huellas está en [`../docs/README.md`](../docs/README.md#comprobar-que-el-repositorio-y-la-base-coinciden).
 

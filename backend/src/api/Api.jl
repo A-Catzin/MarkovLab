@@ -65,6 +65,7 @@ include("watchlist.jl")
 include("asset_analysis.jl")
 include("portfolio_versions.jl")
 include("portfolio_stress.jl")
+include("portfolio_optimizations.jl")
 
 """
     warm_database(users, prices, portfolios, simulations)
