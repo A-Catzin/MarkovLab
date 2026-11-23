@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { backendFetch } from "@/lib/backend";
 import { requireUser } from "@/lib/guards";
+import { isLocalFixturesEnabled } from "@/lib/modules/runtime";
 import { formatMoney, getCatalogAssets } from "@/lib/portfolios";
 import { requestMarketRefresh, updateWatchlist } from "./actions";
 import styles from "./market.module.css";
@@ -14,9 +15,31 @@ type WatchedAsset = {
   currency: string;
   latest_price: number | null;
   latest_date: string | null;
+  price_source?: "api" | "csv" | null;
+  data_freshness?: "fresh" | "cached" | "local" | null;
+  updated_at?: string | null;
   changes?: Record<"daily" | "weekly" | "monthly", number | null>;
 };
 type Point = [date: string, price: number];
+
+const SOURCE_LABELS: Record<"api" | "csv", string> = {
+  api: "API",
+  csv: "Archivo CSV",
+};
+
+const FRESHNESS_LABELS: Record<"fresh" | "cached" | "local", string> = {
+  fresh: "Actualizado",
+  cached: "En caché",
+  local: "Archivo local",
+};
+
+function provenanceSummary(item: WatchedAsset): string | null {
+  if (!item.price_source && !item.data_freshness) return null;
+  const source = item.price_source ? SOURCE_LABELS[item.price_source] : null;
+  const freshness = item.data_freshness ? FRESHNESS_LABELS[item.data_freshness] : null;
+  if (source && freshness) return `${source} · ${freshness}`;
+  return source ?? freshness;
+}
 
 export const metadata: Metadata = { title: "Seguimiento de mercado · MarkovLab" };
 
@@ -61,6 +84,7 @@ export default async function MarketPage({ searchParams }: {
   searchParams: Promise<{ asset?: string; error?: string; refresh?: string }>;
 }) {
   const user = await requireUser();
+  const showPreviewLinks = isLocalFixturesEnabled();
   const { asset, error, refresh } = await searchParams;
   const [list, catalog] = await Promise.allSettled([
     backendFetch<{ assets: WatchedAsset[]; can_request_refresh?: boolean }>(
@@ -81,7 +105,14 @@ export default async function MarketPage({ searchParams }: {
 
   return (
     <>
-      <div className="page-head"><h1>Seguimiento de mercado</h1></div>
+      <div className="page-head">
+        <h1>Seguimiento de mercado</h1>
+        {showPreviewLinks && (
+          <Link href="/app/mercado/analisis" className="button button--small button--quiet">
+            Análisis y correlación
+          </Link>
+        )}
+      </div>
       {error && <p className="notice notice--error" role="alert">No se pudo actualizar la lista. Inténtalo de nuevo.</p>}
       {list.status === "rejected" ? (
         <p className="notice notice--error" role="alert">No se pudo cargar tu lista. Recarga la página para volver a intentar.</p>
@@ -132,6 +163,11 @@ export default async function MarketPage({ searchParams }: {
                     <td className="num">
                       {item.latest_price === null ? "Sin datos" : formatMoney(item.latest_price, item.currency)}
                       {item.latest_date && <time className={`data-table__hint ${styles.detail}`} dateTime={item.latest_date}>{item.latest_date}</time>}
+                      {provenanceSummary(item) && (
+                        <span className={`data-table__hint ${styles.detail}`}>
+                          {provenanceSummary(item)}
+                        </span>
+                      )}
                       {item.changes && (
                         <dl className={styles.changes} aria-label="Variación por período">
                           {(Object.keys(periodLabels) as (keyof typeof periodLabels)[]).map((period) => {

@@ -2,12 +2,35 @@ import { SignOutButton } from "@/components/auth/AuthButtons";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { NavLinks, type NavItem } from "./NavLinks";
 
-/** Páginas de todo usuario con sesión. */
-const USER_NAV: NavItem[] = [
+/** Páginas publicadas de todo usuario con sesión. */
+export const USER_NAV: NavItem[] = [
   { href: "/app", label: "Inicio" },
   { href: "/app/carteras", label: "Mis carteras" },
   { href: "/app/mercado", label: "Mercado" },
   { href: "/app/simulador", label: "Simulador" },
+];
+
+/** Módulos en fase de vista previa local cuando `MARKOVLAB_USE_LOCAL_FIXTURES=1`. */
+export const PREVIEW_APP_NAV: NavItem[] = [
+  { href: "/app/mercado/analisis", label: "Análisis" },
+  { href: "/app/optimizacion", label: "Optimización" },
+  { href: "/app/prediccion", label: "Predicción" },
+  { href: "/app/backtesting", label: "Backtesting" },
+  { href: "/app/reportes", label: "Reportes" },
+];
+
+/** Destinos del banco visual local (`/dev/vistas`). */
+export const DEV_PREVIEW_NAV: NavItem[] = [
+  { href: "/dev/vistas", label: "Índice F1–F7" },
+  { href: "/dev/vistas/dashboard", label: "Dashboard" },
+  { href: "/dev/vistas/analisis", label: "F1 Análisis" },
+  { href: "/dev/vistas/mercado", label: "F2 Mercado" },
+  { href: "/dev/vistas/cartera-editar", label: "F2 Carteras" },
+  { href: "/dev/vistas/estres", label: "F3 Estrés" },
+  { href: "/dev/vistas/optimizacion", label: "F4 Optimización" },
+  { href: "/dev/vistas/prediccion", label: "F5 Predicción" },
+  { href: "/dev/vistas/backtesting", label: "F6 Backtesting" },
+  { href: "/dev/vistas/reportes", label: "F7 Reportes" },
 ];
 
 /** Páginas que además ve un admin. */
@@ -28,13 +51,27 @@ interface ShellUser {
  * enlaces de admin solo se muestran a admins; la protección real está en los layouts y
  * en el backend.
  */
-export function AppShell({ user, children }: { user: ShellUser; children: React.ReactNode }) {
+export function AppShell({
+  user,
+  navItems,
+  showPreviewNav = false,
+  signOutHref,
+  children,
+}: {
+  user: ShellUser;
+  navItems?: NavItem[];
+  showPreviewNav?: boolean;
+  signOutHref?: string;
+  children: React.ReactNode;
+}) {
+  const resolvedItems = navItems ?? (showPreviewNav ? [...USER_NAV, ...PREVIEW_APP_NAV] : USER_NAV);
+
   return (
     <div className="shell">
       <header className="shell__top">
-        <Wordmark href="/app" />
+        <Wordmark href={navItems?.[0]?.href ?? "/app"} />
         <nav className="shell__nav" aria-label="Navegación principal">
-          <NavLinks items={USER_NAV} label="Laboratorio" />
+          <NavLinks items={resolvedItems} label="Laboratorio" />
           {user.role === "admin" && (
             <div className="shell__admin">
               <span className="shell__badge">Admin</span>
@@ -44,7 +81,13 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
         </nav>
         <div className="shell__account">
           <span className="shell__email">{user.email}</span>
-          <SignOutButton className="link shell__signout" />
+          {signOutHref ? (
+            <a className="link shell__signout" href={signOutHref}>
+              Volver a portada
+            </a>
+          ) : (
+            <SignOutButton className="link shell__signout" />
+          )}
         </div>
       </header>
       <main className="shell__main">{children}</main>
