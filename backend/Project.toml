@@ -11,6 +11,7 @@ JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LibPQ = "194296ae-ab2e-5f79-8cd4-7183a0a5a0d1"
 Oxygen = "df9a0d86-3283-4920-82dc-4555fc0d1d8b"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SCIP = "82193955-e24f-5292-bf16-6f2c5261a85f"
 
 [compat]
 HTTP = "2.11.1"
@@ -19,6 +20,7 @@ JSON = "1.11.0"
 JuMP = "1.32.1"
 LibPQ = "1.18.0"
 Oxygen = "1.11.0"
+SCIP = "0.12.8"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

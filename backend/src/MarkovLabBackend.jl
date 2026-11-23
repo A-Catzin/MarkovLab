@@ -7,6 +7,7 @@ import LibPQ
 import Random
 import HiGHS
 import JuMP
+import SCIP
 
 include("domain/errors.jl")
 include("domain/metrics.jl")

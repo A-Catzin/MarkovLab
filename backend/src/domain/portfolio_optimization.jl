@@ -67,3 +67,61 @@ function minimum_variance_weights(covariance, lower, upper; max_volatility=nothi
     end
     return weights
 end
+
+struct UndefinedSharpeError <: Exception end
+
+# The relative lower bound excludes zero-risk ratios and keeps the scaled
+# quadratic equality above the solver's absolute feasibility tolerance.
+const SHARPE_MIN_RELATIVE_VOLATILITY = 1e-4
+const MAX_SHARPE_SOLVE_SECONDS = 10.0
+
+"""Maximize the signed Sharpe ratio globally, within the solver's tolerances."""
+function maximum_sharpe_weights(covariance, expected_returns, lower, upper;
+                                risk_free_rate=0.0, max_volatility=nothing)
+    n = size(covariance, 1)
+    require_matching_assets(expected_returns, n)
+    validate_finite(expected_returns, "expected return")
+    (risk_free_rate isa Real && !(risk_free_rate isa Bool) && isfinite(risk_free_rate)) ||
+        throw(ArgumentError("risk_free_rate must be a finite number"))
+    excess = expected_returns .- risk_free_rate
+    validate_finite(excess, "excess return")
+    least_risk = minimum_variance_weights(covariance, lower, upper; max_volatility)
+
+    max_individual_risk = sqrt(maximum(covariance[i, i] for i in 1:n))
+    risk_scale = max_volatility === nothing ? max_individual_risk : min(max_volatility, max_individual_risk)
+    risk_scale > 0 || throw(UndefinedSharpeError())
+    min_risk = portfolio_volatility(least_risk, covariance)
+    risk_lower = iszero(min_risk) ? SHARPE_MIN_RELATIVE_VOLATILITY : min_risk / risk_scale * (1 - 1e-7)
+    risk_upper = 1.0
+    risk_lower <= risk_upper || throw(OptimizationSolverError("invalid_risk_bounds"))
+    return_scale = maximum(abs, excess)
+    coefficients = iszero(return_scale) ? zeros(n) : excess ./ return_scale
+
+    model = JuMP.Model(SCIP.Optimizer)
+    JuMP.set_silent(model)
+    JuMP.set_time_limit_sec(model, MAX_SHARPE_SOLVE_SECONDS)
+    JuMP.set_optimizer_attribute(model, "numerics/feastol", 1e-10)
+    JuMP.@variable(model, lower[i] <= weight[i=1:n] <= upper[i])
+    JuMP.@variable(model, risk_lower <= risk <= risk_upper)
+    JuMP.@variable(model, -1 / risk_lower <= score <= 1 / risk_lower)
+    JuMP.@constraint(model, sum(weight) == 1)
+    JuMP.@constraint(model, risk^2 == sum(((covariance[i, j] / risk_scale) / risk_scale) *
+                                          weight[i] * weight[j] for i in 1:n, j in 1:n))
+    # Keep the sign of excess return. Squaring the ratio would reverse the
+    # ordering for negative Sharpe and can select the worst feasible portfolio.
+    JuMP.@constraint(model, score * risk == sum(coefficients[i] * weight[i] for i in 1:n))
+    JuMP.@objective(model, Max, score)
+    JuMP.optimize!(model)
+    status = JuMP.termination_status(model)
+    status == JuMP.MOI.INFEASIBLE && throw(UndefinedSharpeError())
+    status == JuMP.MOI.OPTIMAL && JuMP.primal_status(model) == JuMP.MOI.FEASIBLE_POINT ||
+        throw(OptimizationSolverError(string(status)))
+    weights = JuMP.value.(weight)
+    realized_risk = portfolio_volatility(weights, covariance) / risk_scale
+    (isapprox(sum(weights), 1; atol=1e-8, rtol=0) &&
+     all(lower .- 1e-8 .<= weights .<= upper .+ 1e-8) &&
+     risk_lower - 1e-8 <= realized_risk <= risk_upper + 1e-8 &&
+     isapprox(portfolio_return(weights, coefficients) / realized_risk, JuMP.value(score);
+              atol=1e-7, rtol=1e-5)) || throw(OptimizationSolverError("invalid_primal_solution"))
+    return weights
+end
