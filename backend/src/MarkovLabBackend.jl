@@ -43,6 +43,7 @@ include("services/portfolios.jl")
 include("services/market_sync.jl")
 include("services/watchlist_refresh.jl")
 include("services/portfolio_simulations.jl")
+include("services/portfolio_stress.jl")
 include("api/Api.jl")
 
 export InsufficientDataError

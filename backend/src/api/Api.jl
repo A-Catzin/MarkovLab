@@ -21,7 +21,7 @@ using ..MarkovLabBackend: MarkovLabBackend, InsufficientDataError, MissingExchan
                           PostgresSimulationRepository, simulate_user_portfolio, list_user_simulations,
                           WatchlistRepository, PostgresWatchlist, watched_assets, follow_asset, unfollow_asset,
                           is_followed, price_history, queue_market_refresh!, analyze_assets,
-                          update_portfolio, duplicate_portfolio, list_portfolio_versions
+                          update_portfolio, duplicate_portfolio, list_portfolio_versions, stress_user_portfolio
 
 const SERVICE_NAME = "markovlab-backend"
 const DEFAULT_ALLOWED_ORIGINS = "http://localhost:3000"
@@ -64,6 +64,7 @@ include("routes.jl")
 include("watchlist.jl")
 include("asset_analysis.jl")
 include("portfolio_versions.jl")
+include("portfolio_stress.jl")
 
 """
     warm_database(users, prices, portfolios, simulations)

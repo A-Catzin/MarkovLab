@@ -296,6 +296,65 @@ o `database_unavailable`. Las escrituras fallidas no crean versiones parciales.
 Aplicar la migración `0006_versiones_cartera.sql` antes de usar estas rutas
 en producción; la migración agrega una tabla y no reescribe carteras existentes.
 
+### `POST /api/internal/portfolios/{id}/stress` (B4, RF-46)
+
+Requiere `X-Internal-Key` y `X-Actor-Id`. Usa el UUID de una cartera propia; no
+usa query. Cuerpo JSON de ejemplo:
+
+```json
+{
+  "horizon": 21,
+  "simulations": 10000,
+  "confidence": 0.95,
+  "lookback_years": 5,
+  "seed": 42,
+  "return_shift": -0.15,
+  "volatility_multiplier": 1.5,
+  "correlation_shift": 0.3
+}
+```
+
+`horizon` es obligatorio (1–2520 días hábiles). Los demás campos son opcionales:
+`simulations` 1–100000 (10000 por defecto), con un máximo de 10000000 sorteos
+por escenario (`simulations × horizon`); `confidence` entre 0 y 1 (0.95);
+`lookback_years` 1–20 (5); `seed` entero de 0 a 9007199254740991 (si falta se
+genera y se devuelve la usada). Se requieren al menos 60 cierres comunes en la
+ventana que termina en el último cierre común, convertidos a la moneda de la
+cartera.
+
+Los choques neutrales son `0, 1, 0`. `return_shift` en [-1, 1] es un cambio
+en la media anual en fracciones y se divide entre 252 para aplicarlo por día.
+`volatility_multiplier` en (0, 10] multiplica las desviaciones; la covarianza
+se escala por su cuadrado. `correlation_shift` en [-1, 1] es la intensidad de
+una mezcla: hacia correlación común 1 si es positiva, y hacia
+`-1 / (n - 1)` si es negativa, donde `n` son los activos con volatilidad no
+nula. Con menos de dos activos de ese tipo no modifica correlaciones. No se
+recortan correlaciones individuales; la mezcla conserva una covarianza válida.
+
+**200**, objeto JSON con estos campos exactos:
+
+- Identidad: `portfolio_id` (UUID), `portfolio_name`, `capital` (número),
+  `currency`, `model` (`normal-rebalanced-v1`).
+- Calibración: `window: {from,to}` (fechas ISO), `observations` y
+  `lookback_years` (enteros). `shock: {return_shift,volatility_multiplier,correlation_shift}`
+  refleja los números aplicados.
+- `baseline` y `stressed`: cada uno contiene `horizon_days`, `confidence`,
+  `seed`, `simulations`, `expected_final_value`, `median_final_value`,
+  `p5_final_value`, `p95_final_value`, `var_fraction`, `var_amount`,
+  `cvar_fraction` y `cvar_amount` (todos números). Comparten semilla y secuencia
+  aleatoria. VaR/CVaR positivos indican pérdida; los montos están en la moneda
+  de la cartera.
+- `deltas: {expected_final_value,var_fraction,var_amount,cvar_fraction,cvar_amount}`:
+  escenario con estrés menos escenario base.
+
+La operación no guarda resultados ni cambia la cartera. Los mismos datos,
+parámetros y semilla reproducen la comparación.
+
+Errores: **400** `invalid_input` o `invalid_json`; **401** `unauthorized`;
+**403** `forbidden`; **404** `not_found` para carteras inexistentes o ajenas;
+**422** `insufficient_data` o `missing_exchange_rate`; **503**
+`not_configured` o `database_unavailable`.
+
 ### Seguimiento de mercado (RF-08 a RF-11, RF-13)
 
 Requiere la clave interna y un actor de usuario válido. La pertenencia a la lista se
@@ -377,7 +436,7 @@ El middleware de `backend/src/api/cors.jl` solo devuelve `Access-Control-Allow-O
 ## Límites actuales
 
 - Los endpoints públicos de cálculo (`/api/analysis/metrics` y `/api/risk/monte-carlo`) no exigen sesión ni persisten resultados; las simulaciones persistidas asociadas a una cartera guardada (RF-47) se ejecutan a través de `POST /api/internal/portfolios/{id}/simulations`.
-- Todavía no hay endpoints para optimización matemática (`JuMP`/`HiGHS`), modelos predictivos, backtesting ni escenarios de estrés.
+- Todavía no hay endpoints para optimización matemática (`JuMP`/`HiGHS`), modelos predictivos ni backtesting.
 - Sin progreso de simulaciones largas (RNF-02); con los límites actuales una solicitud tarda milisegundos.
 
 ## Pruebas
