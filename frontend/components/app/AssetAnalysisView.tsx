@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { formatInteger, formatPercent, formatRatio } from "@/lib/formatters";
 import type { AdapterResult, ViewScenario } from "@/lib/modules/runtime";
 import type { AssetAnalysisData, PeriodPreset, ReturnKind } from "@/lib/modules/types";
@@ -174,6 +174,7 @@ export function AssetAnalysisView({
   initialTo: string;
 }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [symbols, setSymbols] = useState<string[]>(initialSymbols);
   const [period, setPeriod] = useState<PeriodPreset>(initialPeriod);
   const [returnKind, setReturnKind] = useState<ReturnKind>(initialReturnKind);
@@ -213,7 +214,9 @@ export function AssetAnalysisView({
       q.set("desde", next.from);
       q.set("hasta", next.to);
     }
-    router.push(`${basePath}?${q.toString()}`);
+    startTransition(() => {
+      router.push(`${basePath}?${q.toString()}`);
+    });
   }
 
   function handleApply(e: React.FormEvent) {
@@ -368,8 +371,8 @@ export function AssetAnalysisView({
             )}
 
             <div className={styles.toolbarActions}>
-              <button type="submit" className="button button--small">
-                Aplicar análisis
+              <button type="submit" className="button button--small" disabled={isPending} aria-busy={isPending}>
+                {isPending ? "Analizando…" : "Aplicar análisis"}
               </button>
             </div>
           </div>
