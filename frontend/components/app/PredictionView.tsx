@@ -35,6 +35,23 @@ interface PredictionSessionRun {
   provenance: ProvenanceInfo;
 }
 
+function describePredictionModel(
+  modelName: string,
+  metric: PredictionMetricKind,
+  fallbackParameters: string,
+): { title: string; summary: string } {
+  if (modelName === "empirical_stationary_v1") {
+    return {
+      title: "Cuantiles históricos (P50)",
+      summary:
+        metric === "volatility"
+          ? "Mediana y rango P5–P95 de σ₂₁ · √252 (ventana móvil de 21 sesiones)."
+          : "Mediana y rango P5–P95 de rₜ = (Pₜ / Pₜ₋₁) − 1 en los últimos 252 cierres.",
+    };
+  }
+  return { title: modelName, summary: fallbackParameters };
+}
+
 function findLastHistoricalIndex(series: PredictionSeriesPoint[]): number {
   for (let i = series.length - 1; i >= 0; i -= 1) {
     if (series[i].phase === "historical") return i;
@@ -752,11 +769,20 @@ export function PredictionView({
                     {formatPercent(headlineUpper, { signed: activeData.metric === "return" })}
                   </dd>
                 </div>
-                <div className={styles.kpiCell}>
-                  <dt className={styles.kpiLabel}>Modelo y parámetros</dt>
-                  <dd className={styles.kpiValue}>{activeData.modelName}</dd>
-                  <dd className={styles.kpiSub}>{activeData.modelParameters}</dd>
-                </div>
+                {(() => {
+                  const modelInfo = describePredictionModel(
+                    activeData.modelName,
+                    activeData.metric,
+                    activeData.modelParameters,
+                  );
+                  return (
+                    <div className={styles.kpiCell}>
+                      <dt className={styles.kpiLabel}>Modelo y parámetros</dt>
+                      <dd className={styles.kpiValue}>{modelInfo.title}</dd>
+                      <dd className={styles.kpiSub}>{modelInfo.summary}</dd>
+                    </div>
+                  );
+                })()}
                 <div className={styles.kpiCell}>
                   <dt className={styles.kpiLabel}>Ventana de entrenamiento</dt>
                   <dd className={styles.kpiValue}>{activeData.trainingWindow.observations} obs.</dd>

@@ -131,7 +131,7 @@ function mapPredictionToData(
       to: raw.training_window.to,
       observations: raw.training_window.observations,
     },
-    assumptions: `Corte ${raw.as_of} · ${raw.model} · solo referencia estadística`,
+    assumptions: `Corte ${raw.as_of} · ${raw.model === "empirical_stationary_v1" ? "Cuantiles históricos estacionarios" : raw.model} · solo referencia estadística`,
   };
 
   return { prediction, provenance };
