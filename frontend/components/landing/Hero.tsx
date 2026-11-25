@@ -13,6 +13,27 @@ const BAND_PATHS = 2000;
 const Y_MIN = 0.7;
 const Y_MAX = 1.7;
 
+function EnterArrowIcon() {
+  return (
+    <svg
+      className="hero__enter-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M3.5 8h9m0 0L8.75 4.25M12.5 8l-3.75 3.75"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function x(t: number) {
   return (t / TRADING_DAYS) * WIDTH;
 }
@@ -53,8 +74,9 @@ export function Hero() {
               Markov<span className="wordmark__accent">Lab</span>
             </span>
           </a>
-          <Link className="link hero__menu" href="/login">
+          <Link className="button button--small hero__enter hero__menu" href="/login">
             Entrar
+            <EnterArrowIcon />
           </Link>
         </div>
         <div className="hero__talk">
@@ -62,9 +84,15 @@ export function Hero() {
             Un laboratorio académico para construir, optimizar y evaluar carteras con simulaciones Monte Carlo,
             backtesting y pronósticos reproducibles.
           </p>
-          <a className="button" href="#simulador" data-load style={{ ["--i" as string]: 1 }}>
-            Probar el simulador
-          </a>
+          <div className="hero__actions" data-load style={{ ["--i" as string]: 1 }}>
+            <Link className="button hero__enter" href="/login">
+              Entrar al laboratorio
+              <EnterArrowIcon />
+            </Link>
+            <a className="button button--quiet" href="#simulador">
+              Probar el simulador
+            </a>
+          </div>
         </div>
       </div>
 
@@ -79,8 +107,9 @@ export function Hero() {
               </li>
             ))}
           </ul>
-          <Link className="button button--small" href="/login">
+          <Link className="button button--small hero__enter" href="/login">
             Entrar
+            <EnterArrowIcon />
           </Link>
         </nav>
         <div className="hero__headline">

@@ -55,15 +55,15 @@
     display: none;
   }
 
-  /* Sin el botón de la barra, "Entrar" aparece como enlace junto al logo. */
+  /* Sin el botón de la barra, "Entrar" se muestra junto al logo como botón compacto. */
   .hero__top {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
   }
 
   .hero__menu {
-    display: inline;
+    display: inline-flex;
   }
 
   .hero__nav ul {
@@ -2374,7 +2374,7 @@ img {
   .hero__top {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
     order: 0;
   }
 
