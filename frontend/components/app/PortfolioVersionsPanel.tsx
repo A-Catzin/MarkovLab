@@ -68,7 +68,7 @@ export function PortfolioVersionsPanel({ data }: { data: PortfolioEditData }) {
     <section className="panel" aria-labelledby="versions-title">
       <div className={styles.panelHeader}>
         <div>
-          <h2 id="versions-title">Versiones y duplicación de la cartera (RF-32 y RF-33)</h2>
+          <h2 id="versions-title">Versiones y duplicación de la cartera</h2>
           <p className="panel__help">
             Cada edición registra una nueva versión derivada para comparar rendimiento y riesgo estimado sin perder el
             historial previo. Duplicar genera una copia aparte sin modificar la cartera de origen.

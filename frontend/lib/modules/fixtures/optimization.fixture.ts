@@ -115,7 +115,7 @@ export function buildOptimizationFixture(params: {
           ];
     return {
       status: "infeasible",
-      title: "No existe una solución factible con estas restricciones (RF-39)",
+      title: "No existe una solución factible con estas restricciones",
       message:
         "Las restricciones ingresadas se contradicen entre sí o exigen un nivel de riesgo menor al mínimo alcanzable con los activos seleccionados.",
       conflicts,

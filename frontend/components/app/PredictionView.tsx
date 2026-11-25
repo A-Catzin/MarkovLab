@@ -423,7 +423,7 @@ export function PredictionView({
   if (result.status === "not_integrated") {
     return (
       <div className={styles.viewRoot}>
-        <h1 className={styles.pageTitle}>Predicción de activos (RF-21 a RF-26)</h1>
+        <h1 className={styles.pageTitle}>Predicción de activos</h1>
         <ModuleStatePanel result={result} />
       </div>
     );
@@ -459,7 +459,7 @@ export function PredictionView({
         <>
           <section className={styles.panelCard} style={{ marginTop: 16 }} aria-labelledby="pred-controls-title">
             <div className={styles.panelHeader}>
-              <h2 id="pred-controls-title">Parámetros del pronóstico (RF-21 y RF-22)</h2>
+              <h2 id="pred-controls-title">Parámetros del pronóstico</h2>
               <span className={styles.panelMeta}>Horizonte en sesiones hábiles y fecha de corte opcional</span>
             </div>
 
@@ -525,7 +525,7 @@ export function PredictionView({
 
                 <div>
                   <span className={styles.panelMeta} style={{ display: "block", marginBottom: 6 }}>
-                    Contraste posterior (RF-26)
+                    Contraste posterior
                   </span>
                   <div className={styles.chipGroup} role="group" aria-label="Modo de contraste observado">
                     <button
@@ -687,7 +687,7 @@ export function PredictionView({
                   </dd>
                 </div>
                 <div className={styles.kpiCell}>
-                  <dt className={styles.kpiLabel}>Modelo y parámetros (RF-24)</dt>
+                  <dt className={styles.kpiLabel}>Modelo y parámetros</dt>
                   <dd className={styles.kpiValue}>{activeData.modelName}</dd>
                   <dd className={styles.kpiSub}>{activeData.modelParameters}</dd>
                 </div>
@@ -699,7 +699,7 @@ export function PredictionView({
                   </dd>
                 </div>
                 <div className={styles.kpiCell}>
-                  <dt className={styles.kpiLabel}>Evaluación posterior (RF-26)</dt>
+                  <dt className={styles.kpiLabel}>Evaluación posterior</dt>
                   <dd className={styles.kpiValue}>
                     {activeData.evaluation ? `MAE ${formatPercent(activeData.evaluation.mae)}` : "Pendiente"}
                   </dd>
@@ -716,7 +716,7 @@ export function PredictionView({
 
                 <section className={styles.panelCard} aria-labelledby="pred-limitations-title">
                   <div className={styles.panelHeader}>
-                    <h2 id="pred-limitations-title">Limitaciones del modelo (RF-25)</h2>
+                    <h2 id="pred-limitations-title">Limitaciones del modelo</h2>
                     <span className={`${styles.pill} ${styles.pillWarning}`}>Solo referencia estadística</span>
                   </div>
                   <ul

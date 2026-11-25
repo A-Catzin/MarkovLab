@@ -190,7 +190,7 @@ export function StressTestingView({
   if (result.status === "not_integrated") {
     return (
       <div className={styles.viewRoot}>
-        <h1 className={styles.pageTitle}>Escenarios de estrés (RF-46)</h1>
+        <h1 className={styles.pageTitle}>Escenarios de estrés</h1>
         <ModuleStatePanel result={result} />
       </div>
     );
@@ -254,7 +254,7 @@ export function StressTestingView({
     <div className={styles.viewRoot}>
       <div className={styles.pageHeadMeta}>
         <div>
-          <h1 className={styles.pageTitle}>Escenarios de estrés comparativos (RF-46)</h1>
+          <h1 className={styles.pageTitle}>Escenarios de estrés comparativos</h1>
           <p className={styles.pageLead}>
             Aplica choques de rendimiento, volatilidad o correlación manteniendo exactamente el mismo horizonte, nivel de
             confianza y semilla de la simulación base. No modifica la cartera ni sus simulaciones guardadas.

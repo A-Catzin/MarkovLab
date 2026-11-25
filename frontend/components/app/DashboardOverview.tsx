@@ -63,7 +63,7 @@ export function DashboardOverview({ result }: { result: AdapterResult<DashboardO
       {result.data.recentAnalyses.length > 0 && (
         <section className="panel" aria-labelledby="dash-recent-title">
           <div className={styles.panelHeader}>
-            <h2 id="dash-recent-title">Resumen de análisis recientes (RF-54 y RF-57)</h2>
+            <h2 id="dash-recent-title">Resumen de análisis recientes</h2>
             <span className={styles.panelMeta}>Incluye período y origen de cálculo</span>
           </div>
           <div className="table-wrap">
@@ -117,7 +117,6 @@ export function DashboardOverview({ result }: { result: AdapterResult<DashboardO
             <thead>
               <tr>
                 <th scope="col">Módulo</th>
-                <th scope="col">Requisitos</th>
                 <th scope="col">Estado</th>
                 <th scope="col" className="data-table__action">Destino</th>
               </tr>
@@ -131,7 +130,6 @@ export function DashboardOverview({ result }: { result: AdapterResult<DashboardO
                       {mod.description}
                     </span>
                   </th>
-                  <td>{mod.srsRefs}</td>
                   <td>
                     <span
                       className={`${styles.pill} ${

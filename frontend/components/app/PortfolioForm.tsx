@@ -206,7 +206,7 @@ export function PortfolioForm({
           </select>
         </label>
         <label className="field" htmlFor="portfolio-start-date">
-          <span>{mode === "edit" ? "Fecha de referencia (RF-27)" : "Fecha de referencia (opcional, RF-27)"}</span>
+          <span>{mode === "edit" ? "Fecha de referencia" : "Fecha de referencia (opcional)"}</span>
           <input
             id="portfolio-start-date"
             name="start_date"

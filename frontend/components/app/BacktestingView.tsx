@@ -207,7 +207,7 @@ export function BacktestingView({
   if (result.status === "not_integrated") {
     return (
       <div className={styles.viewRoot}>
-        <h1 className={styles.pageTitle}>Backtesting de estrategias (RF-49 a RF-53)</h1>
+        <h1 className={styles.pageTitle}>Backtesting de estrategias</h1>
         <ModuleStatePanel result={result} />
       </div>
     );
@@ -323,7 +323,7 @@ export function BacktestingView({
 
           <section className={styles.panelCard} style={{ marginTop: 20 }} aria-labelledby="bt-config-title">
             <div className={styles.panelHeader}>
-              <h2 id="bt-config-title">Separación de ventanas y parámetros (RF-49 y RF-50)</h2>
+              <h2 id="bt-config-title">Separación de ventanas y parámetros</h2>
               <span className={styles.panelMeta}>
                 {activeRun
                   ? activeRun.rebalanceLabel
@@ -468,7 +468,7 @@ export function BacktestingView({
                 )}
 
                 <label className="field" htmlFor="bt-benchmark">
-                  <span>Benchmark opcional (RF-52)</span>
+                  <span>Benchmark opcional</span>
                   <select
                     id="bt-benchmark"
                     value={benchmarkValue}
@@ -611,7 +611,7 @@ export function BacktestingView({
 
               <section className="panel" aria-labelledby="bt-history-title">
                 <div className={styles.panelHeader}>
-                  <h2 id="bt-history-title">Historial de ejecuciones (RF-53)</h2>
+                  <h2 id="bt-history-title">Historial de ejecuciones</h2>
                   <span className={styles.panelMeta}>Cada corrida conserva supuestos, ventanas y métricas</span>
                 </div>
                 <div className="table-wrap">

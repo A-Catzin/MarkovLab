@@ -286,7 +286,7 @@ export function AssetAnalysisView({
       <section className={styles.panelCard} style={{ marginTop: 16 }} aria-labelledby="analysis-controls-title">
         <div className={styles.panelHeader}>
           <h2 id="analysis-controls-title">Selección de activos y período</h2>
-          <span className={styles.panelMeta}>RF-15 a RF-20 · incluye caso NU (12 sesiones) para validar RF-20</span>
+          <span className={styles.panelMeta}>Rendimientos, volatilidad, drawdown y correlaciones sobre sesiones comunes</span>
         </div>
 
         <form onSubmit={handleApply} noValidate>
@@ -435,7 +435,7 @@ export function AssetAnalysisView({
 
             <section className={styles.panelCard} aria-labelledby="corr-matrix-title">
               <div className={styles.panelHeader}>
-                <h2 id="corr-matrix-title">Matriz de correlación (RF-17 y RF-18)</h2>
+                <h2 id="corr-matrix-title">Matriz de correlación</h2>
                 <span className={styles.panelMeta}>Pearson diario · rango -1.00 a +1.00</span>
               </div>
               {result.data.correlationSymbols.length < 2 ? (

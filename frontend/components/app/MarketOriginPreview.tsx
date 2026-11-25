@@ -35,7 +35,7 @@ export function MarketOriginPreview({
     <div className={styles.viewRoot}>
       <div className={styles.pageHeadMeta}>
         <div>
-          <h1 className={styles.pageTitle}>Seguimiento de mercado y origen de datos (RF-13)</h1>
+          <h1 className={styles.pageTitle}>Seguimiento de mercado y origen de datos</h1>
           <p className={styles.pageLead}>
             Cada activo distingue si su último cierre proviene de API actualizada, caché reciente o archivo CSV manual,
             sin inventar etiquetas cuando el servidor no las informa.
@@ -58,14 +58,14 @@ export function MarketOriginPreview({
           <section className="panel" aria-labelledby="market-origin-title">
             <div className={styles.panelHeader}>
               <h2 id="market-origin-title">Activos monitoreados</h2>
-              <span className={styles.panelMeta}>RF-12 permanece sin cambios sobre /app/mercado real</span>
+              <span className={styles.panelMeta}>La actualización manual sigue disponible en /app/mercado</span>
             </div>
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
                   <tr>
                     <th scope="col">Activo</th>
-                    <th scope="col">Origen y frescura (RF-13)</th>
+                    <th scope="col">Origen y frescura</th>
                     <th scope="col" className="num">Último cierre</th>
                     <th scope="col" className="num">Día</th>
                     <th scope="col" className="num">Semana</th>
