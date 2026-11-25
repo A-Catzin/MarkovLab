@@ -187,7 +187,7 @@ export async function loadAssetAnalysisView(params: {
         if (error.status === 422 || error.code === "insufficient_data") {
           return {
             status: "insufficient_data",
-            title: "Histórico común insuficiente para el período (RF-20)",
+            title: "Histórico común insuficiente para el período",
             message:
               "Los activos seleccionados tienen menos de dos sesiones de cierre comunes en la ventana consultada.",
             details: ["El motor requiere al menos 2 sesiones compartidas sin interpolar precios faltantes."],

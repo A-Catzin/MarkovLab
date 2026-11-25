@@ -227,7 +227,7 @@ export function buildAssetAnalysisFixture(params: {
     const obs = selectedSymbols.includes("NU") ? 12 : Math.min(approxSessions, 14);
     return {
       status: "insufficient_data",
-      title: "Histórico insuficiente para el período elegido (RF-20)",
+      title: "Histórico insuficiente para el período elegido",
       message:
         "Para calcular volatilidad anualizada, drawdown y matriz de correlación con validez estadística se requieren al menos 20 sesiones alineadas en común.",
       details: [

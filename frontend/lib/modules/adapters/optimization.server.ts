@@ -279,7 +279,7 @@ export async function executePortfolioOptimization(params: {
           return {
             ok: false,
             kind: "infeasible",
-            title: "No existe una solución factible con estas restricciones (RF-39)",
+            title: "No existe una solución factible con estas restricciones",
             message:
               minimumVolatility !== null
                 ? `El solver determinó que la volatilidad mínima alcanzable para estas cotas es ${formatPct(minimumVolatility)}.`

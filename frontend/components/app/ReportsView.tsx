@@ -48,7 +48,7 @@ export function ReportsView({
   if (result.status === "not_integrated") {
     return (
       <div className={styles.viewRoot}>
-        <h1 className={styles.pageTitle}>Reportes y detalle matemático (RF-54 a RF-58)</h1>
+        <h1 className={styles.pageTitle}>Reportes y detalle matemático</h1>
         <ModuleStatePanel result={result} />
       </div>
     );
@@ -96,10 +96,10 @@ export function ReportsView({
             <div className={styles.kpiCell}>
               <dt className={styles.kpiLabel}>Métricas documentadas</dt>
               <dd className={styles.kpiValue}>{formatInteger(result.data.formulas.length)}</dd>
-              <dd className={styles.kpiSub}>Fórmula, unidad y supuestos explícitos (RF-56)</dd>
+              <dd className={styles.kpiSub}>Fórmula, unidad y supuestos explícitos</dd>
             </div>
             <div className={styles.kpiCell}>
-              <dt className={styles.kpiLabel}>Exportación CSV (RF-58)</dt>
+              <dt className={styles.kpiLabel}>Exportación CSV</dt>
               <dd className={styles.kpiValue}>
                 {canExportRealCsv ? "Disponible" : isExampleMode ? "Desactivada (ejemplo)" : "No disponible"}
               </dd>
@@ -109,7 +109,7 @@ export function ReportsView({
 
           <section className="panel" aria-labelledby="reports-list-title">
             <div className={styles.panelHeader}>
-              <h2 id="reports-list-title">Análisis consolidados (RF-54 y RF-57)</h2>
+              <h2 id="reports-list-title">Análisis consolidados</h2>
               <div className={styles.chipGroup} role="group" aria-label="Filtrar reportes por módulo">
                 {filterCodes.map((code) => (
                   <button
@@ -254,7 +254,7 @@ export function ReportsView({
           <div className={styles.splitGrid}>
             <section className={styles.panelCard} aria-labelledby="formulas-title">
               <div className={styles.panelHeader}>
-                <h2 id="formulas-title">Detalle matemático de métricas (RF-56)</h2>
+                <h2 id="formulas-title">Detalle matemático de métricas</h2>
                 <span className={styles.panelMeta}>Transparencia metodológica</span>
               </div>
               <div className={styles.chipGroup} role="group" aria-label="Elegir fórmula del glosario">
@@ -287,7 +287,7 @@ export function ReportsView({
 
             <section className={styles.panelCard} aria-labelledby="export-title">
               <div className={styles.panelHeader}>
-                <h2 id="export-title">Exportación a CSV (RF-58)</h2>
+                <h2 id="export-title">Exportación a CSV</h2>
                 <span className={`${styles.pill} ${canExportRealCsv ? styles.pillFresh : styles.pillWarning}`}>
                   {canExportRealCsv ? "Listo" : isExampleMode ? "Solo ejemplo" : "No disponible"}
                 </span>

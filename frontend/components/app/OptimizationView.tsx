@@ -141,7 +141,7 @@ export function OptimizationView({
   if (result.status === "not_integrated") {
     return (
       <div className={styles.viewRoot}>
-        <h1 className={styles.pageTitle}>Optimización de carteras (RF-34 a RF-40)</h1>
+        <h1 className={styles.pageTitle}>Optimización de carteras</h1>
         <ModuleStatePanel result={result} />
       </div>
     );
@@ -214,7 +214,7 @@ export function OptimizationView({
       if (check.infeasibleReasons.length > 0) {
         setIssues([]);
         setInfeasibleFeedback({
-          title: "Combinación de restricciones inviable (RF-39)",
+          title: "Combinación de restricciones inviable",
           message: "No existe ninguna cartera que satisfaga simultáneamente estos límites y sume 100 %.",
           conflicts: check.infeasibleReasons,
           minimumVolatility: result.data.feasibleMinVolatility,
@@ -436,7 +436,7 @@ export function OptimizationView({
     <div className={styles.viewRoot}>
       <div className={styles.pageHeadMeta}>
         <div>
-          <h1 className={styles.pageTitle}>Optimización de carteras (RF-34 a RF-40)</h1>
+          <h1 className={styles.pageTitle}>Optimización de carteras</h1>
           <p className={styles.pageLead}>
             Calcula asignaciones de mínima varianza o máximo Sharpe sujetas a límites mínimo y máximo por activo y tope
             opcional de volatilidad. Ninguna optimización modifica tu cartera ni constituye una recomendación de
@@ -484,7 +484,7 @@ export function OptimizationView({
         <div className={styles.toolbar}>
           <div>
             <span className={styles.panelMeta} style={{ display: "block", marginBottom: 6 }}>
-              Objetivo matemático (RF-35)
+              Objetivo matemático
             </span>
             <div className={styles.chipGroup} role="group" aria-label="Objetivo de optimización">
               <button
@@ -697,7 +697,7 @@ export function OptimizationView({
 
                 <section className={styles.panelCard} aria-labelledby="opt-table-title">
                   <div className={styles.panelHeader}>
-                    <h2 id="opt-table-title">Comparación por activo (RF-40)</h2>
+                    <h2 id="opt-table-title">Comparación por activo</h2>
                     <span className={styles.panelMeta}>Suma total 100.00 %</span>
                   </div>
                   <div className="table-wrap" style={{ marginTop: 8 }}>

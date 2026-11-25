@@ -56,19 +56,33 @@ function NormalizedSeriesChart({ data }: { data: AssetAnalysisData }) {
         </span>
       </div>
       <div className={styles.chartLegend}>
-        {data.series.map((s, idx) => (
-          <span key={s.symbol} className={styles.legendItem}>
-            <span
-              className={styles.legendSwatch}
-              style={{
-                background: SERIES_COLORS[idx % SERIES_COLORS.length],
-                borderTop: SERIES_DASHES[idx % SERIES_DASHES.length] ? "2px dashed" : undefined,
-              }}
-              aria-hidden="true"
-            />
-            {s.symbol}
-          </span>
-        ))}
+        {data.series.map((s, idx) => {
+          const color = SERIES_COLORS[idx % SERIES_COLORS.length];
+          const dash = SERIES_DASHES[idx % SERIES_DASHES.length];
+          return (
+            <span key={s.symbol} className={styles.legendItem}>
+              <svg
+                width="26"
+                height="10"
+                viewBox="0 0 26 10"
+                className={styles.legendLineSvg}
+                aria-hidden="true"
+              >
+                <line
+                  x1="1"
+                  y1="5"
+                  x2="25"
+                  y2="5"
+                  stroke={color}
+                  strokeWidth={2.5}
+                  strokeDasharray={dash}
+                  strokeLinecap={dash ? "butt" : "round"}
+                />
+              </svg>
+              {s.symbol}
+            </span>
+          );
+        })}
       </div>
       <figure className={styles.chartFrame}>
         <svg
@@ -77,6 +91,18 @@ function NormalizedSeriesChart({ data }: { data: AssetAnalysisData }) {
           role="img"
           aria-label={`Gráfico lineal de evolución normalizada base 100 entre ${data.effectiveFrom} y ${data.effectiveTo}`}
         >
+          {minVal < 100 && maxVal > 100 && (
+            <line
+              x1={padL}
+              x2={w - padR}
+              y1={padT + innerH - ((100 - minVal) / span) * innerH}
+              y2={padT + innerH - ((100 - minVal) / span) * innerH}
+              stroke="var(--muted)"
+              strokeOpacity={0.35}
+              strokeDasharray="3 3"
+              strokeWidth={1}
+            />
+          )}
           {yTicks.map((tick) => {
             const y = padT + innerH - ((tick - minVal) / span) * innerH;
             return (
@@ -286,7 +312,7 @@ export function AssetAnalysisView({
       <section className={styles.panelCard} style={{ marginTop: 16 }} aria-labelledby="analysis-controls-title">
         <div className={styles.panelHeader}>
           <h2 id="analysis-controls-title">Selección de activos y período</h2>
-          <span className={styles.panelMeta}>RF-15 a RF-20 · incluye caso NU (12 sesiones) para validar RF-20</span>
+          <span className={styles.panelMeta}>Rendimientos, volatilidad, drawdown y correlaciones sobre sesiones comunes</span>
         </div>
 
         <form onSubmit={handleApply} noValidate>
@@ -435,7 +461,7 @@ export function AssetAnalysisView({
 
             <section className={styles.panelCard} aria-labelledby="corr-matrix-title">
               <div className={styles.panelHeader}>
-                <h2 id="corr-matrix-title">Matriz de correlación (RF-17 y RF-18)</h2>
+                <h2 id="corr-matrix-title">Matriz de correlación</h2>
                 <span className={styles.panelMeta}>Pearson diario · rango -1.00 a +1.00</span>
               </div>
               {result.data.correlationSymbols.length < 2 ? (

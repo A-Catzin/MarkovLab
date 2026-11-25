@@ -47,6 +47,24 @@ html { scrollbar-color: #2d4f8c #080d19; }
   flex: none;
 }
 
+.hero__enter {
+  box-shadow: 0 10px 26px -10px rgb(226 176 74 / 58%);
+  transition:
+    transform var(--t-press) var(--ease-out),
+    background-color var(--t-hover) ease,
+    box-shadow var(--t-hover) ease;
+}
+.hero__enter:hover:not(:disabled) {
+  box-shadow: 0 14px 30px -10px rgb(239 197 111 / 72%);
+}
+.hero__enter-icon {
+  flex: none;
+  transition: transform 180ms var(--ease-out);
+}
+.hero__enter:hover:not(:disabled) .hero__enter-icon {
+  transform: translateX(3px);
+}
+
 button.link {
   transition: color 180ms ease, text-decoration-color 180ms ease, transform 120ms var(--ease-out);
 }
@@ -87,9 +105,24 @@ button.link:active:not(:disabled) { transform: scale(0.98); }
 }
 .hero h1 { max-width: 10ch; font-size: clamp(4.2rem, 9.5vw, 9.5rem); line-height: .92; }
 .hero__subtitle { max-width: 30ch; margin-top: 26px; font-size: clamp(1.1rem, 1.5vw, 1.45rem); line-height: 1.45; }
-.hero__talk { grid-column: 1 / 5; grid-row: 2; position: relative; z-index: 2; margin: 38px 0 0; padding: 0; max-width: 39ch; }
+.hero__talk { grid-column: 1 / 6; grid-row: 2; position: relative; z-index: 2; margin: 38px 0 0; padding: 0; max-width: 46ch; }
 .hero__talk p { font-size: 1rem; line-height: 1.6; }
-.hero__talk .button { margin-top: 24px; }
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+.hero__talk .button { margin-top: 0; }
+.hero__actions .button--quiet {
+  border: 1px solid #2a3d66;
+  background: rgb(20 34 63 / 78%);
+}
+.hero__actions .button--quiet:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--field-strong);
+}
 .hero__coin { grid-column: 7 / 13; grid-row: 1 / 3; z-index: 1; align-self: center; justify-self: end; width: min(100%, 620px); margin: 115px -5% 0 0; }
 .hero__coin-canvas { max-width: none; }
 .hero__figure { grid-column: 1 / 13; grid-row: 3; z-index: 0; margin-top: 70px; }
@@ -156,10 +189,33 @@ button.link:active:not(:disabled) { transform: scale(0.98); }
   animation: ml-fade-in-up 220ms var(--ease-expo) both;
 }
 
+@media (max-width: 1100px) {
+  .hero__top .hero__menu {
+    display: inline-flex;
+    top: 16px;
+    min-height: 44px;
+    padding: 0 18px;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 980px) {
+  .hero__nav {
+    padding-left: 205px;
+    padding-right: 150px;
+  }
+  .hero__nav ul {
+    gap: 16px;
+  }
+}
+
 @media (max-width: 760px) {
   .hero { display: grid; min-height: auto; padding-inline: 20px; }
   .hero__top .wordmark, .hero__top .hero__menu { position: static; }
-  .hero__top .hero__menu { display: inline; }
+  .hero__top .hero__menu {
+    display: inline-flex;
+    min-height: 40px;
+    padding: 0 16px;
+  }
   .hero__top { grid-column: 1 / -1; grid-row: 1; display: flex; justify-content: space-between; align-items: center; padding-top: 20px; }
   .hero__nav { grid-column: 1 / -1; grid-row: 2; position: static; justify-content: start; min-height: 0; margin-top: 22px; padding: 0 0 12px; background: transparent; }
   /* Los cuatro enlaces caben en dos filas; antes se cortaba "Preguntas" en un carril con scroll. */
@@ -167,7 +223,9 @@ button.link:active:not(:disabled) { transform: scale(0.98); }
   .hero__headline { display: block; grid-column: 1 / -1; grid-row: 3; margin-top: 50px; }
   .hero h1 { margin-top: 0; font-size: clamp(3.8rem, 13vw, 6rem); line-height: .92; }
   .hero__subtitle { max-width: 28ch; margin-top: 20px; }
-  .hero__talk { grid-column: 1 / -1; grid-row: 4; margin-top: 22px; max-width: 38ch; }
+  .hero__talk { grid-column: 1 / -1; grid-row: 4; margin-top: 22px; max-width: none; }
+  .hero__actions { flex-direction: column; align-items: stretch; }
+  .hero__talk .button { width: 100%; }
   .hero__coin { grid-column: 1 / -1; grid-row: 5; width: min(90%, 390px); justify-self: center; margin: 10px 0 -30px; }
   .hero__figure { grid-column: 1 / -1; grid-row: 6; margin: 0; }
   .hero .fan__plot { height: 190px; }
@@ -216,11 +274,12 @@ button.link:active:not(:disabled) { transform: scale(0.98); }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .button, .photo, .shell__link, button.link, .shell__main input, .shell__main select, .shell__main textarea {
+  .button, .hero__enter, .hero__enter-icon, .photo, .shell__link, button.link, .shell__main input, .shell__main select, .shell__main textarea {
     transition: none;
   }
   .button:hover:not(:disabled),
   .button:active:not(:disabled),
+  .hero__enter:hover:not(:disabled) .hero__enter-icon,
   .shell__link:active,
   button.link:active:not(:disabled),
   .tile--photo:hover .photo {

@@ -15,6 +15,20 @@ import { validateBacktestWindows } from "@/lib/modules/validators";
 import { ErrorSummary, LoadingSkeletonPanel, ModuleStatePanel, ProvenanceStrip } from "./ModuleStateViews";
 import styles from "./modules.module.css";
 
+function buildLinePath(pts: { x: number; y: number | null }[]): string {
+  let d = "";
+  let open = false;
+  for (const pt of pts) {
+    if (pt.y === null) {
+      open = false;
+      continue;
+    }
+    d += `${open ? "L" : "M"}${pt.x.toFixed(1)},${pt.y.toFixed(1)} `;
+    open = true;
+  }
+  return d.trim();
+}
+
 function BacktestCurveChart({ run }: { run: BacktestRunRecord }) {
   const vals = run.curve.flatMap((p) =>
     [p.strategyIndex, p.benchmarkIndex].filter((v): v is number => v !== null),
@@ -23,8 +37,8 @@ function BacktestCurveChart({ run }: { run: BacktestRunRecord }) {
     return null;
   }
 
-  const minVal = Math.floor((Math.min(...vals) - 3) / 5) * 5;
-  const maxVal = Math.ceil((Math.max(...vals) + 3) / 5) * 5;
+  const minVal = Math.floor((Math.min(100, ...vals) - 3) / 5) * 5;
+  const maxVal = Math.ceil((Math.max(100, ...vals) + 3) / 5) * 5;
   const span = Math.max(10, maxVal - minVal);
 
   const w = 720;
@@ -36,25 +50,84 @@ function BacktestCurveChart({ run }: { run: BacktestRunRecord }) {
   const innerW = w - padL - padR;
   const innerH = h - padT - padB;
 
-  const toX = (idx: number) => padL + (run.curve.length <= 1 ? 0 : (idx / (run.curve.length - 1)) * innerW);
   const toY = (val: number) => padT + innerH - ((val - minVal) / span) * innerH;
   const yTicks = [0, 0.33, 0.67, 1].map((f) => Math.round(minVal + span * f));
+  const y100 = toY(100);
 
-  const firstEvalIndex = run.curve.findIndex((p) => p.phase === "evaluation");
-  const lastConfigIndex = firstEvalIndex > 0 ? firstEvalIndex - 1 : 0;
-  const splitX = toX(lastConfigIndex);
+  const configPoints = run.curve.filter((p) => p.phase === "config");
+  const evalPoints = run.curve.filter((p) => p.phase === "evaluation");
+  const hasBothPhases = configPoints.length > 0 && evalPoints.length > 0;
+  const totalPts = configPoints.length + evalPoints.length;
 
-  const stratPath = run.curve
-    .map((p, i) => `${i === 0 ? "M" : "L"}${toX(i).toFixed(1)},${toY(p.strategyIndex).toFixed(1)}`)
-    .join(" ");
+  let splitX = padL;
+  let configX: (i: number) => number;
+  let evalX: (i: number) => number;
 
-  const benchPath = run.benchmarkSymbol
-    ? run.curve
-        .map((p, idx) => (p.benchmarkIndex === null ? null : { idx, val: p.benchmarkIndex }))
-        .filter((item): item is { idx: number; val: number } => item !== null)
-        .map((item, j) => `${j === 0 ? "M" : "L"}${toX(item.idx).toFixed(1)},${toY(item.val).toFixed(1)}`)
-        .join(" ")
+  if (hasBothPhases) {
+    const gap = 12;
+    const usableW = innerW - gap;
+    const configShare = configPoints.length / totalPts;
+    const configW = usableW * configShare;
+    const evalW = usableW - configW;
+    configX = (i: number) => padL + (configPoints.length <= 1 ? configW : (i / (configPoints.length - 1)) * configW);
+    splitX = padL + configW + gap / 2;
+    evalX = (i: number) => splitX + gap / 2 + (evalPoints.length <= 1 ? 0 : (i / (evalPoints.length - 1)) * evalW);
+  } else {
+    configX = (i: number) => padL + (totalPts <= 1 ? 0 : (i / (totalPts - 1)) * innerW);
+    evalX = configX;
+    splitX = padL;
+  }
+
+  const configStratPath = buildLinePath(configPoints.map((p, i) => ({ x: configX(i), y: toY(p.strategyIndex) })));
+  const evalStratPath = buildLinePath(evalPoints.map((p, i) => ({ x: evalX(i), y: toY(p.strategyIndex) })));
+
+  const configBenchPath = run.benchmarkSymbol
+    ? buildLinePath(
+        configPoints.map((p, i) => ({
+          x: configX(i),
+          y: p.benchmarkIndex === null ? null : toY(p.benchmarkIndex),
+        })),
+      )
     : "";
+  const evalBenchPath = run.benchmarkSymbol
+    ? buildLinePath(
+        evalPoints.map((p, i) => ({
+          x: evalX(i),
+          y: p.benchmarkIndex === null ? null : toY(p.benchmarkIndex),
+        })),
+      )
+    : "";
+
+  const labelFitsRight = splitX < w - padR - 210;
+  const showBase100Tag = minVal < 100 && maxVal > 100 && Math.abs(y100 - (padT + 14)) >= 16;
+  const xTickLabels: { key: string; x: number; text: string; anchor: "start" | "middle" | "end" }[] = [];
+  if (hasBothPhases) {
+    xTickLabels.push({ key: "cfg-start", x: padL, text: configPoints[0].date, anchor: "start" });
+    if (splitX - padL > 90 && w - padR - splitX > 90) {
+      xTickLabels.push({
+        key: "cfg-end",
+        x: splitX,
+        text: configPoints[configPoints.length - 1].date,
+        anchor: "middle",
+      });
+    }
+    xTickLabels.push({
+      key: "eval-end",
+      x: w - padR,
+      text: evalPoints[evalPoints.length - 1].date,
+      anchor: "end",
+    });
+  } else if (run.curve.length > 0) {
+    xTickLabels.push({ key: "only-start", x: padL, text: run.curve[0].date, anchor: "start" });
+    if (run.curve.length > 1) {
+      xTickLabels.push({
+        key: "only-end",
+        x: w - padR,
+        text: run.curve[run.curve.length - 1].date,
+        anchor: "end",
+      });
+    }
+  }
 
   return (
     <section className="panel" aria-labelledby="bt-chart-title">
@@ -68,12 +141,16 @@ function BacktestCurveChart({ run }: { run: BacktestRunRecord }) {
 
       <div className={styles.chartLegend}>
         <span className={styles.legendItem}>
-          <span className={styles.legendSwatch} style={{ background: "#e2b04a" }} aria-hidden="true" />{" "}
+          <svg width="26" height="10" viewBox="0 0 26 10" className={styles.legendLineSvg} aria-hidden="true">
+            <line x1="1" y1="5" x2="25" y2="5" stroke="#e2b04a" strokeWidth={2.5} strokeLinecap="round" />
+          </svg>
           {run.strategyName}
         </span>
         {run.benchmarkSymbol && (
           <span className={styles.legendItem}>
-            <span className={styles.legendSwatch} style={{ borderTop: "2px dashed #6ea8fe" }} aria-hidden="true" />{" "}
+            <svg width="26" height="10" viewBox="0 0 26 10" className={styles.legendLineSvg} aria-hidden="true">
+              <line x1="1" y1="5" x2="25" y2="5" stroke="#6ea8fe" strokeWidth={2.2} strokeDasharray="6 4" />
+            </svg>
             Benchmark ({run.benchmarkSymbol})
           </span>
         )}
@@ -86,13 +163,15 @@ function BacktestCurveChart({ run }: { run: BacktestRunRecord }) {
           role="img"
           aria-label={`Curva de backtesting separando configuración (${run.configFrom} a ${run.configTo}) de evaluación (${run.evalFrom} a ${run.evalTo})`}
         >
-          <rect
-            x={padL}
-            y={padT}
-            width={Math.max(0, splitX - padL)}
-            height={innerH}
-            fill="rgb(45 79 140 / 16%)"
-          />
+          {hasBothPhases && (
+            <rect
+              x={padL}
+              y={padT}
+              width={Math.max(0, splitX - padL)}
+              height={innerH}
+              fill="rgb(45 79 140 / 16%)"
+            />
+          )}
           {yTicks.map((tick) => {
             const y = toY(tick);
             return (
@@ -104,26 +183,53 @@ function BacktestCurveChart({ run }: { run: BacktestRunRecord }) {
               </g>
             );
           })}
-          <line x1={splitX} x2={splitX} y1={padT} y2={h - padB} stroke="var(--accent)" strokeDasharray="4 4" strokeWidth={1.5} />
-          <text x={splitX + 6} y={padT + 14} fontSize="12" fill="var(--accent)">
-            Inicio fuera de muestra ({run.evalFrom})
-          </text>
-          <path d={stratPath} fill="none" stroke="#e2b04a" strokeWidth={2.2} />
-          {benchPath && <path d={benchPath} fill="none" stroke="#6ea8fe" strokeWidth={2} strokeDasharray="6 4" />}
-          {[0, lastConfigIndex, run.curve.length - 1]
-            .filter((idx, i, arr) => idx >= 0 && arr.indexOf(idx) === i)
-            .map((idx) => (
+          {minVal < 100 && maxVal > 100 && (
+            <line
+              x1={padL}
+              x2={w - padR}
+              y1={y100}
+              y2={y100}
+              stroke="var(--muted)"
+              strokeOpacity={0.4}
+              strokeDasharray="3 3"
+              strokeWidth={1}
+            />
+          )}
+          {showBase100Tag && (
+            <text x={w - padR - 4} y={y100 - 5} textAnchor="end" fontSize="11" fill="var(--muted)">
+              Base 100
+            </text>
+          )}
+          {hasBothPhases && (
+            <>
+              <line x1={splitX} x2={splitX} y1={padT} y2={h - padB} stroke="var(--accent)" strokeDasharray="4 4" strokeWidth={1.5} />
               <text
-                key={idx}
-                x={toX(idx)}
-                y={h - 10}
-                textAnchor={idx === 0 ? "start" : idx === run.curve.length - 1 ? "end" : "middle"}
+                x={labelFitsRight ? splitX + 8 : splitX - 8}
+                y={padT + 14}
+                textAnchor={labelFitsRight ? "start" : "end"}
                 fontSize="12"
-                fill="var(--muted)"
+                fill="var(--accent)"
               >
-                {run.curve[idx].date}
+                Inicio fuera de muestra ({run.evalFrom})
               </text>
-            ))}
+            </>
+          )}
+          {configStratPath && <path d={configStratPath} fill="none" stroke="#e2b04a" strokeWidth={2.2} />}
+          {evalStratPath && <path d={evalStratPath} fill="none" stroke="#e2b04a" strokeWidth={2.2} />}
+          {configBenchPath && <path d={configBenchPath} fill="none" stroke="#6ea8fe" strokeWidth={2} strokeDasharray="6 4" />}
+          {evalBenchPath && <path d={evalBenchPath} fill="none" stroke="#6ea8fe" strokeWidth={2} strokeDasharray="6 4" />}
+          {xTickLabels.map((lbl) => (
+            <text
+              key={lbl.key}
+              x={lbl.x}
+              y={h - 10}
+              textAnchor={lbl.anchor}
+              fontSize="12"
+              fill="var(--muted)"
+            >
+              {lbl.text}
+            </text>
+          ))}
         </svg>
         <figcaption className={styles.chartCaption}>
           Cada etapa (configuración y evaluación fuera de muestra) reinicia su índice base en 100 antes de aplicar costos
@@ -207,7 +313,7 @@ export function BacktestingView({
   if (result.status === "not_integrated") {
     return (
       <div className={styles.viewRoot}>
-        <h1 className={styles.pageTitle}>Backtesting de estrategias (RF-49 a RF-53)</h1>
+        <h1 className={styles.pageTitle}>Backtesting de estrategias</h1>
         <ModuleStatePanel result={result} />
       </div>
     );
@@ -323,7 +429,7 @@ export function BacktestingView({
 
           <section className={styles.panelCard} style={{ marginTop: 20 }} aria-labelledby="bt-config-title">
             <div className={styles.panelHeader}>
-              <h2 id="bt-config-title">Separación de ventanas y parámetros (RF-49 y RF-50)</h2>
+              <h2 id="bt-config-title">Separación de ventanas y parámetros</h2>
               <span className={styles.panelMeta}>
                 {activeRun
                   ? activeRun.rebalanceLabel
@@ -468,7 +574,7 @@ export function BacktestingView({
                 )}
 
                 <label className="field" htmlFor="bt-benchmark">
-                  <span>Benchmark opcional (RF-52)</span>
+                  <span>Benchmark opcional</span>
                   <select
                     id="bt-benchmark"
                     value={benchmarkValue}
@@ -611,7 +717,7 @@ export function BacktestingView({
 
               <section className="panel" aria-labelledby="bt-history-title">
                 <div className={styles.panelHeader}>
-                  <h2 id="bt-history-title">Historial de ejecuciones (RF-53)</h2>
+                  <h2 id="bt-history-title">Historial de ejecuciones</h2>
                   <span className={styles.panelMeta}>Cada corrida conserva supuestos, ventanas y métricas</span>
                 </div>
                 <div className="table-wrap">

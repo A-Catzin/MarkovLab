@@ -111,7 +111,7 @@ export function buildMarketOriginFixture(scenario: ViewScenario = "normal"): Ada
       freshness: "example",
       isExample: true,
       calculatedAt: "2026-10-30 16:15",
-      assumptions: "Muestra de RF-13: distingue API actualizado, caché y carga manual CSV",
+      assumptions: "Muestra de origen y frescura: distingue API actualizado, caché y carga manual CSV",
     },
   };
 }
