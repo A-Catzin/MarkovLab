@@ -64,10 +64,10 @@ export const REQUEST_STAGES = [
 ];
 
 export const IMPLEMENTED_METRICS = [
-  "Rendimientos simples y logarítmicos",
-  "Volatilidad, media y drawdown",
-  "Covarianza y correlación",
-  "VaR y CVaR por Monte Carlo",
+  "Análisis multiactivo, correlación y drawdown",
+  "VaR, CVaR y escenarios de estrés Monte Carlo",
+  "Optimización de mínima varianza y máximo Sharpe",
+  "Predicción con bandas, backtesting y reportes CSV",
 ];
 
 export const QUESTIONS = [
@@ -79,7 +79,7 @@ export const QUESTIONS = [
   {
     question: "¿Ejecuta órdenes reales?",
     answer:
-      "Nunca. No se conecta con brókers ni guarda credenciales bancarias. Solo calcula, a partir de precios históricos o de los datos que usted le entrega.",
+      "Nunca. No se conecta con brókers ni guarda credenciales bancarias. Solo calcula a partir de precios históricos almacenados y de la composición de tus carteras.",
   },
   {
     question: "¿Puedo repetir una simulación?",
@@ -89,17 +89,17 @@ export const QUESTIONS = [
   {
     question: "¿Qué supone el modelo?",
     answer:
-      "Rendimientos normales, independientes entre días y una cartera rebalanceada cada período. La normal subestima los eventos extremos; por eso el CVaR acompaña al VaR.",
+      "En Monte Carlo, rendimientos normales e independientes entre sesiones (acompañando el VaR con CVaR ante colas pesadas); en optimización, predicción y backtesting, series históricas reales sin usar cierres futuros fuera de muestra.",
   },
   {
     question: "¿De dónde salen los precios?",
     answer:
-      "De archivos CSV con símbolo, fecha, apertura, máximo, mínimo, cierre y volumen, validados al importarse. La conexión con una API de mercado es la siguiente etapa.",
+      "De la sincronización con API de datos de mercado y de archivos CSV validados por administración, almacenados en PostgreSQL con conversión diaria de divisas cuando una cartera combina monedas.",
   },
   {
     question: "¿Por qué el simulador da otros números que el motor?",
     answer:
-      "El de esta página usa el mismo modelo en su navegador, con datos de ejemplo y otro generador aleatorio. La distribución coincide; los escenarios uno a uno, no.",
+      "El de esta portada usa el mismo modelo en tu navegador, con datos de ejemplo y otro generador aleatorio. La distribución coincide; los escenarios uno a uno, no.",
   },
 ];
 

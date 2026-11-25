@@ -68,7 +68,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             </span>
           </h1>
           <p data-load style={{ ["--i" as string]: 0 }}>
-            Crea carteras, mide su riesgo y guarda tus simulaciones para volver a ellas cuando quieras.
+            Crea y optimiza carteras, simula escenarios de riesgo y estrés, evalúa estrategias fuera de muestra y
+            exporta tus reportes.
           </p>
           <dl className="auth__facts" data-load style={{ ["--i" as string]: 1 }}>
             {FACTS.map((fact) => (

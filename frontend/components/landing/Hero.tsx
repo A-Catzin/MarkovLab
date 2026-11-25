@@ -59,8 +59,8 @@ export function Hero() {
         </div>
         <div className="hero__talk">
           <p data-load style={{ ["--i" as string]: 0 }}>
-            Un laboratorio académico que mide el riesgo de una cartera con 10,000 escenarios Monte Carlo
-            reproducibles.
+            Un laboratorio académico para construir, optimizar y evaluar carteras con simulaciones Monte Carlo,
+            backtesting y pronósticos reproducibles.
           </p>
           <a className="button" href="#simulador" data-load style={{ ["--i" as string]: 1 }}>
             Probar el simulador
