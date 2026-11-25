@@ -5,10 +5,10 @@ export function Modules() {
     <section className="section" id="modulos" aria-labelledby="modulos-title">
       <div className="mosaic">
         <div className="tile tile--head" data-reveal>
-          <h2 id="modulos-title">Qué calcula</h2>
+          <h2 id="modulos-title">¿Qué calcula?</h2>
           <p>
-            El motor está escrito en Julia y separado en capas: dominio puro, casos de uso, importación de datos y una
-            API HTTP que consume esta página.
+            El motor está escrito en Julia y separado en capas: dominio puro, optimización, sincronización de mercado y
+            una API HTTP conectada con PostgreSQL.
           </p>
         </div>
 
@@ -30,7 +30,7 @@ export function Modules() {
         </div>
 
         <div className="tile tile--pale tile--csv" data-reveal style={{ ["--i" as string]: 3 }}>
-          <p className="tile-sentence">Importa precios desde CSV y descarta duplicados.</p>
+          <p className="tile-sentence">Sincroniza precios de mercado e importa CSV validados.</p>
         </div>
 
         <figure className="tile tile--photo tile--bourse" data-reveal>
@@ -46,7 +46,7 @@ export function Modules() {
         </figure>
 
         <div className="tile tile--list" data-reveal style={{ ["--i" as string]: 1 }}>
-          <h3>Ya implementado</h3>
+          <h3>Módulos disponibles</h3>
           <ul>
             {IMPLEMENTED_METRICS.map((metric) => (
               <li key={metric}>{metric}</li>
@@ -55,7 +55,7 @@ export function Modules() {
         </div>
 
         <div className="tile tile--muted tile--next" data-reveal>
-          <p className="tile-sentence">Optimización y backtesting llegan en la próxima etapa.</p>
+          <p className="tile-sentence">Optimización, predicción, backtesting y exportación CSV integrados.</p>
         </div>
 
         <figure className="tile tile--photo tile--ticker" data-reveal style={{ ["--i" as string]: 1 }}>

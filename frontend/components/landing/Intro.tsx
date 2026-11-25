@@ -4,7 +4,7 @@ export function Intro() {
   return (
     <section className="intro grid" id="historia" aria-labelledby="historia-title">
       <h2 className="intro__title" id="historia-title" data-reveal>
-        Por qué Márkov
+        ¿Por qué Márkov?
       </h2>
       <p className="intro__note" data-reveal style={{ ["--i" as string]: 1 }}>
         El nombre viene de Andréi Márkov, que mostró que el siguiente paso puede depender del anterior y aun así

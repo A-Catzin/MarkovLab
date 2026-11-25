@@ -19,9 +19,9 @@ const text = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: "MarkovLab · Simulación y riesgo de carteras",
+  title: "MarkovLab · Análisis, optimización y riesgo de carteras",
   description:
-    "Laboratorio académico que mide el riesgo de una cartera con 10,000 escenarios Monte Carlo reproducibles, calculados por un motor en Julia.",
+    "Laboratorio académico para analizar activos, optimizar carteras, simular riesgo Monte Carlo, evaluar estrategias con backtesting y exportar reportes.",
 };
 
 export default function RootLayout({

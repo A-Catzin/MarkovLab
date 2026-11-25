@@ -30,7 +30,7 @@ function Histogram({ result }: { result: Result }) {
   const worstShare = oneIn(result.request.confidence);
   return (
     <>
-      <p className="ui-hist__title">Cómo se repartieron los {result.summary.scenarios.toLocaleString("es-MX")} futuros</p>
+      <p className="ui-hist__title">¿Cómo se repartieron los {result.summary.scenarios.toLocaleString("es-MX")} futuros?</p>
       <svg
         className="ui-hist"
         viewBox="0 0 100 40"
@@ -184,7 +184,7 @@ export function Simulator({ initial }: { initial: DemoResult }) {
               <tr>
                 <th scope="col">Empresa</th>
                 <th scope="col">Gana al año</th>
-                <th scope="col">Cuánto varía</th>
+                <th scope="col">¿Cuánto varía?</th>
                 <th scope="col">Tu parte</th>
               </tr>
             </thead>
@@ -202,7 +202,7 @@ export function Simulator({ initial }: { initial: DemoResult }) {
             </tbody>
           </table>
           <p className="ui-note">
-            &ldquo;Gana al año&rdquo; es la ganancia típica; &ldquo;Cuánto varía&rdquo; indica qué tanto sube y baja
+            &ldquo;Gana al año&rdquo; es la ganancia típica; &ldquo;¿Cuánto varía?&rdquo; indica qué tanto sube y baja
             en un año normal (volatilidad).
           </p>
         </div>

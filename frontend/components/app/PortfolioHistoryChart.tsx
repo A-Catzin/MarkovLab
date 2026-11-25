@@ -206,8 +206,8 @@ export function PortfolioHistoryChart({
         <div>
           <h2 id="history-title">Valor histórico</h2>
           <p className="panel__help">
-            Cuánto habría valido la cartera si la hubieras comprado antes con
-            estos pesos y no la movieras. La línea vertical marca el día en que
+            ¿Cuánto habría valido la cartera si la hubieras comprado antes con
+            estos pesos y no la movieras? La línea vertical marca el día en que
             la creaste y la horizontal, tu capital.
             {currencyNote && ` ${currencyNote}`}
           </p>
