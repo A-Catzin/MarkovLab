@@ -44,7 +44,7 @@ function findLastHistoricalIndex(series: PredictionSeriesPoint[]): number {
 
 function PredictionUncertaintyChart({ data }: { data: PredictionData }) {
   const vals = data.series.flatMap((p) =>
-    [p.historicalValue, p.lowerBound, p.upperBound, p.observedAfterValue].filter(
+    [p.historicalValue, p.forecastPoint, p.lowerBound, p.upperBound, p.observedAfterValue].filter(
       (v): v is number => v !== null,
     ),
   );
@@ -52,15 +52,16 @@ function PredictionUncertaintyChart({ data }: { data: PredictionData }) {
     return null;
   }
 
-  const minVal = Math.floor((Math.min(...vals) - 0.02) * 50) / 50;
+  const rawMin = Math.floor((Math.min(...vals) - 0.02) * 50) / 50;
+  const minVal = data.metric === "volatility" ? Math.max(0, rawMin) : rawMin;
   const maxVal = Math.ceil((Math.max(...vals) + 0.02) * 50) / 50;
   const span = Math.max(0.05, maxVal - minVal);
 
   const w = 720;
-  const h = 235;
+  const h = 240;
   const padL = 56;
-  const padR = 20;
-  const padT = 18;
+  const padR = 76;
+  const padT = 20;
   const padB = 34;
   const innerW = w - padL - padR;
   const innerH = h - padT - padB;
@@ -93,48 +94,63 @@ function PredictionUncertaintyChart({ data }: { data: PredictionData }) {
     } => entry.p.lowerBound !== null && entry.p.upperBound !== null,
   );
 
-  const lastHistVal = lastHistIndex >= 0 ? data.series[lastHistIndex].historicalValue : null;
-  const anchorPoint =
-    lastHistIndex >= 0 && lastHistVal !== null ? { idx: lastHistIndex, val: lastHistVal } : null;
+  const forecastStartX =
+    lastHistIndex >= 0 ? splitX : forecastItems[0] ? toX(forecastItems[0].idx) : padL;
 
-  const forecastLine = [
-    ...(anchorPoint ? [anchorPoint] : []),
-    ...forecastItems.map((entry) => ({ idx: entry.idx, val: entry.p.forecastPoint })),
-  ]
-    .map((pt, i) => `${i === 0 ? "M" : "L"}${toX(pt.idx).toFixed(1)},${toY(pt.val).toFixed(1)}`)
+  const forecastPts =
+    forecastItems.length > 0
+      ? [
+          ...(lastHistIndex >= 0 ? [{ x: forecastStartX, y: toY(forecastItems[0].p.forecastPoint) }] : []),
+          ...forecastItems.map((entry) => ({ x: toX(entry.idx), y: toY(entry.p.forecastPoint) })),
+        ]
+      : [];
+  const forecastLine = forecastPts
+    .map((pt, i) => `${i === 0 ? "M" : "L"}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`)
     .join(" ");
 
-  const upperPoly = [
-    ...(anchorPoint ? [anchorPoint] : []),
-    ...bandItems.map((entry) => ({ idx: entry.idx, val: entry.p.upperBound })),
-  ];
-  const lowerPoly = [
-    ...bandItems
-      .slice()
-      .reverse()
-      .map((entry) => ({ idx: entry.idx, val: entry.p.lowerBound })),
-    ...(anchorPoint ? [anchorPoint] : []),
-  ];
+  const upperEdge =
+    bandItems.length > 0
+      ? [
+          ...(lastHistIndex >= 0 ? [{ x: forecastStartX, y: toY(bandItems[0].p.upperBound) }] : []),
+          ...bandItems.map((entry) => ({ x: toX(entry.idx), y: toY(entry.p.upperBound) })),
+        ]
+      : [];
+  const lowerEdge =
+    bandItems.length > 0
+      ? [
+          ...(lastHistIndex >= 0 ? [{ x: forecastStartX, y: toY(bandItems[0].p.lowerBound) }] : []),
+          ...bandItems.map((entry) => ({ x: toX(entry.idx), y: toY(entry.p.lowerBound) })),
+        ]
+      : [];
+
+  const upperBoundPath = upperEdge
+    .map((pt, i) => `${i === 0 ? "M" : "L"}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`)
+    .join(" ");
+  const lowerBoundPath = lowerEdge
+    .map((pt, i) => `${i === 0 ? "M" : "L"}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`)
+    .join(" ");
   const bandPoints =
     bandItems.length > 0
-      ? [...upperPoly, ...lowerPoly]
-          .map((pt) => `${toX(pt.idx).toFixed(1)},${toY(pt.val).toFixed(1)}`)
+      ? [...upperEdge, ...lowerEdge.slice().reverse()]
+          .map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`)
           .join(" ")
       : "";
 
-  const observedLine = [
-    ...(anchorPoint ? [anchorPoint] : []),
-    ...forecastItems
-      .filter(
-        (entry): entry is {
-          idx: number;
-          p: PredictionSeriesPoint & { forecastPoint: number; observedAfterValue: number };
-        } => entry.p.observedAfterValue !== null,
-      )
-      .map((entry) => ({ idx: entry.idx, val: entry.p.observedAfterValue })),
-  ]
-    .map((pt, i) => `${i === 0 ? "M" : "L"}${toX(pt.idx).toFixed(1)},${toY(pt.val).toFixed(1)}`)
+  const observedItems = forecastItems.filter(
+    (entry): entry is {
+      idx: number;
+      p: PredictionSeriesPoint & { forecastPoint: number; observedAfterValue: number };
+    } => entry.p.observedAfterValue !== null,
+  );
+  const observedLine = observedItems
+    .map((entry, i) => `${i === 0 ? "M" : "L"}${toX(entry.idx).toFixed(1)},${toY(entry.p.observedAfterValue).toFixed(1)}`)
     .join(" ");
+
+  const lastBand = bandItems[bandItems.length - 1]?.p ?? null;
+  const lastForecastVal = forecastItems[forecastItems.length - 1]?.p.forecastPoint ?? data.point;
+  const pointLabelY = lastForecastVal !== null ? toY(lastForecastVal) : null;
+  const upperLabelY = lastBand !== null ? toY(lastBand.upperBound) : null;
+  const lowerLabelY = lastBand !== null ? toY(lastBand.lowerBound) : null;
 
   return (
     <section className={styles.panelCard} aria-labelledby="pred-chart-title">
@@ -142,23 +158,31 @@ function PredictionUncertaintyChart({ data }: { data: PredictionData }) {
         <h2 id="pred-chart-title">
           Trayectoria histórica, pronóstico y banda ({data.confidenceLabel})
         </h2>
-        <span className={styles.panelMeta}>Corte de entrenamiento: {data.trainingWindow.to}</span>
+        <span className={styles.panelMeta}>
+          {data.metric === "volatility" ? "Volatilidad anualizada (21 ses.)" : "Rendimiento diario por sesión"} ·
+          Corte: {data.trainingWindow.to}
+        </span>
       </div>
       <div className={styles.chartLegend}>
         <span className={styles.legendItem}>
-          <span className={styles.legendSwatch} style={{ background: "var(--ink)" }} aria-hidden="true" /> Histórico
+          <svg width="26" height="10" viewBox="0 0 26 10" className={styles.legendLineSvg} aria-hidden="true">
+            <line x1="1" y1="5" x2="25" y2="5" stroke="var(--ink)" strokeWidth={2.2} strokeLinecap="round" />
+          </svg>
+          Histórico
         </span>
         <span className={styles.legendItem}>
-          <span
-            className={styles.legendSwatch}
-            style={{ borderTop: "2px dashed #e2b04a" }}
-            aria-hidden="true"
-          />{" "}
+          <svg width="26" height="10" viewBox="0 0 26 10" className={styles.legendLineSvg} aria-hidden="true">
+            <rect x="1" y="1" width="24" height="8" rx="1.5" fill="rgb(226 176 74 / 22%)" />
+            <line x1="1" y1="5" x2="25" y2="5" stroke="#e2b04a" strokeWidth={2} strokeDasharray="5 3" />
+          </svg>
           Pronóstico puntual + banda
         </span>
         {data.hasPostObservations && (
           <span className={styles.legendItem}>
-            <span className={styles.legendSwatch} style={{ background: "#5fc49a" }} aria-hidden="true" /> Valor observado
+            <svg width="26" height="10" viewBox="0 0 26 10" className={styles.legendLineSvg} aria-hidden="true">
+              <line x1="1" y1="5" x2="25" y2="5" stroke="#5fc49a" strokeWidth={2.2} strokeLinecap="round" />
+            </svg>
+            Valor observado
           </span>
         )}
       </div>
@@ -181,7 +205,25 @@ function PredictionUncertaintyChart({ data }: { data: PredictionData }) {
               </g>
             );
           })}
-          {bandPoints && <polygon points={bandPoints} fill="rgb(226 176 74 / 14%)" />}
+          {minVal < 0 && maxVal > 0 && (
+            <line
+              x1={padL}
+              x2={w - padR}
+              y1={toY(0)}
+              y2={toY(0)}
+              stroke="var(--muted)"
+              strokeOpacity={0.38}
+              strokeDasharray="2 3"
+              strokeWidth={1}
+            />
+          )}
+          {bandPoints && <polygon points={bandPoints} fill="rgb(226 176 74 / 16%)" />}
+          {upperBoundPath && (
+            <path d={upperBoundPath} fill="none" stroke="rgb(226 176 74 / 65%)" strokeWidth={1.2} strokeDasharray="3 3" />
+          )}
+          {lowerBoundPath && (
+            <path d={lowerBoundPath} fill="none" stroke="rgb(226 176 74 / 65%)" strokeWidth={1.2} strokeDasharray="3 3" />
+          )}
           <line
             x1={splitX}
             x2={splitX}
@@ -197,6 +239,29 @@ function PredictionUncertaintyChart({ data }: { data: PredictionData }) {
           )}
           {data.hasPostObservations && observedLine && (
             <path d={observedLine} fill="none" stroke="#5fc49a" strokeWidth={2} />
+          )}
+          {data.hasPostObservations && observedItems.length === 1 && (
+            <circle
+              cx={toX(observedItems[0].idx)}
+              cy={toY(observedItems[0].p.observedAfterValue)}
+              r={3.5}
+              fill="#5fc49a"
+            />
+          )}
+          {lastForecastVal !== null && pointLabelY !== null && (
+            <text x={w - padR + 6} y={pointLabelY + 4} fontSize="11.5" fontWeight={600} fill="#e2b04a">
+              {formatPercent(lastForecastVal, { decimals: 1 })}
+            </text>
+          )}
+          {lastBand !== null && upperLabelY !== null && pointLabelY !== null && Math.abs(pointLabelY - upperLabelY) >= 13 && (
+            <text x={w - padR + 6} y={upperLabelY + 4} fontSize="11" fill="var(--muted)">
+              {formatPercent(lastBand.upperBound, { decimals: 1 })}
+            </text>
+          )}
+          {lastBand !== null && lowerLabelY !== null && pointLabelY !== null && Math.abs(lowerLabelY - pointLabelY) >= 13 && (
+            <text x={w - padR + 6} y={lowerLabelY + 4} fontSize="11" fill="var(--muted)">
+              {formatPercent(lastBand.lowerBound, { decimals: 1 })}
+            </text>
           )}
           {[0, lastHistIndex, data.series.length - 1]
             .filter((idx, i, arr) => idx >= 0 && arr.indexOf(idx) === i)
@@ -214,8 +279,9 @@ function PredictionUncertaintyChart({ data }: { data: PredictionData }) {
             ))}
         </svg>
         <figcaption className={styles.chartCaption}>
-          La franja dorada representa el rango estimado de incertidumbre; los valores observados posteriores (cuando
-          existen) permiten contrastar el error del modelo de referencia.
+          El modelo estacionario de referencia proyecta la mediana histórica y el rango empírico por sesión individual
+          ({data.confidenceLabel}), no una trayectoria acumulada. Cuando existen sesiones posteriores, el valor
+          observado permite contrastar el error.
         </figcaption>
       </figure>
 

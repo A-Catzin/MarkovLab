@@ -633,6 +633,12 @@
   height: 2px;
 }
 
+.legendLineSvg {
+  display: block;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
 .legendDot {
   display: inline-block;
   width: 8px;
